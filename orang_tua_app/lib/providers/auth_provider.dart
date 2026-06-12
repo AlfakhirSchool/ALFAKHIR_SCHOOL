@@ -1,0 +1,106 @@
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import '../core/api.dart';
+import '../core/storage.dart';
+import '../models/child.dart';
+
+class OrangTuaUser {
+  final String id;
+  final String email;
+  final String nama;
+  final String role;
+
+  const OrangTuaUser({required this.id, required this.email, required this.nama, required this.role});
+
+  factory OrangTuaUser.fromJson(Map<String, dynamic> json) => OrangTuaUser(
+        id: json['id'] ?? '', email: json['email'] ?? '',
+        nama: json['nama'] ?? '', role: json['role'] ?? '',
+      );
+
+  Map<String, dynamic> toJson() => {'id': id, 'email': email, 'nama': nama, 'role': role};
+}
+
+class AuthProvider extends ChangeNotifier {
+  OrangTuaUser? _user;
+  List<Child> _children = [];
+  Child? _selectedChild;
+  bool _isLoading = false;
+  String? _error;
+
+  OrangTuaUser? get user => _user;
+  List<Child> get children => _children;
+  Child? get selectedChild => _selectedChild;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+  bool get isLoggedIn => _user != null;
+
+  void selectChild(Child child) {
+    _selectedChild = child;
+    notifyListeners();
+  }
+
+  Future<void> tryAutoLogin() async {
+    final token = await AuthStorage.getAccessToken();
+    if (token == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('ortu_user');
+    if (userJson != null) {
+      _user = OrangTuaUser.fromJson(jsonDecode(userJson));
+      notifyListeners();
+      await _loadChildren();
+    }
+  }
+
+  Future<bool> login(String email, String password) async {
+    _isLoading = true; _error = null; notifyListeners();
+
+    try {
+      final res = await dio.post('/auth/login', data: {'email': email, 'password': password});
+      final data = res.data['data'];
+      final user = OrangTuaUser.fromJson(data['user']);
+
+      if (!['ortu', 'admin'].contains(user.role)) {
+        _error = 'Akses hanya untuk Orang Tua'; _isLoading = false; notifyListeners(); return false;
+      }
+
+      await AuthStorage.saveTokens(accessToken: data['accessToken'], refreshToken: data['refreshToken']);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('ortu_user', jsonEncode(user.toJson()));
+
+      _user = user; _isLoading = false; notifyListeners();
+      await _loadChildren();
+      return true;
+    } catch (e) {
+      _error = _parseError(e); _isLoading = false; notifyListeners(); return false;
+    }
+  }
+
+  Future<void> _loadChildren() async {
+    try {
+      final res = await dio.get('/auth/profile');
+      final data = res.data['data'];
+      final ortuData = data['ortu'];
+      if (ortuData != null && ortuData['children'] != null) {
+        _children = (ortuData['children'] as List).map((c) => Child.fromJson(c)).toList();
+      } else if (data['siswa'] != null) {
+        _children = [Child.fromJson(data['siswa'])];
+      }
+      if (_children.isNotEmpty) _selectedChild = _children.first;
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  Future<void> logout() async {
+    try { await dio.post('/auth/logout'); } catch (_) {}
+    await AuthStorage.clearTokens();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('ortu_user');
+    _user = null; _children = []; _selectedChild = null;
+    notifyListeners();
+  }
+
+  String _parseError(dynamic e) {
+    try { return e.response?.data?['message'] ?? 'Login gagal'; } catch (_) { return 'Koneksi bermasalah'; }
+  }
+}
