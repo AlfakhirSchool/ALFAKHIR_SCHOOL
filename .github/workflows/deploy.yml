@@ -1,0 +1,269 @@
+name: "CI/CD - Al Fakhir School LMS"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: "Skip tests (emergency deploy only)"
+        required: false
+        default: "false"
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/backend
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 1 — Backend TypeScript compile + unit tests
+  # ─────────────────────────────────────────────────────────────────────────────
+  test-backend:
+    name: "Backend — TypeCheck & Tests"
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd "pg_isready -U test -d test_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    env:
+      NODE_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: test_db
+      DB_USER: test
+      DB_PASSWORD: test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-test-jwt-secret-not-for-production' }}
+      JWT_REFRESH_SECRET: ci-test-refresh-secret-not-for-production
+      PORT: 3001
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false   # submodules linted separately
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: TypeScript — noEmit type-check
+        working-directory: backend
+        run: npx tsc --noEmit
+
+      - name: Run backend tests (if present)
+        working-directory: backend
+        run: npm test --if-present
+        timeout-minutes: 10
+
+      - name: Upload coverage report (if present)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 2 — Lint & build web-admin and web-guru (Next.js submodules)
+  # ─────────────────────────────────────────────────────────────────────────────
+  lint-web:
+    name: "Web — Lint & Build (${{ matrix.app }})"
+    needs: test-backend
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web-admin, web-guru]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
+
+      - name: Install dependencies — ${{ matrix.app }}
+        working-directory: ${{ matrix.app }}
+        run: npm ci
+
+      - name: Lint — ${{ matrix.app }}
+        working-directory: ${{ matrix.app }}
+        run: npm run lint --if-present
+
+      - name: Build — ${{ matrix.app }}
+        working-directory: ${{ matrix.app }}
+        env:
+          # Provide dummy values so Next.js build succeeds without real secrets
+          NEXT_PUBLIC_API_URL: https://api.alfakhirschool.id/api
+          NEXT_PUBLIC_APP_ENV: ci
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app }}-build
+          path: |
+            ${{ matrix.app }}/.next
+            ${{ matrix.app }}/out
+          if-no-files-found: ignore
+          retention-days: 3
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 3 — Build Docker image for backend (smoke-test only, no push)
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-docker:
+    name: "Docker — Build Backend Image"
+    needs: test-backend
+    runs-on: ubuntu-latest
+    # Only run on pushes to main (not PRs)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend Docker image (verify only — no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+
+      - name: Confirm image was built
+        run: |
+          echo "Docker image ${{ env.IMAGE_NAME }}:${{ github.sha }} built successfully."
+          echo "Image was NOT pushed (CI smoke-test only)."
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 4 — Deployment notification & step summary
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy-notification:
+    name: "Deploy — Notification & Summary"
+    needs: [test-backend, lint-web, build-docker]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Write deployment summary
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s" ${{ github.sha }})
+          COMMIT_SHORT="${{ github.sha }}"
+          COMMIT_SHORT="${COMMIT_SHORT:0:7}"
+          COMMIT_AUTHOR="${{ github.actor }}"
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          NOW=$(date -u "+%Y-%m-%d %H:%M UTC")
+
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          # Al Fakhir School LMS — Deployment Pipeline
+
+          | Field         | Value |
+          |---------------|-------|
+          | **Status**    | ✅ All checks passed |
+          | **Commit**    | [\`${COMMIT_SHORT}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}) — ${COMMIT_MSG} |
+          | **Author**    | ${COMMIT_AUTHOR} |
+          | **Branch**    | \`${{ github.ref_name }}\` |
+          | **Timestamp** | ${NOW} |
+          | **Run**       | [View run](${RUN_URL}) |
+
+          ## Next steps
+          - Vercel auto-deploys **web-admin** and **web-guru** from this push.
+          - Backend server at **api.alfakhirschool.id** requires manual \`docker compose pull && docker compose up -d\` on the production host.
+          - Run \`node tests/api-test-suite.js\` from a host that can reach the API to verify.
+
+          EOF
+
+      - name: Send Slack notification (optional — skips if secret not set)
+        if: ${{ secrets.SLACK_WEBHOOK != '' }}
+        run: |
+          COMMIT_SHORT="${{ github.sha }}"
+          COMMIT_SHORT="${COMMIT_SHORT:0:7}"
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          curl -fsSL -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"text\": \"*Al Fakhir School LMS* CI passed :white_check_mark:\",
+              \"attachments\": [{
+                \"color\": \"#36a64f\",
+                \"fields\": [
+                  {\"title\": \"Branch\", \"value\": \"main\", \"short\": true},
+                  {\"title\": \"Commit\", \"value\": \"${COMMIT_SHORT}\", \"short\": true},
+                  {\"title\": \"Author\", \"value\": \"${{ github.actor }}\", \"short\": true},
+                  {\"title\": \"Run\", \"value\": \"<${RUN_URL}|View run>\", \"short\": true}
+                ]
+              }]
+            }" \
+            || echo "Slack notification failed — continuing"
+
+      - name: Echo fallback (no Slack secret)
+        if: ${{ secrets.SLACK_WEBHOOK == '' }}
+        run: |
+          echo "=============================================="
+          echo "  Al Fakhir School LMS CI/CD Pipeline PASSED "
+          echo "  Commit : ${{ github.sha }}"
+          echo "  Branch : ${{ github.ref_name }}"
+          echo "  Author : ${{ github.actor }}"
+          echo "  Run    : https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "  Vercel deploys web-admin and web-guru automatically."
+          echo "=============================================="

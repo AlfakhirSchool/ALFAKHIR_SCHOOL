@@ -1,0 +1,164 @@
+name: "Scheduled Backup Verification"
+
+on:
+  schedule:
+    # Every day at 10:00 UTC = 17:00 WIB (UTC+7)
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: "Enable verbose output"
+        required: false
+        default: "false"
+        type: boolean
+
+jobs:
+  verify-backup:
+    name: "Verify PostgreSQL Backup on Production"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/prod_key
+          chmod 600 ~/.ssh/prod_key
+          ssh-keyscan -H "${{ secrets.PROD_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Check recent backup files via SSH
+        id: backup_check
+        run: |
+          echo "Connecting to production host ${{ secrets.PROD_HOST }} ..."
+
+          # Fetch backup file listing
+          BACKUP_OUTPUT=$(ssh -i ~/.ssh/prod_key \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=15 \
+            "deploy@${{ secrets.PROD_HOST }}" \
+            "ls -la ~/alfakhir/backups/postgres/ 2>/dev/null | tail -10 || echo 'BACKUP_DIR_MISSING'" \
+          )
+
+          echo "Raw backup listing:"
+          echo "${BACKUP_OUTPUT}"
+          echo "backup_output<<EOF" >> $GITHUB_OUTPUT
+          echo "${BACKUP_OUTPUT}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Check if the backup directory is missing
+          if echo "${BACKUP_OUTPUT}" | grep -q "BACKUP_DIR_MISSING"; then
+            echo "backup_status=MISSING_DIR" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Extract the latest backup file modification time
+          LATEST_BACKUP_EPOCH=$(ssh -i ~/.ssh/prod_key \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=15 \
+            "deploy@${{ secrets.PROD_HOST }}" \
+            "find ~/alfakhir/backups/postgres/ -maxdepth 1 -type f -name '*.sql*' \
+              -printf '%T@\n' 2>/dev/null | sort -n | tail -1 || echo 0" \
+          )
+
+          echo "Latest backup epoch: ${LATEST_BACKUP_EPOCH}"
+          echo "latest_epoch=${LATEST_BACKUP_EPOCH}" >> $GITHUB_OUTPUT
+
+          NOW_EPOCH=$(date +%s)
+          # 25 hours in seconds = 90000
+          MAX_AGE=90000
+
+          if [ -z "${LATEST_BACKUP_EPOCH}" ] || [ "${LATEST_BACKUP_EPOCH}" = "0" ]; then
+            echo "backup_status=NO_BACKUP_FOUND" >> $GITHUB_OUTPUT
+          else
+            AGE_SECONDS=$(( NOW_EPOCH - ${LATEST_BACKUP_EPOCH%.*} ))
+            echo "Backup age: ${AGE_SECONDS} seconds ( $(( AGE_SECONDS / 3600 )) hours )"
+            echo "age_seconds=${AGE_SECONDS}" >> $GITHUB_OUTPUT
+
+            if [ "${AGE_SECONDS}" -gt "${MAX_AGE}" ]; then
+              echo "backup_status=STALE" >> $GITHUB_OUTPUT
+            else
+              echo "backup_status=OK" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/prod_key
+
+      - name: Write job summary
+        if: always()
+        run: |
+          BACKUP_STATUS="${{ steps.backup_check.outputs.backup_status }}"
+          AGE_SEC="${{ steps.backup_check.outputs.age_seconds }}"
+          AGE_HOURS=$(( ${AGE_SEC:-0} / 3600 ))
+          NOW=$(date -u "+%Y-%m-%d %H:%M UTC")
+
+          case "${BACKUP_STATUS}" in
+            OK)
+              STATUS_ICON="✅"
+              STATUS_TEXT="Backup is current (${AGE_HOURS}h old — within 25h threshold)"
+              ;;
+            STALE)
+              STATUS_ICON="🚨"
+              STATUS_TEXT="STALE backup detected! Last backup is ${AGE_HOURS} hours old (threshold: 25h)"
+              ;;
+            NO_BACKUP_FOUND)
+              STATUS_ICON="❌"
+              STATUS_TEXT="No backup files found in ~/alfakhir/backups/postgres/"
+              ;;
+            MISSING_DIR)
+              STATUS_ICON="❌"
+              STATUS_TEXT="Backup directory missing on production host"
+              ;;
+            *)
+              STATUS_ICON="⚠️"
+              STATUS_TEXT="Backup status unknown (check SSH connectivity)"
+              ;;
+          esac
+
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          # Backup Verification Report
+
+          | Field          | Value |
+          |----------------|-------|
+          | **Status**     | ${STATUS_ICON} ${STATUS_TEXT} |
+          | **Checked at** | ${NOW} |
+          | **Host**       | Production (secrets.PROD_HOST) |
+          | **Path**       | ~/alfakhir/backups/postgres/ |
+
+          ## Recent backup files
+
+          \`\`\`
+          ${{ steps.backup_check.outputs.backup_output }}
+          \`\`\`
+
+          ## Action required
+
+          EOF
+
+          if [ "${BACKUP_STATUS}" = "OK" ]; then
+            echo "No action required. Next check in ~24 hours." >> $GITHUB_STEP_SUMMARY
+          else
+            cat >> $GITHUB_STEP_SUMMARY << EOF
+          **Immediate action required:**
+          1. SSH into the production server.
+          2. Run \`~/alfakhir/scripts/backup.sh\` manually.
+          3. Verify backup completed: \`ls -lh ~/alfakhir/backups/postgres/ | tail -5\`
+          4. Re-run this workflow via workflow_dispatch to confirm.
+          EOF
+          fi
+
+      - name: Fail if backup is stale or missing
+        if: |
+          steps.backup_check.outputs.backup_status == 'STALE' ||
+          steps.backup_check.outputs.backup_status == 'NO_BACKUP_FOUND' ||
+          steps.backup_check.outputs.backup_status == 'MISSING_DIR'
+        run: |
+          echo "FATAL: Backup check failed — status: ${{ steps.backup_check.outputs.backup_status }}"
+          echo "See job summary for details."
+          exit 1
+
+# REQUIRED SECRETS:
+#   PROD_HOST    — Hostname or IP of the production server (e.g. vps.alfakhirschool.id)
+#   PROD_SSH_KEY — Private SSH key content (PEM) for the deploy user on production
+#
+# To add secrets: GitHub → Repository → Settings → Secrets and variables → Actions
