@@ -93,6 +93,10 @@ JurnalGuru.belongsTo(Kelas, { foreignKey: 'kelas_id', as: 'kelas' });
 MataPelajaran.hasMany(JurnalGuru, { foreignKey: 'mata_pelajaran_id', as: 'jurnal_list' });
 JurnalGuru.belongsTo(MataPelajaran, { foreignKey: 'mata_pelajaran_id', as: 'mata_pelajaran' });
 
+// Activity Log
+ActivityLog.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasMany(ActivityLog, { foreignKey: 'user_id', as: 'activity_logs' });
+
 export {
   User, Sekolah, Kelas, MataPelajaran,
   Siswa, Guru, OrangTua,

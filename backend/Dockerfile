@@ -1,23 +1,29 @@
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production
-
+RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
+
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 
-RUN mkdir -p uploads logs
+RUN mkdir -p uploads logs && chown -R nodejs:nodejs uploads logs
+
+USER nodejs
 
 EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD wget -qO- http://localhost:3001/api/health || exit 1
 
 CMD ["node", "dist/server.js"]

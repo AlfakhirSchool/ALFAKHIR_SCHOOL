@@ -1,0 +1,85 @@
+{
+  "name": "Al Fakhir - Payment Creation Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "payment-created",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-payment-created",
+      "name": "Webhook - Payment Created",
+      "type": "n8n-nodes-base.webhook",
+      "position": [240, 300],
+      "webhookId": "payment-created"
+    },
+    {
+      "parameters": {
+        "jsCode": "const payment = $input.item.json;\nreturn [\n  {\n    json: {\n      siswa_id: payment.siswa_id,\n      nama_siswa: payment.nama_siswa,\n      jenis: payment.jenis_pembayaran,\n      nominal: new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(payment.nominal),\n      kode_va: payment.kode_va,\n      jatuh_tempo: new Date(payment.tanggal_jatuh_tempo).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),\n      fcm_token: payment.fcm_token_ortu\n    }\n  }\n];"
+      },
+      "id": "format-payment",
+      "name": "Format Payment Data",
+      "type": "n8n-nodes-base.code",
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://fcm.googleapis.com/fcm/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "key={{ $env.FCM_SERVER_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "={{ $json.fcm_token }}"
+            },
+            {
+              "name": "notification",
+              "value": "={{ JSON.stringify({ title: 'Tagihan Baru - ' + $json.jenis, body: 'Tagihan ' + $json.nominal + ' untuk ' + $json.nama_siswa + '. Jatuh tempo: ' + $json.jatuh_tempo }) }}"
+            },
+            {
+              "name": "data",
+              "value": "={{ JSON.stringify({ type: 'payment_created', siswa_id: $json.siswa_id, kode_va: $json.kode_va }) }}"
+            }
+          ]
+        }
+      },
+      "id": "send-fcm",
+      "name": "Send FCM Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true, message: 'Notification sent' }) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Payment Created": {
+      "main": [[ { "node": "Format Payment Data", "type": "main", "index": 0 } ]]
+    },
+    "Format Payment Data": {
+      "main": [[ { "node": "Send FCM Notification", "type": "main", "index": 0 } ]]
+    },
+    "Send FCM Notification": {
+      "main": [[ { "node": "Respond", "type": "main", "index": 0 } ]]
+    }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" }
+}

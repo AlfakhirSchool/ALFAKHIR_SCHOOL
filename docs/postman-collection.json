@@ -1,0 +1,163 @@
+{
+  "info": {
+    "name": "Al Fakhir School LMS API",
+    "description": "REST API documentation for Al Fakhir School LMS - 55+ endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3001/api", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json();", "if (r.data?.accessToken) {", "  pm.collectionVariables.set('accessToken', r.data.accessToken);", "  pm.collectionVariables.set('refreshToken', r.data.refreshToken);", "}"] } }],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\"email\":\"admin@alfakhirschool.id\",\"password\":\"Admin@1234\"}", "options": { "raw": { "language": "json" } } }
+          }
+        },
+        { "name": "Refresh Token", "request": { "method": "POST", "url": "{{baseUrl}}/auth/refresh", "body": { "mode": "raw", "raw": "{\"refreshToken\":\"{{refreshToken}}\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Get Profile", "request": { "method": "GET", "url": "{{baseUrl}}/auth/profile" } },
+        { "name": "Change Password", "request": { "method": "PUT", "url": "{{baseUrl}}/auth/change-password", "body": { "mode": "raw", "raw": "{\"oldPassword\":\"Admin@1234\",\"newPassword\":\"NewPass@5678\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Logout", "request": { "method": "POST", "url": "{{baseUrl}}/auth/logout" } }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        { "name": "Admin Dashboard", "request": { "method": "GET", "url": "{{baseUrl}}/dashboard" } },
+        { "name": "Guru Dashboard", "request": { "method": "GET", "url": "{{baseUrl}}/dashboard/guru" } }
+      ]
+    },
+    {
+      "name": "Siswa",
+      "item": [
+        { "name": "List Siswa", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/siswa?page=1&limit=20&search=", "variable": [] } } },
+        { "name": "Get Siswa by ID", "request": { "method": "GET", "url": "{{baseUrl}}/siswa/:id" } },
+        { "name": "Create Siswa", "request": { "method": "POST", "url": "{{baseUrl}}/siswa", "body": { "mode": "raw", "raw": "{\"nisn\":\"0012345001\",\"nama\":\"Ahmad Rizky\",\"kelas_id\":\"uuid\",\"email\":\"siswa@alfakhirschool.id\",\"password\":\"Siswa@1234\",\"tanggal_lahir\":\"2007-03-15\",\"jenis_kelamin\":\"L\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Update Siswa", "request": { "method": "PUT", "url": "{{baseUrl}}/siswa/:id" } },
+        { "name": "Delete Siswa", "request": { "method": "DELETE", "url": "{{baseUrl}}/siswa/:id" } },
+        { "name": "Siswa Profile (self)", "request": { "method": "GET", "url": "{{baseUrl}}/siswa/profile" } }
+      ]
+    },
+    {
+      "name": "Guru",
+      "item": [
+        { "name": "List Guru", "request": { "method": "GET", "url": "{{baseUrl}}/guru" } },
+        { "name": "Get Guru by ID", "request": { "method": "GET", "url": "{{baseUrl}}/guru/:id" } },
+        { "name": "Create Guru", "request": { "method": "POST", "url": "{{baseUrl}}/guru", "body": { "mode": "raw", "raw": "{\"nip\":\"1985...\",\"nama\":\"Bpk. Rizki\",\"spesialisasi\":\"Matematika\",\"email\":\"guru@alfakhirschool.id\",\"password\":\"Guru@1234\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Update Guru", "request": { "method": "PUT", "url": "{{baseUrl}}/guru/:id" } },
+        { "name": "Delete Guru", "request": { "method": "DELETE", "url": "{{baseUrl}}/guru/:id" } }
+      ]
+    },
+    {
+      "name": "Kelas",
+      "item": [
+        { "name": "List Kelas", "request": { "method": "GET", "url": "{{baseUrl}}/kelas" } },
+        { "name": "Get Kelas + Siswa", "request": { "method": "GET", "url": "{{baseUrl}}/kelas/:id" } },
+        { "name": "Create Kelas", "request": { "method": "POST", "url": "{{baseUrl}}/kelas", "body": { "mode": "raw", "raw": "{\"nama\":\"X IPA 1\",\"jenjang\":\"SMA\",\"tingkat\":10,\"tahun_ajaran\":\"2025/2026\",\"sekolah_id\":\"uuid\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Update Kelas", "request": { "method": "PUT", "url": "{{baseUrl}}/kelas/:id" } },
+        { "name": "Delete Kelas", "request": { "method": "DELETE", "url": "{{baseUrl}}/kelas/:id" } }
+      ]
+    },
+    {
+      "name": "Mata Pelajaran",
+      "item": [
+        { "name": "List Mapel", "request": { "method": "GET", "url": "{{baseUrl}}/mata-pelajaran" } },
+        { "name": "Create Mapel", "request": { "method": "POST", "url": "{{baseUrl}}/mata-pelajaran", "body": { "mode": "raw", "raw": "{\"nama\":\"Matematika\",\"kode\":\"MTK\",\"jenjang\":\"SMA\",\"kkm\":75}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Update Mapel", "request": { "method": "PUT", "url": "{{baseUrl}}/mata-pelajaran/:id" } },
+        { "name": "Delete Mapel", "request": { "method": "DELETE", "url": "{{baseUrl}}/mata-pelajaran/:id" } }
+      ]
+    },
+    {
+      "name": "Jadwal",
+      "item": [
+        { "name": "List Jadwal", "request": { "method": "GET", "url": "{{baseUrl}}/jadwal-pelajaran" } },
+        { "name": "Jadwal by Kelas", "request": { "method": "GET", "url": "{{baseUrl}}/jadwal-pelajaran?kelas_id=uuid" } },
+        { "name": "Jadwal by Guru", "request": { "method": "GET", "url": "{{baseUrl}}/jadwal-pelajaran?guru_id=uuid" } },
+        { "name": "Create Jadwal", "request": { "method": "POST", "url": "{{baseUrl}}/jadwal-pelajaran", "body": { "mode": "raw", "raw": "{\"kelas_id\":\"uuid\",\"mata_pelajaran_id\":\"uuid\",\"guru_id\":\"uuid\",\"hari\":\"Senin\",\"jam_mulai\":\"07:00\",\"jam_selesai\":\"08:30\",\"ruangan\":\"Ruang A1\"}", "options": { "raw": { "language": "json" } } } } }
+      ]
+    },
+    {
+      "name": "Absensi",
+      "item": [
+        { "name": "List Absensi", "request": { "method": "GET", "url": "{{baseUrl}}/absensi?kelas_id=uuid&tanggal=2025-06-01" } },
+        { "name": "Buat Sesi QR", "request": { "method": "POST", "url": "{{baseUrl}}/absensi/sesi", "body": { "mode": "raw", "raw": "{\"jadwal_pelajaran_id\":\"uuid\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Scan QR Absensi", "request": { "method": "POST", "url": "{{baseUrl}}/absensi/scan", "body": { "mode": "raw", "raw": "{\"qr_token\":\"ABC123\",\"siswa_id\":\"uuid\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Absensi Manual", "request": { "method": "POST", "url": "{{baseUrl}}/absensi/manual", "body": { "mode": "raw", "raw": "{\"jadwal_pelajaran_id\":\"uuid\",\"absensi\":[{\"siswa_id\":\"uuid\",\"status\":\"hadir\"}]}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Tutup Sesi Absensi", "request": { "method": "PUT", "url": "{{baseUrl}}/absensi/sesi/:id/close" } },
+        { "name": "Rekap Absensi Siswa", "request": { "method": "GET", "url": "{{baseUrl}}/absensi/rekap/:siswa_id" } }
+      ]
+    },
+    {
+      "name": "Nilai",
+      "item": [
+        { "name": "List Nilai by Kelas", "request": { "method": "GET", "url": "{{baseUrl}}/nilai?kelas_id=uuid&semester=1&tahun_ajaran=2025/2026" } },
+        { "name": "Input Nilai (Batch)", "request": { "method": "POST", "url": "{{baseUrl}}/nilai/batch", "body": { "mode": "raw", "raw": "{\"kelas_id\":\"uuid\",\"mata_pelajaran_id\":\"uuid\",\"semester\":1,\"tahun_ajaran\":\"2025/2026\",\"nilai\":[{\"siswa_id\":\"uuid\",\"kuis\":80,\"tugas\":85,\"uts\":78,\"uas\":82}]}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Nilai Siswa (self)", "request": { "method": "GET", "url": "{{baseUrl}}/nilai/siswa/me" } },
+        { "name": "Update Nilai", "request": { "method": "PUT", "url": "{{baseUrl}}/nilai/:id" } }
+      ]
+    },
+    {
+      "name": "Pembayaran",
+      "item": [
+        { "name": "List Pembayaran", "request": { "method": "GET", "url": "{{baseUrl}}/pembayaran?status=belum&page=1" } },
+        { "name": "Pembayaran Siswa", "request": { "method": "GET", "url": "{{baseUrl}}/pembayaran/siswa/:siswa_id" } },
+        { "name": "Buat Tagihan", "request": { "method": "POST", "url": "{{baseUrl}}/pembayaran", "body": { "mode": "raw", "raw": "{\"siswa_id\":\"uuid\",\"jenis_pembayaran\":\"SPP\",\"nominal\":500000,\"bulan\":7,\"tahun\":2025,\"tanggal_jatuh_tempo\":\"2025-07-10\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Konfirmasi Pembayaran", "request": { "method": "PUT", "url": "{{baseUrl}}/pembayaran/:id/confirm", "body": { "mode": "raw", "raw": "{\"tanggal_bayar\":\"2025-06-12\",\"metode\":\"BCA Transfer\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Webhook BCA", "request": { "method": "POST", "url": "{{baseUrl}}/pembayaran/webhook/bca" } },
+        { "name": "Statistik Pembayaran", "request": { "method": "GET", "url": "{{baseUrl}}/pembayaran/stats" } }
+      ]
+    },
+    {
+      "name": "Jurnal Guru",
+      "item": [
+        { "name": "List Jurnal", "request": { "method": "GET", "url": "{{baseUrl}}/jurnal-guru" } },
+        { "name": "Create Jurnal", "request": { "method": "POST", "url": "{{baseUrl}}/jurnal-guru", "body": { "mode": "raw", "raw": "{\"kelas_id\":\"uuid\",\"mata_pelajaran_id\":\"uuid\",\"tanggal\":\"2025-06-12\",\"topik_pelajaran\":\"SPLTV\",\"metode_pembelajaran\":\"Ceramah\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Submit Jurnal", "request": { "method": "POST", "url": "{{baseUrl}}/jurnal-guru/:id/submit" } },
+        { "name": "Approve Jurnal", "request": { "method": "PUT", "url": "{{baseUrl}}/jurnal-guru/:id/approve" } },
+        { "name": "Jurnal per Siswa", "request": { "method": "GET", "url": "{{baseUrl}}/jurnal-guru/laporan/siswa/:siswa_id" } }
+      ]
+    },
+    {
+      "name": "Rapor",
+      "item": [
+        { "name": "Rapor by Kelas", "request": { "method": "GET", "url": "{{baseUrl}}/rapor/kelas/:kelas_id?semester=1&tahun_ajaran=2025/2026" } },
+        { "name": "Generate Rapor", "request": { "method": "POST", "url": "{{baseUrl}}/rapor/generate", "body": { "mode": "raw", "raw": "{\"kelas_id\":\"uuid\",\"semester\":1,\"tahun_ajaran\":\"2025/2026\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Rapor Siswa", "request": { "method": "GET", "url": "{{baseUrl}}/rapor/siswa/:siswa_id" } }
+      ]
+    },
+    {
+      "name": "Audit Log",
+      "item": [
+        { "name": "List Audit Log", "request": { "method": "GET", "url": "{{baseUrl}}/audit-log?page=1&limit=50" } },
+        { "name": "Audit Log Stats", "request": { "method": "GET", "url": "{{baseUrl}}/audit-log/stats" } },
+        { "name": "Filter by Table", "request": { "method": "GET", "url": "{{baseUrl}}/audit-log?table_name=siswa&action=UPDATE" } }
+      ]
+    },
+    {
+      "name": "Notifikasi",
+      "item": [
+        { "name": "Register FCM Token", "request": { "method": "POST", "url": "{{baseUrl}}/notifikasi/fcm-token", "body": { "mode": "raw", "raw": "{\"fcm_token\":\"fcm-token-here\",\"device_info\":\"Android\"}", "options": { "raw": { "language": "json" } } } } },
+        { "name": "Get Notifications", "request": { "method": "GET", "url": "{{baseUrl}}/notifikasi" } },
+        { "name": "Mark Read", "request": { "method": "PUT", "url": "{{baseUrl}}/notifikasi/:id/read" } }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        { "name": "Health Check", "request": { "method": "GET", "url": "{{baseUrl}}/health", "auth": { "type": "noauth" } } }
+      ]
+    }
+  ]
+}

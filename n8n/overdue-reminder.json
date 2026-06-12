@@ -1,0 +1,111 @@
+{
+  "name": "Al Fakhir - Overdue Payment Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 24 }]
+        }
+      },
+      "id": "cron-daily",
+      "name": "Daily at 08:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.BACKEND_URL }}/api/pembayaran?status=belum&overdue=true",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $env.BACKEND_INTERNAL_TOKEN }}" }
+          ]
+        }
+      },
+      "id": "get-overdue",
+      "name": "Get Overdue Payments",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\nconst payments = response.data || [];\nconst today = new Date();\n\nconst overdue = payments.filter(p => {\n  if (!p.tanggal_jatuh_tempo) return false;\n  return new Date(p.tanggal_jatuh_tempo) < today && p.status !== 'lunas';\n});\n\nconsole.log(`Found ${overdue.length} overdue payments`);\n\nreturn overdue.map(p => ({\n  json: {\n    pembayaran_id: p.id,\n    nama_siswa: p.siswa?.nama || 'Siswa',\n    jenis: p.jenis_pembayaran,\n    nominal: new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(p.nominal),\n    hari_terlambat: Math.floor((today - new Date(p.tanggal_jatuh_tempo)) / (1000 * 60 * 60 * 24)),\n    kode_va: p.kode_va,\n    fcm_token_ortu: p.siswa?.orang_tua_list?.[0]?.user?.fcm_token\n  }\n}));"
+      },
+      "id": "filter-overdue",
+      "name": "Filter & Format Overdue",
+      "type": "n8n-nodes-base.code",
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [
+            {
+              "leftValue": "={{ $json.fcm_token_ortu }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ]
+        }
+      },
+      "id": "if-has-token",
+      "name": "Has FCM Token?",
+      "type": "n8n-nodes-base.if",
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://fcm.googleapis.com/fcm/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "key={{ $env.FCM_SERVER_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"to\": \"{{ $json.fcm_token_ortu }}\",\n  \"notification\": {\n    \"title\": \"⚠️ Tagihan Terlambat {{ $json.hari_terlambat }} Hari\",\n    \"body\": \"Tagihan {{ $json.jenis }} {{ $json.nominal }} untuk {{ $json.nama_siswa }} sudah melewati jatuh tempo. Segera lakukan pembayaran.\"\n  },\n  \"data\": {\n    \"type\": \"payment_overdue\",\n    \"pembayaran_id\": \"{{ $json.pembayaran_id }}\",\n    \"kode_va\": \"{{ $json.kode_va }}\"\n  },\n  \"android\": {\n    \"priority\": \"high\",\n    \"notification\": { \"channel_id\": \"payment_reminder\" }\n  }\n}"
+      },
+      "id": "send-reminder",
+      "name": "Send Overdue Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = $input.all();\nconst sent = results.filter(r => r.json.statusCode === 200 || r.json.multicast_id);\nconsole.log(`Sent ${sent.length} reminders`);\nreturn [{ json: { sent: sent.length, total: results.length } }];"
+      },
+      "id": "log-results",
+      "name": "Log Results",
+      "type": "n8n-nodes-base.code",
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Daily at 08:00": {
+      "main": [[ { "node": "Get Overdue Payments", "type": "main", "index": 0 } ]]
+    },
+    "Get Overdue Payments": {
+      "main": [[ { "node": "Filter & Format Overdue", "type": "main", "index": 0 } ]]
+    },
+    "Filter & Format Overdue": {
+      "main": [[ { "node": "Has FCM Token?", "type": "main", "index": 0 } ]]
+    },
+    "Has FCM Token?": {
+      "main": [
+        [ { "node": "Send Overdue Reminder", "type": "main", "index": 0 } ],
+        []
+      ]
+    },
+    "Send Overdue Reminder": {
+      "main": [[ { "node": "Log Results", "type": "main", "index": 0 } ]]
+    }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["payment", "reminder", "scheduled"]
+}

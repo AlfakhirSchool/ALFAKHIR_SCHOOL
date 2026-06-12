@@ -1,0 +1,112 @@
+{
+  "name": "Al Fakhir - Payment Confirmation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "payment-confirmed",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-confirmed",
+      "name": "Webhook - Payment Confirmed",
+      "type": "n8n-nodes-base.webhook",
+      "position": [240, 300],
+      "webhookId": "payment-confirmed"
+    },
+    {
+      "parameters": {
+        "jsCode": "const payment = $input.item.json;\nconst tgl = new Date(payment.tanggal_bayar).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });\nconst nominal = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(payment.nominal);\nreturn [{\n  json: {\n    ...payment,\n    nominal_fmt: nominal,\n    tanggal_fmt: tgl,\n    message_siswa: `Pembayaran ${payment.jenis_pembayaran} sebesar ${nominal} telah dikonfirmasi. Terima kasih!`,\n    message_ortu: `Tagihan ${payment.jenis_pembayaran} ${nominal} untuk ${payment.nama_siswa} telah LUNAS per ${tgl}.`\n  }\n}];"
+      },
+      "id": "format-confirm",
+      "name": "Format Confirmation",
+      "type": "n8n-nodes-base.code",
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.fcm_token_siswa }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ]
+        }
+      },
+      "id": "if-has-siswa-token",
+      "name": "Has Siswa Token?",
+      "type": "n8n-nodes-base.if",
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://fcm.googleapis.com/fcm/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "key={{ $env.FCM_SERVER_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"to\": \"{{ $json.fcm_token_siswa }}\", \"notification\": { \"title\": \"Pembayaran Dikonfirmasi ✓\", \"body\": \"{{ $json.message_siswa }}\" }, \"data\": { \"type\": \"payment_confirmed\", \"pembayaran_id\": \"{{ $json.id }}\" } }"
+      },
+      "id": "notify-siswa",
+      "name": "Notify Siswa",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [900, 160]
+    },
+    {
+      "parameters": {
+        "url": "https://fcm.googleapis.com/fcm/send",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "key={{ $env.FCM_SERVER_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"to\": \"{{ $json.fcm_token_ortu }}\", \"notification\": { \"title\": \"Tagihan Lunas ✓\", \"body\": \"{{ $json.message_ortu }}\" }, \"data\": { \"type\": \"payment_confirmed\" } }"
+      },
+      "id": "notify-ortu",
+      "name": "Notify Orang Tua",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ success: true }) }}"
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Payment Confirmed": {
+      "main": [[ { "node": "Format Confirmation", "type": "main", "index": 0 } ]]
+    },
+    "Format Confirmation": {
+      "main": [[ { "node": "Has Siswa Token?", "type": "main", "index": 0 } ]]
+    },
+    "Has Siswa Token?": {
+      "main": [
+        [ { "node": "Notify Siswa", "type": "main", "index": 0 } ],
+        [ { "node": "Notify Orang Tua", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Notify Siswa": {
+      "main": [[ { "node": "Respond", "type": "main", "index": 0 } ]]
+    }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" }
+}

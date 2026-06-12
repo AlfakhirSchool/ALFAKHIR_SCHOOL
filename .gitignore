@@ -1,0 +1,58 @@
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+*.iml
+*.class
+*.jar
+*.aab
+*.apk
+google-services.json
+GoogleService-Info.plist
+android/key.properties
+*.jks
+
+# Uploads & logs
+uploads/
+logs/
+backups/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker volumes (data)
+postgres_data/
+redis_data/
+minio_data/
+n8n_data/
+
+# Keystores
+*.keystore
+*.p12

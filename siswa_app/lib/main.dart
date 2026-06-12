@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'core/theme.dart';
+import 'core/fcm.dart';
 import 'providers/auth_provider.dart';
 import 'providers/data_provider.dart';
 import 'screens/login_screen.dart';
@@ -8,6 +10,7 @@ import 'screens/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const AlFakhirSiswaApp());
 }
 
@@ -49,6 +52,9 @@ class _AppGateState extends State<AppGate> {
 
   Future<void> _init() async {
     await context.read<AuthProvider>().tryAutoLogin();
+    if (context.read<AuthProvider>().isLoggedIn) {
+      await FcmService.init();
+    }
     setState(() => _initialized = true);
   }
 
