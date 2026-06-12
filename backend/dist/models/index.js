@@ -92,3 +92,6 @@ Kelas_1.default.hasMany(JurnalGuru_1.default, { foreignKey: 'kelas_id', as: 'jur
 JurnalGuru_1.default.belongsTo(Kelas_1.default, { foreignKey: 'kelas_id', as: 'kelas' });
 MataPelajaran_1.default.hasMany(JurnalGuru_1.default, { foreignKey: 'mata_pelajaran_id', as: 'jurnal_list' });
 JurnalGuru_1.default.belongsTo(MataPelajaran_1.default, { foreignKey: 'mata_pelajaran_id', as: 'mata_pelajaran' });
+// Activity Log
+ActivityLog_1.default.belongsTo(User_1.default, { foreignKey: 'user_id', as: 'user' });
+User_1.default.hasMany(ActivityLog_1.default, { foreignKey: 'user_id', as: 'activity_logs' });
