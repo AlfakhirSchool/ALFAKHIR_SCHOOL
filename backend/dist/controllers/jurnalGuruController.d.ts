@@ -1,0 +1,11 @@
+import { Response } from 'express';
+import { AuthRequest } from '../middleware/auth';
+export declare const create: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const update: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const getById: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const getAll: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const remove: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const submit: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const review: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const getLaporanKelas: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const exportPdf: (req: AuthRequest, res: Response) => Promise<void>;

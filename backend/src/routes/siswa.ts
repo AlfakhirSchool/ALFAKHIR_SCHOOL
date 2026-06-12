@@ -1,0 +1,15 @@
+import { Router } from 'express';
+import * as siswaController from '../controllers/siswaController';
+import { authenticate, authorize } from '../middleware/auth';
+
+const router = Router();
+
+router.use(authenticate);
+
+router.get('/', authorize('admin', 'guru'), siswaController.getAll);
+router.post('/', authorize('admin'), siswaController.create);
+router.get('/:id', authorize('admin', 'guru', 'siswa', 'ortu'), siswaController.getById);
+router.put('/:id', authorize('admin'), siswaController.update);
+router.delete('/:id', authorize('admin'), siswaController.remove);
+
+export default router;

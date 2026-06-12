@@ -1,0 +1,10 @@
+import { Response } from 'express';
+import { AuthRequest } from '../middleware/auth';
+export declare const createQrSession: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const closeQrSession: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const scanQr: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const inputCode: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const manualInput: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const update: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const getLaporan: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const getSiswaDetail: (req: AuthRequest, res: Response) => Promise<void>;
