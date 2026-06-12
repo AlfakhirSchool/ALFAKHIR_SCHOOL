@@ -1,45 +1,18 @@
 version: '3.8'
 
-services:
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: alfakhir-backend
-    ports:
-      - "3001:3001"
-    environment:
-      NODE_ENV: production
-      PORT: 3001
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: alfakhir_school
-      DB_USER: alfakhir
-      DB_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      REDIS_URL: redis://redis:6379
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./uploads:/app/uploads
-      - ./logs:/app/logs
-    restart: unless-stopped
-    networks:
-      - alfakhir-network
+# Local development - gunakan port 5433/6380 karena 5432/6379 sudah dipakai natively
+# Backend connect ke container postgres/redis lewat docker network (internal)
 
+services:
   postgres:
     image: postgres:14-alpine
     container_name: alfakhir-postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_DB: alfakhir_school
       POSTGRES_USER: alfakhir
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-alfakhir_dev_2025}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/src/migrations/001_init_schema.sql:/docker-entrypoint-initdb.d/001_schema.sql
@@ -56,7 +29,7 @@ services:
     image: redis:7-alpine
     container_name: alfakhir-redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -68,17 +41,35 @@ services:
     networks:
       - alfakhir-network
 
-  nginx:
-    image: nginx:alpine
-    container_name: alfakhir-nginx
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: alfakhir-backend
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: alfakhir_school
+      DB_USER: alfakhir
+      DB_PASSWORD: ${DB_PASSWORD:-alfakhir_dev_2025}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-alfakhir-2025}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-alfakhir-2025}
+      REDIS_URL: redis://redis:6379
+      API_PREFIX: /api
+      FRONTEND_ADMIN_URL: http://localhost:3000
+      FRONTEND_GURU_URL: http://localhost:3002
     depends_on:
-      - backend
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
     restart: unless-stopped
     networks:
       - alfakhir-network
