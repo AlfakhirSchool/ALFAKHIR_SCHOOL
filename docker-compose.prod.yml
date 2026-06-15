@@ -121,6 +121,10 @@ services:
       DB_USER: ${POSTGRES_USER:-alfakhir}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_SSL: "false"
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
     depends_on:
       postgres:
         condition: service_healthy
