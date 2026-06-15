@@ -19,7 +19,7 @@ services:
     ports:
       - "9090:9090"
     networks:
-      - alfakhir_net
+      - alfakhir_alfakhir_net
 
   grafana:
     image: grafana/grafana:latest
@@ -39,7 +39,7 @@ services:
     depends_on:
       - prometheus
     networks:
-      - alfakhir_net
+      - alfakhir_alfakhir_net
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -57,7 +57,7 @@ services:
     ports:
       - "127.0.0.1:9100:9100"
     networks:
-      - alfakhir_net
+      - alfakhir_alfakhir_net
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
@@ -68,7 +68,7 @@ services:
     ports:
       - "127.0.0.1:9187:9187"
     networks:
-      - alfakhir_net
+      - alfakhir_alfakhir_net
 
   alertmanager:
     image: prom/alertmanager:latest
@@ -79,12 +79,12 @@ services:
     ports:
       - "127.0.0.1:9093:9093"
     networks:
-      - alfakhir_net
+      - alfakhir_alfakhir_net
 
 volumes:
   prometheus_data:
   grafana_data:
 
 networks:
-  alfakhir_net:
+  alfakhir_alfakhir_net:
     external: true
