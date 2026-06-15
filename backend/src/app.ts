@@ -20,6 +20,7 @@ import raporRoutes from './routes/rapor';
 import notifikasiRoutes from './routes/notifikasi';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import logger from './config/logger';
+import { testEmailConnection } from './utils/emailService';
 
 dotenv.config();
 
@@ -27,12 +28,21 @@ const app = express();
 
 app.use(helmet());
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_GURU_URL || 'http://localhost:3000',
-    process.env.FRONTEND_ADMIN_URL || 'http://localhost:3001',
-    'http://localhost:3000',
-    'http://localhost:3001',
-  ],
+  origin: (origin, callback) => {
+    const allowed = [
+      process.env.FRONTEND_ADMIN_URL,
+      process.env.FRONTEND_GURU_URL,
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'http://10.10.9.73:3000',
+      'http://10.10.9.73:3002',
+    ].filter(Boolean);
+    if (!origin || allowed.includes(origin) || (process.env.CLOUDFLARE_TUNNEL_TOKEN && origin?.endsWith('.trycloudflare.com'))) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
   credentials: true,
 }));
 app.use(morgan('combined', {
@@ -45,6 +55,11 @@ const PREFIX = process.env.API_PREFIX || '/api';
 
 app.get(`${PREFIX}/health`, (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), version: '1.0.0' });
+});
+
+app.get(`${PREFIX}/health/email`, async (_req, res) => {
+  const ok = await testEmailConnection();
+  res.json({ smtp: ok ? 'connected' : 'not configured', user: process.env.SMTP_USER || null });
 });
 
 app.use(`${PREFIX}/auth`, authRoutes);
