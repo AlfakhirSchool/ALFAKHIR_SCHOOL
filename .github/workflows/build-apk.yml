@@ -51,6 +51,10 @@ jobs:
         working-directory: siswa_app
         run: flutter pub get
 
+      - name: Generate app icon
+        working-directory: siswa_app
+        run: flutter pub run flutter_launcher_icons
+
       - name: Build release APK
         working-directory: siswa_app
         run: |
@@ -104,6 +108,10 @@ jobs:
       - name: Flutter pub get
         working-directory: orang_tua_app
         run: flutter pub get
+
+      - name: Generate app icon
+        working-directory: orang_tua_app
+        run: flutter pub run flutter_launcher_icons
 
       - name: Build release APK
         working-directory: orang_tua_app

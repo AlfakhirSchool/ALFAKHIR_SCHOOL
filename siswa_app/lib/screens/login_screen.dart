@@ -58,19 +58,12 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 children: [
                   // Logo
-                  Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Text('AF', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-                    ),
+                  Image.asset(
+                    'assets/images/logo_alfakhir.png',
+                    width: 260,
+                    fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 16),
-                  const Text('Al Fakhir School', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
                   const Text('Portal Siswa', style: TextStyle(color: Colors.white70, fontSize: 14)),
                   const SizedBox(height: 40),
 

@@ -66,8 +66,8 @@ class _AppGateState extends State<AppGate> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('AF', style: TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)),
-              SizedBox(height: 8),
+              Image(image: AssetImage('assets/images/app_icon.png'), width: 110),
+              SizedBox(height: 16),
               Text('Al Fakhir School', style: TextStyle(color: Colors.white70, fontSize: 16)),
               SizedBox(height: 32),
               CircularProgressIndicator(color: colorAccent),

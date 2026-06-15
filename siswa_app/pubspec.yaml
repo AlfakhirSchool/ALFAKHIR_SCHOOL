@@ -28,6 +28,15 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   hive_generator: ^2.0.1
   build_runner: ^2.4.8
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#1A2332"
+  adaptive_icon_foreground: "assets/images/app_icon.png"
 
 flutter:
   uses-material-design: true
@@ -36,6 +45,8 @@ flutter:
     - assets/images/logo_smp.png
     - assets/images/logo_sd.png
     - assets/images/logo_sma.png
+    - assets/images/app_icon.png
+    - assets/images/logo_alfakhir.png
   fonts:
     - family: Poppins
       fonts:
