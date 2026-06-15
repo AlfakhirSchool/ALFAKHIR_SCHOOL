@@ -1,8 +1,6 @@
-version: '3.9'
-
-# Jalankan: docker-compose -f monitoring/docker-compose.monitoring.yml up -d
-# Grafana: http://localhost:3100 (admin/alfakhir2025)
-# Prometheus: http://localhost:9090
+# Jalankan: docker compose -f monitoring/docker-compose.monitoring.yml up -d
+# Grafana:    http://10.10.9.73:3100  (admin / alfakhir2025)
+# Prometheus: http://10.10.9.73:9090
 
 services:
   prometheus:
@@ -19,7 +17,7 @@ services:
       - '--storage.tsdb.retention.time=30d'
       - '--web.enable-lifecycle'
     ports:
-      - "127.0.0.1:9090:9090"
+      - "9090:9090"
     networks:
       - alfakhir_net
 
@@ -31,13 +29,13 @@ services:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: alfakhir2025
       GF_USERS_ALLOW_SIGN_UP: "false"
-      GF_SERVER_ROOT_URL: https://monitoring.alfakhirschool.id
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s:%(http_port)s/"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
     ports:
-      - "127.0.0.1:3100:3000"
+      - "3100:3000"
     depends_on:
       - prometheus
     networks:
