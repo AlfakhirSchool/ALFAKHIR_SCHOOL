@@ -16,6 +16,10 @@ class DataProvider extends ChangeNotifier {
   List<Pembayaran> _pembayaranList = [];
   List<JurnalSummary> _jurnalList = [];
   bool _loading = false;
+  Map<String, dynamic>? _rapor;
+  bool _raporLoading = false;
+  List<Map<String, dynamic>> _notifikasiList = [];
+  bool _notifikasiLoading = false;
 
   List<Nilai> get nilaiList => _nilaiList;
   AbsensiSummary? get absensiSummary => _absensiSummary;
@@ -24,6 +28,11 @@ class DataProvider extends ChangeNotifier {
   List<Pembayaran> get pembayaranList => _pembayaranList;
   List<JurnalSummary> get jurnalList => _jurnalList;
   bool get loading => _loading;
+  Map<String, dynamic>? get rapor => _rapor;
+  bool get raporLoading => _raporLoading;
+  List<Map<String, dynamic>> get notifikasiList => _notifikasiList;
+  bool get notifikasiLoading => _notifikasiLoading;
+  int get unreadNotifikasi => _notifikasiList.where((n) => !(n['is_read'] as bool? ?? false)).length;
 
   Future<void> loadForChild(Child child) async {
     if (_loadedFor == child.id) return;
@@ -40,6 +49,50 @@ class DataProvider extends ChangeNotifier {
 
     _loading = false;
     notifyListeners();
+  }
+
+  Future<void> loadRapor(String siswaId, {String semester = '1', String tahunAjaran = '2025/2026'}) async {
+    _raporLoading = true;
+    notifyListeners();
+    try {
+      final res = await dio.get('/rapor/siswa/$siswaId',
+          queryParameters: {'semester': semester, 'tahun_ajaran': tahunAjaran});
+      _rapor = res.data['data'] as Map<String, dynamic>?;
+    } catch (_) { _rapor = null; }
+    _raporLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> loadNotifikasi() async {
+    _notifikasiLoading = true;
+    notifyListeners();
+    try {
+      final res = await dio.get('/notifikasi');
+      _notifikasiList = List<Map<String, dynamic>>.from(res.data['data'] as List? ?? []);
+    } catch (_) {}
+    _notifikasiLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> markNotifikasiRead(String id) async {
+    try {
+      await dio.put('/notifikasi/$id/read');
+      final idx = _notifikasiList.indexWhere((n) => n['id'] == id);
+      if (idx != -1) {
+        _notifikasiList[idx] = {..._notifikasiList[idx], 'is_read': true};
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  Future<void> markAllNotifikasiRead() async {
+    try {
+      for (final n in _notifikasiList.where((n) => !(n['is_read'] as bool? ?? false))) {
+        await dio.put('/notifikasi/${n['id']}/read');
+      }
+      _notifikasiList = _notifikasiList.map((n) => {...n, 'is_read': true}).toList();
+      notifyListeners();
+    } catch (_) {}
   }
 
   Future<void> refresh(Child child) async {

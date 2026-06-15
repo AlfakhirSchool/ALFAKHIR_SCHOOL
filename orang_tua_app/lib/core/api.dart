@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-const String baseUrl = 'http://10.0.2.2:3001/api';
+const String baseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://10.0.2.2:3001/api');
 const _storage = FlutterSecureStorage();
 
 Dio createDio() {

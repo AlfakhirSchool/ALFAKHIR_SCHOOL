@@ -51,11 +51,35 @@ info "CPU: $CPU_COUNT cores | RAM: ${RAM_GB}GB | Disk free: ${DISK_GB}GB"
 [[ $DISK_GB -lt 10 ]] && error "Disk free < 10GB. Butuh minimal 20GB."
 success "System requirements OK"
 
-# ─── Update & packages ────────────────────────────────────────────────────────
+# ─── Fix Proxmox enterprise repos (requires paid license) ────────────────────
 step "STEP 2: Install Dependencies"
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq
+
+# Disable Proxmox enterprise repos that require a subscription (return 401)
+if [[ -f /etc/apt/sources.list.d/pve-enterprise.list ]]; then
+  sed -i 's|^deb |#deb |g' /etc/apt/sources.list.d/pve-enterprise.list
+  warn "Disabled pve-enterprise.list (requires paid subscription)"
+fi
+if [[ -f /etc/apt/sources.list.d/ceph.list ]]; then
+  sed -i 's|^deb |#deb |g' /etc/apt/sources.list.d/ceph.list
+  warn "Disabled ceph enterprise repo"
+fi
+# Remove Cloudflare repo if it has issues
+if [[ -f /etc/apt/sources.list.d/cloudflare.list ]]; then
+  sed -i 's|^deb |#deb |g' /etc/apt/sources.list.d/cloudflare.list 2>/dev/null || true
+fi
+
+# Add Proxmox no-subscription repo for Debian 12 (bookworm) / 13 (trixie)
+DEBIAN_CODENAME=$(. /etc/os-release && echo "${VERSION_CODENAME:-bookworm}")
+if [[ ! -f /etc/apt/sources.list.d/pve-no-subscription.list ]]; then
+  info "Adding Proxmox no-subscription repo (${DEBIAN_CODENAME})..."
+  echo "deb http://download.proxmox.com/debian/pve ${DEBIAN_CODENAME} pve-no-subscription" \
+    > /etc/apt/sources.list.d/pve-no-subscription.list 2>/dev/null || true
+fi
+
+# Suppress apt errors from broken repos (continue anyway)
+apt-get update -qq 2>&1 | grep -v "^W:\|^N:\|Unauthorized\|Release'\|not signed\|cloudflare" || true
 apt-get install -y -qq \
     curl wget git openssl ca-certificates gnupg lsb-release \
     ufw fail2ban htop unzip bc jq certbot 2>/dev/null
