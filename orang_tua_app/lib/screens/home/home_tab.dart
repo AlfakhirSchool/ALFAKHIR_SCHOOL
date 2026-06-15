@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme.dart';
+import '../../core/school_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/data_provider.dart';
 import '../../widgets/child_selector.dart';
@@ -20,6 +21,8 @@ class HomeTab extends StatelessWidget {
     final pembayaran = data.pembayaranList;
     final nilaiList = data.nilaiList;
 
+    final school = SchoolTheme.fromLevel(child?.sekolahLevel);
+
     final tunggakan = pembayaran.where((p) => !p.isLunas).toList();
     final totalTunggakan = tunggakan.fold(0.0, (s, p) => s + p.sisa);
     final avgNilai = nilaiList.isEmpty ? null
@@ -28,7 +31,7 @@ class HomeTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorBg,
       body: RefreshIndicator(
-        color: colorPrimary,
+        color: school.primary,
         onRefresh: () async {
           if (child != null) await data.refresh(child);
         },
@@ -40,11 +43,11 @@ class HomeTab extends StatelessWidget {
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.pin,
                 background: Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [colorNavy, colorPrimary],
+                      colors: school.gradient,
                     ),
                   ),
                   child: SafeArea(
@@ -53,20 +56,20 @@ class HomeTab extends StatelessWidget {
                         const ChildSelectorBar(),
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.all(20),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
+                                // Logo sekolah anak
                                 Container(
-                                  width: 52, height: 52,
+                                  width: 56, height: 56,
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
+                                    color: Colors.white,
                                     shape: BoxShape.circle,
+                                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8)],
                                   ),
-                                  child: Center(
-                                    child: Text(child?.initial ?? 'S',
-                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22)),
-                                  ),
+                                  padding: const EdgeInsets.all(6),
+                                  child: Image.asset(school.logoAsset, fit: BoxFit.contain),
                                 ),
                                 const SizedBox(width: 14),
                                 Expanded(
@@ -74,10 +77,11 @@ class HomeTab extends StatelessWidget {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
+                                      Text(school.namaJenjang,
+                                          style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.w500)),
+                                      const SizedBox(height: 3),
                                       Text(child?.nama ?? 'Anak', style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
                                       Text(child?.kelasNama ?? '', style: const TextStyle(color: Colors.white70, fontSize: 13)),
-                                      if (child?.sekolahNama != null)
-                                        Text(child!.sekolahNama!, style: const TextStyle(color: Colors.white54, fontSize: 11)),
                                     ],
                                   ),
                                 ),
@@ -139,7 +143,7 @@ class HomeTab extends StatelessWidget {
                         label: 'Rata-rata Nilai',
                         value: avgNilai != null ? avgNilai.toStringAsFixed(1) : '-',
                         icon: Icons.school_outlined,
-                        color: colorPrimary,
+                        color: school.primary,
                       ),
                     ],
                   ),
@@ -155,7 +159,7 @@ class HomeTab extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             _AbsensiChip('Hadir', summary.hadir, colorSuccess),
-                            _AbsensiChip('Sakit', summary.sakit, const Color(0xFF3B7FD1)),
+                            _AbsensiChip('Sakit', summary.sakit, school.primary),
                             _AbsensiChip('Izin', summary.izin, colorWarning),
                             _AbsensiChip('Alfa', summary.alfa, colorError),
                           ],

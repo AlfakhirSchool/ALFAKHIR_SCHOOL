@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme.dart';
+import '../../core/school_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/data_provider.dart';
 
@@ -18,6 +19,8 @@ class HomeTab extends StatelessWidget {
     final pembayaran = data.pembayaranList;
     final jadwal = data.jadwalList;
 
+    final school = SchoolTheme.fromLevel(profile?.sekolahLevel);
+
     final today = DateFormat('EEEE', 'id_ID').format(DateTime.now());
     final jadwalHariIni = jadwal.where((j) => j.hari == today).toList()
       ..sort((a, b) => a.jamMulai.compareTo(b.jamMulai));
@@ -27,7 +30,7 @@ class HomeTab extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorBg,
       body: RefreshIndicator(
-        color: colorSMA,
+        color: school.primary,
         onRefresh: () async {
           if (profile != null) {
             await context.read<DataProvider>().loadDashboard();
@@ -37,49 +40,57 @@ class HomeTab extends StatelessWidget {
         },
         child: CustomScrollView(
           slivers: [
-            // App Bar
             SliverAppBar(
-              expandedHeight: 160,
+              expandedHeight: 180,
               pinned: true,
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [colorNavy, colorSMA],
+                      colors: school.gradient,
                     ),
                   ),
                   child: SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Halo, ${user?.nama?.split(' ').first ?? ''} 👋',
-                                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                                  Text(profile?.kelasNama ?? '', style: const TextStyle(color: Colors.white70, fontSize: 13)),
-                                ],
-                              ),
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(user?.nama?.substring(0, 1) ?? 'S',
-                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                                ),
-                              ),
-                            ],
+                          // Logo sekolah
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8)],
+                            ),
+                            padding: const EdgeInsets.all(6),
+                            child: Image.asset(school.logoAsset, fit: BoxFit.contain),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(school.namaJenjang,
+                                    style: TextStyle(
+                                        color: Colors.white.withOpacity(0.85),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: 0.3)),
+                                const SizedBox(height: 4),
+                                Text('Halo, ${user?.nama?.split(' ').first ?? ''} 👋',
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 2),
+                                Text(profile?.kelasNama ?? '',
+                                    style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -93,7 +104,6 @@ class HomeTab extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  // Quick Stats
                   Row(
                     children: [
                       _StatCard(
@@ -113,16 +123,14 @@ class HomeTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Jadwal Hari Ini
-                  _SectionTitle(title: 'Jadwal Hari Ini · $today'),
+                  _SectionTitle(title: 'Jadwal Hari Ini · $today', color: school.primary),
                   if (jadwalHariIni.isEmpty)
                     const _EmptyCard(message: 'Tidak ada jadwal hari ini')
                   else
-                    ...jadwalHariIni.map((j) => _JadwalCard(jadwal: j)),
+                    ...jadwalHariIni.map((j) => _JadwalCard(jadwal: j, color: school.primary)),
                   const SizedBox(height: 16),
 
-                  // Absensi Summary
-                  _SectionTitle(title: 'Rekap Absensi Bulan Ini'),
+                  _SectionTitle(title: 'Rekap Absensi Bulan Ini', color: school.primary),
                   if (summary != null)
                     Card(
                       child: Padding(
@@ -131,7 +139,7 @@ class HomeTab extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             _AbsensiChip(label: 'Hadir', count: summary.hadir, color: colorSuccess),
-                            _AbsensiChip(label: 'Sakit', count: summary.sakit, color: colorSMA),
+                            _AbsensiChip(label: 'Sakit', count: summary.sakit, color: school.primary),
                             _AbsensiChip(label: 'Izin', count: summary.izin, color: colorWarning),
                             _AbsensiChip(label: 'Alfa', count: summary.alfa, color: colorError),
                           ],
@@ -153,8 +161,7 @@ class HomeTab extends StatelessWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  final String label;
-  final String value;
+  final String label, value;
   final IconData icon;
   final Color color;
 
@@ -194,8 +201,9 @@ class _StatCard extends StatelessWidget {
 
 class _JadwalCard extends StatelessWidget {
   final dynamic jadwal;
+  final Color color;
 
-  const _JadwalCard({required this.jadwal});
+  const _JadwalCard({required this.jadwal, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -205,11 +213,11 @@ class _JadwalCard extends StatelessWidget {
         leading: Container(
           width: 48,
           height: 48,
-          decoration: BoxDecoration(color: colorSMA.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(jadwal.jamMulai, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colorSMA)),
+              Text(jadwal.jamMulai, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
               Text(jadwal.jamSelesai, style: const TextStyle(fontSize: 9, color: Colors.grey)),
             ],
           ),
@@ -242,14 +250,21 @@ class _AbsensiChip extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   final String title;
+  final Color color;
 
-  const _SectionTitle({required this.title});
+  const _SectionTitle({required this.title, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: colorNavy)),
+      child: Row(
+        children: [
+          Container(width: 4, height: 16, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(width: 8),
+          Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: color)),
+        ],
+      ),
     );
   }
 }

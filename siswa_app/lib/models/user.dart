@@ -42,6 +42,7 @@ class SiswaProfile {
   final String? kelasNama;
   final String? kelasId;
   final String? sekolahNama;
+  final String? sekolahLevel;
   final User user;
 
   const SiswaProfile({
@@ -53,6 +54,7 @@ class SiswaProfile {
     this.kelasNama,
     this.kelasId,
     this.sekolahNama,
+    this.sekolahLevel,
   });
 
   factory SiswaProfile.fromJson(Map<String, dynamic> json) => SiswaProfile(
@@ -64,5 +66,6 @@ class SiswaProfile {
         kelasNama: json['kelas']?['nama'],
         kelasId: json['kelas_id'],
         sekolahNama: json['kelas']?['sekolah']?['nama'],
+        sekolahLevel: json['kelas']?['sekolah']?['level'],
       );
 }

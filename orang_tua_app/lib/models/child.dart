@@ -4,6 +4,7 @@ class Child {
   final String? nisn;
   final String? kelasNama;
   final String? sekolahNama;
+  final String? sekolahLevel;
   final String? profilePic;
 
   const Child({
@@ -12,6 +13,7 @@ class Child {
     this.nisn,
     this.kelasNama,
     this.sekolahNama,
+    this.sekolahLevel,
     this.profilePic,
   });
 
@@ -21,6 +23,7 @@ class Child {
         nisn: json['nisn'],
         kelasNama: json['kelas']?['nama'],
         sekolahNama: json['kelas']?['sekolah']?['nama'],
+        sekolahLevel: json['kelas']?['sekolah']?['level'],
         profilePic: json['user']?['profile_pic'],
       );
 
