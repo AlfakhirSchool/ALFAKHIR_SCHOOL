@@ -117,6 +117,12 @@ services:
       FRONTEND_GURU_URL: ${FRONTEND_GURU_URL}
       N8N_WEBHOOK_URL: http://n8n:5678/webhook
       FCM_SERVER_KEY: ${FCM_SERVER_KEY}
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${POSTGRES_DB:-alfakhir_school}
+      DB_USER: ${POSTGRES_USER:-alfakhir}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_SSL: "false"
     depends_on:
       postgres:
         condition: service_healthy
@@ -154,6 +160,36 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - alfakhir_net
+
+  web-admin:
+    build:
+      context: ./web-admin
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://10.10.9.73/api}
+    container_name: alfakhir_web_admin
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - alfakhir_net
+
+  web-guru:
+    build:
+      context: ./web-guru
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://10.10.9.73/api}
+    container_name: alfakhir_web_guru
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
     depends_on:
       - backend
     networks:
