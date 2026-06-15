@@ -26,6 +26,10 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Set build number
+        working-directory: siswa_app
+        run: sed -i "s/^version: .*/version: 1.0.0+${{ github.run_number }}/" pubspec.yaml
+
       - name: Create Android project structure
         working-directory: siswa_app
         run: flutter create . --platforms android
@@ -75,6 +79,10 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Set build number
+        working-directory: orang_tua_app
+        run: sed -i "s/^version: .*/version: 1.0.0+${{ github.run_number }}/" pubspec.yaml
+
       - name: Create Android project structure
         working-directory: orang_tua_app
         run: flutter create . --platforms android
@@ -107,3 +115,43 @@ jobs:
           name: alfakhir-orang-tua-apk
           path: orang_tua_app/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-siswa, build-orang-tua]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Siswa APK
+        uses: actions/download-artifact@v4
+        with:
+          name: alfakhir-siswa-apk
+          path: ./apks/siswa
+
+      - name: Download Orang Tua APK
+        uses: actions/download-artifact@v4
+        with:
+          name: alfakhir-orang-tua-apk
+          path: ./apks/ortu
+
+      - name: Rename APKs
+        run: |
+          mv ./apks/siswa/app-release.apk ./alfakhir-siswa.apk
+          mv ./apks/ortu/app-release.apk ./alfakhir-ortu.apk
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: "Release v${{ github.run_number }}"
+          body: |
+            Build otomatis dari GitHub Actions #${{ github.run_number }}
+
+            **Download APK:**
+            - 📱 [App Siswa](https://github.com/AlfakhirSchool/ALFAKHIR_SCHOOL/releases/download/v${{ github.run_number }}/alfakhir-siswa.apk)
+            - 👪 [App Orang Tua](https://github.com/AlfakhirSchool/ALFAKHIR_SCHOOL/releases/download/v${{ github.run_number }}/alfakhir-ortu.apk)
+          files: |
+            ./alfakhir-siswa.apk
+            ./alfakhir-ortu.apk
+          make_latest: true

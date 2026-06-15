@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme.dart';
+import 'core/updater.dart';
 import 'providers/auth_provider.dart';
 import 'providers/data_provider.dart';
 import 'screens/login_screen.dart';
@@ -50,6 +51,10 @@ class _AppGateState extends State<AppGate> {
   Future<void> _init() async {
     await context.read<AuthProvider>().tryAutoLogin();
     setState(() => _initialized = true);
+    // Cek update setelah splash selesai, jangan blokir startup
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) AppUpdater.checkForUpdate(context);
+    });
   }
 
   @override
