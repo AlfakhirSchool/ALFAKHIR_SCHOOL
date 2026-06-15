@@ -12,14 +12,14 @@ INSERT INTO sekolah (id, nama, level) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Users (bcrypt hash of 'Admin@1234')
-INSERT INTO users (id, email, password_hash, nama, role, is_active) VALUES
-  ('516ff1b2-2fff-e6d2-789a-f36635906fa5', 'admin@alfakhirschool.id',  '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Administrator',              'admin', true),
-  ('cf79c7cb-24c1-a0ce-4590-1bdfbd63c235', 'guru1@alfakhirschool.id',  '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Bpk. Rizki Kurniawan, S.Pd', 'guru',  true),
-  ('7ed03097-0f86-a66d-9afc-e9fc2e0364a1', 'guru2@alfakhirschool.id',  '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Ibu Sari Dewi, S.Pd',        'guru',  true),
-  ('7d1b59a8-046a-7f2e-a0f5-959ee417678a', 'siswa1@alfakhirschool.id', '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Ahmad Rizky Pratama',        'siswa', true),
-  ('b17d1c6c-d812-f1e8-02f4-be7dc3b527e7', 'siswa2@alfakhirschool.id', '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Siti Nurhaliza',             'siswa', true),
-  ('088e3f54-9b8e-fc63-7dfc-0d4f7a9ecb5f', 'ortu1@alfakhirschool.id',  '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Bpk. Pratama',               'ortu',  true),
-  ('ba3c24e4-a93b-37f9-2abd-3ecb069c6ec9', 'ortu2@alfakhirschool.id',  '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Ibu Nurhaliza',              'ortu',  true)
+INSERT INTO users (id, email, password_hash, nama, role, is_active, created_at, updated_at) VALUES
+  ('516ff1b2-2fff-e6d2-789a-f36635906fa5', 'admin@alfakhirschool.id',  '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Administrator',              'admin', true, NOW(), NOW()),
+  ('cf79c7cb-24c1-a0ce-4590-1bdfbd63c235', 'guru1@alfakhirschool.id',  '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Bpk. Rizki Kurniawan, S.Pd', 'guru',  true, NOW(), NOW()),
+  ('7ed03097-0f86-a66d-9afc-e9fc2e0364a1', 'guru2@alfakhirschool.id',  '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Ibu Sari Dewi, S.Pd',        'guru',  true, NOW(), NOW()),
+  ('7d1b59a8-046a-7f2e-a0f5-959ee417678a', 'siswa1@alfakhirschool.id', '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Ahmad Rizky Pratama',        'siswa', true, NOW(), NOW()),
+  ('b17d1c6c-d812-f1e8-02f4-be7dc3b527e7', 'siswa2@alfakhirschool.id', '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Siti Nurhaliza',             'siswa', true, NOW(), NOW()),
+  ('088e3f54-9b8e-fc63-7dfc-0d4f7a9ecb5f', 'ortu1@alfakhirschool.id',  '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Bpk. Pratama',               'ortu',  true, NOW(), NOW()),
+  ('ba3c24e4-a93b-37f9-2abd-3ecb069c6ec9', 'ortu2@alfakhirschool.id',  '$2b$12$UOY92/I/nDxp1Kxn3SO7/.xB3Qu7HRnqxJchP3D9.Twbx/xJSzsce', 'Ibu Nurhaliza',              'ortu',  true, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- Guru
@@ -67,10 +67,10 @@ INSERT INTO jadwal_pelajaran (id, kelas_id, mata_pelajaran_id, guru_id, hari, ja
 ON CONFLICT (id) DO NOTHING;
 
 -- Pembayaran (status: belum_bayar/sebagian/lunas)
-INSERT INTO pembayaran (id, siswa_id, tahun_ajaran, jenis_biaya, nominal_biaya, status, virtual_account, va_bank, tanggal_jatuh_tempo) VALUES
-  ('4cab002c-bb96-a3f7-4e82-f466d1475c0e', '013f0f67-779f-3b16-86c6-04db150d12ea', '2025/2026', 'SPP Semester 1', 500000, 'lunas',      '8800001001', 'bca', '2025-06-10'),
-  ('95067cd7-6f0c-e61d-973a-ec7cfcea3645', '013f0f67-779f-3b16-86c6-04db150d12ea', '2025/2026', 'SPP Semester 2', 500000, 'belum_bayar','8800001002', 'bca', '2025-12-10'),
-  ('1599b074-65db-14f8-d5dd-6fde7c10ff72', '331633a2-46a4-e1ce-efc9-539a71fcd124', '2025/2026', 'SPP Semester 1', 500000, 'belum_bayar','8800002001', 'bca', '2025-06-10')
+INSERT INTO pembayaran (id, siswa_id, tahun_ajaran, jenis_biaya, nominal_biaya, status, virtual_account, va_bank, tanggal_jatuh_tempo, created_at, updated_at) VALUES
+  ('4cab002c-bb96-a3f7-4e82-f466d1475c0e', '013f0f67-779f-3b16-86c6-04db150d12ea', '2025/2026', 'SPP Semester 1', 500000, 'lunas',      '8800001001', 'bca', '2025-06-10', NOW(), NOW()),
+  ('95067cd7-6f0c-e61d-973a-ec7cfcea3645', '013f0f67-779f-3b16-86c6-04db150d12ea', '2025/2026', 'SPP Semester 2', 500000, 'belum_bayar','8800001002', 'bca', '2025-12-10', NOW(), NOW()),
+  ('1599b074-65db-14f8-d5dd-6fde7c10ff72', '331633a2-46a4-e1ce-efc9-539a71fcd124', '2025/2026', 'SPP Semester 1', 500000, 'belum_bayar','8800002001', 'bca', '2025-06-10', NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- Nilai (kuis*10% + tugas*15% + uts*25% + uas*50%)
