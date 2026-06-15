@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 const Color colorPrimary = Color(0xFF1B8B87);
+const Color colorSMA = Color(0xFF3B7FD1);
+const Color colorSD = Color(0xFFFF8C42);
 const Color colorAccent = Color(0xFFFF8C42);
 const Color colorNavy = Color(0xFF1A2332);
 const Color colorSuccess = Color(0xFF10B981);

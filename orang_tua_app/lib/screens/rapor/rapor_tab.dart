@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/data_provider.dart';
-import '../../widgets/child_selector.dart';
+import '../../widgets/child_selector.dart' show ChildSelectorBar;
 
 class RaporTab extends StatefulWidget {
   const RaporTab({super.key});
@@ -26,7 +26,7 @@ class _RaporTabState extends State<RaporTab> {
     final auth = context.read<AuthProvider>();
     if (auth.selectedChild != null) {
       context.read<DataProvider>().loadRapor(
-        auth.selectedChild!,
+        auth.selectedChild!.id,
         semester: _semester,
         tahunAjaran: _tahunAjaran,
       );
@@ -46,7 +46,7 @@ class _RaporTabState extends State<RaporTab> {
       ),
       body: Column(
         children: [
-          ChildSelector(onChanged: (_) => _load()),
+          const ChildSelectorBar(),
 
           // Filter semester
           Container(

@@ -23,13 +23,19 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
           channel: stable
           cache: true
 
       - name: Create Android project structure
         working-directory: siswa_app
         run: flutter create . --platforms android
+
+      - name: Fix Kotlin version
+        working-directory: siswa_app
+        run: |
+          sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "1.9.22"/' android/settings.gradle || true
+          sed -i "s/id 'org.jetbrains.kotlin.android' version '[^']*'/id 'org.jetbrains.kotlin.android' version '1.9.22'/" android/settings.gradle || true
+          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.22"/' android/build.gradle || true
 
       - name: Create asset dirs
         working-directory: siswa_app
@@ -66,13 +72,19 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
           channel: stable
           cache: true
 
       - name: Create Android project structure
         working-directory: orang_tua_app
         run: flutter create . --platforms android
+
+      - name: Fix Kotlin version
+        working-directory: orang_tua_app
+        run: |
+          sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "1.9.22"/' android/settings.gradle || true
+          sed -i "s/id 'org.jetbrains.kotlin.android' version '[^']*'/id 'org.jetbrains.kotlin.android' version '1.9.22'/" android/settings.gradle || true
+          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.22"/' android/build.gradle || true
 
       - name: Create asset dirs
         working-directory: orang_tua_app
