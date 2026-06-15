@@ -76,6 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             TextFormField(
                               controller: _emailCtrl,
                               keyboardType: TextInputType.emailAddress,
+                              style: const TextStyle(color: Colors.black87),
                               decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email_outlined)),
                               validator: (v) => v == null || !v.contains('@') ? 'Email tidak valid' : null,
                             ),
@@ -84,6 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             TextFormField(
                               controller: _passwordCtrl,
                               obscureText: _obscure,
+                              style: const TextStyle(color: Colors.black87),
                               decoration: InputDecoration(
                                 labelText: 'Password',
                                 prefixIcon: const Icon(Icons.lock_outline),

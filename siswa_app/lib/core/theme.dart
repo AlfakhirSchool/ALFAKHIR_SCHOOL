@@ -54,6 +54,10 @@ ThemeData appTheme = ThemeData(
     filled: true,
     fillColor: Colors.white,
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    labelStyle: const TextStyle(color: Colors.black54),
+    hintStyle: const TextStyle(color: Colors.black38),
+    prefixIconColor: Colors.black54,
+    suffixIconColor: Colors.black54,
   ),
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
     selectedItemColor: colorSMA,
