@@ -66,6 +66,13 @@ class AuthProvider extends ChangeNotifier {
       await loadProfile();
       return true;
     } catch (e) {
+      debugPrint('LOGIN ERROR type: ${e.runtimeType}');
+      debugPrint('LOGIN ERROR: $e');
+      try {
+        final de = e as dynamic;
+        debugPrint('LOGIN response: ${de.response?.statusCode} ${de.response?.data}');
+        debugPrint('LOGIN message: ${de.message}');
+      } catch (_) {}
       _error = _parseError(e);
       _isLoading = false;
       notifyListeners();
