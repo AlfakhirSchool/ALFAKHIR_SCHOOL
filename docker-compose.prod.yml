@@ -72,16 +72,18 @@ services:
       N8N_BASIC_AUTH_ACTIVE: "true"
       N8N_BASIC_AUTH_USER: ${N8N_USER:-admin}
       N8N_BASIC_AUTH_PASSWORD: ${N8N_PASSWORD}
-      N8N_HOST: ${N8N_HOST:-n8n.alfakhirschool.id}
+      N8N_HOST: ${N8N_HOST:-n8n.smpialfakhir.sch.id}
       N8N_PORT: 5678
       N8N_PROTOCOL: https
-      WEBHOOK_URL: https://${N8N_HOST:-n8n.alfakhirschool.id}/
+      WEBHOOK_URL: https://${N8N_HOST:-n8n.smpialfakhir.sch.id}/
       DB_TYPE: postgresdb
       DB_POSTGRESDB_HOST: postgres
       DB_POSTGRESDB_PORT: 5432
       DB_POSTGRESDB_DATABASE: ${N8N_DB:-n8n}
       DB_POSTGRESDB_USER: ${POSTGRES_USER:-alfakhir}
       DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      BACKEND_URL: http://backend:3001
+      FCM_SERVER_KEY: ${FCM_SERVER_KEY}
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n/workflows:/home/node/.n8n/workflows:ro
