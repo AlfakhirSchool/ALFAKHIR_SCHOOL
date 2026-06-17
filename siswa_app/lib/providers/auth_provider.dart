@@ -18,7 +18,8 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoggedIn => _user != null;
 
   Future<void> tryAutoLogin() async {
-    final token = await AuthStorage.getAccessToken();
+    String? token;
+    try { token = await AuthStorage.getAccessToken(); } catch (_) {}
     if (token == null) return;
 
     final prefs = await SharedPreferences.getInstance();

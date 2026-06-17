@@ -41,7 +41,8 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> tryAutoLogin() async {
-    final token = await AuthStorage.getAccessToken();
+    String? token;
+    try { token = await AuthStorage.getAccessToken(); } catch (_) {}
     if (token == null) return;
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString('ortu_user');
