@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
-import { User, Guru, Siswa, OrangTua } from '../models';
+import { User, Guru, Siswa, OrangTua, Kelas, Sekolah } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 
@@ -103,7 +103,24 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
   if (!user) {
     throw createError('User tidak ditemukan', 404);
   }
-  res.json({ success: true, data: user });
+
+  let profileData: Record<string, unknown> = user.toJSON();
+
+  if (user.role === 'siswa') {
+    const siswa = await Siswa.findOne({
+      where: { user_id: user.id },
+      include: [{ model: Kelas, as: 'kelas', include: [{ model: Sekolah, as: 'sekolah' }] }],
+    });
+    if (siswa) profileData = { ...profileData, siswa: siswa.toJSON() };
+  } else if (user.role === 'guru') {
+    const guru = await Guru.findOne({ where: { user_id: user.id } });
+    if (guru) profileData = { ...profileData, guru: guru.toJSON() };
+  } else if (user.role === 'ortu') {
+    const ortu = await OrangTua.findOne({ where: { user_id: user.id } });
+    if (ortu) profileData = { ...profileData, ortu: ortu.toJSON() };
+  }
+
+  res.json({ success: true, data: profileData });
 };
 
 export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
