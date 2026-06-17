@@ -73,7 +73,10 @@ class AuthProvider extends ChangeNotifier {
       await _loadChildren();
       return true;
     } catch (e) {
-      _error = _parseError(e); _isLoading = false; notifyListeners(); return false;
+      _error = _parseError(e);
+      _isLoading = false;
+      notifyListeners();
+      return false;
     }
   }
 

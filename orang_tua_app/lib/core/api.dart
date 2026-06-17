@@ -1,8 +1,5 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'dns_helper.dart';
 
 const String baseUrl = String.fromEnvironment('API_URL', defaultValue: 'http://10.0.2.2:3001/api');
 const _storage = FlutterSecureStorage(
@@ -12,23 +9,6 @@ const _storage = FlutterSecureStorage(
   ),
 );
 
-HttpClient _createHttpClient() {
-  final client = HttpClient();
-  client.connectionFactory = (uri, proxyHost, proxyPort) async {
-    final port = uri.port == 0 ? (uri.scheme == 'https' ? 443 : 80) : uri.port;
-    String ip;
-    try {
-      final addresses = await InternetAddress.lookup(uri.host)
-          .timeout(const Duration(seconds: 4));
-      ip = addresses.first.address;
-    } catch (_) {
-      ip = await DnsHelper.resolveViaDoH(uri.host);
-    }
-    return Socket.startConnect(ip, port);
-  };
-  return client;
-}
-
 Dio createDio() {
   final dio = Dio(BaseOptions(
     baseUrl: baseUrl,
@@ -36,8 +16,6 @@ Dio createDio() {
     receiveTimeout: const Duration(seconds: 30),
     headers: {'Content-Type': 'application/json'},
   ));
-
-  dio.httpClientAdapter = IOHttpClientAdapter(createHttpClient: _createHttpClient);
 
   dio.interceptors.add(InterceptorsWrapper(
     onRequest: (options, handler) async {
