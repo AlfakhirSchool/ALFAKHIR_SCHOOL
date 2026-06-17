@@ -104,20 +104,21 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
     throw createError('User tidak ditemukan', 404);
   }
 
-  let profileData: Record<string, unknown> = user.toJSON();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const profileData: any = { ...user.toJSON() };
 
   if (user.role === 'siswa') {
     const siswa = await Siswa.findOne({
       where: { user_id: user.id },
       include: [{ model: Kelas, as: 'kelas', include: [{ model: Sekolah, as: 'sekolah' }] }],
     });
-    if (siswa) profileData = { ...profileData, siswa: siswa.toJSON() };
+    if (siswa) profileData.siswa = siswa.toJSON();
   } else if (user.role === 'guru') {
     const guru = await Guru.findOne({ where: { user_id: user.id } });
-    if (guru) profileData = { ...profileData, guru: guru.toJSON() };
+    if (guru) profileData.guru = guru.toJSON();
   } else if (user.role === 'ortu') {
     const ortu = await OrangTua.findOne({ where: { user_id: user.id } });
-    if (ortu) profileData = { ...profileData, ortu: ortu.toJSON() };
+    if (ortu) profileData.ortu = ortu.toJSON();
   }
 
   res.json({ success: true, data: profileData });
