@@ -117,8 +117,18 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
     const guru = await Guru.findOne({ where: { user_id: user.id } });
     if (guru) profileData.guru = guru.toJSON();
   } else if (user.role === 'ortu') {
-    const ortu = await OrangTua.findOne({ where: { user_id: user.id } });
-    if (ortu) profileData.ortu = ortu.toJSON();
+    const ortuList = await OrangTua.findAll({
+      where: { user_id: user.id },
+      include: [{
+        model: Siswa,
+        as: 'siswa',
+        include: [
+          { model: Kelas, as: 'kelas', include: [{ model: Sekolah, as: 'sekolah' }] },
+          { model: User, as: 'user', attributes: ['nama', 'profile_pic'] },
+        ],
+      }],
+    });
+    profileData.ortu = ortuList.map((o) => o.toJSON());
   }
 
   res.json({ success: true, data: profileData });

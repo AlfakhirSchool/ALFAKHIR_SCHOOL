@@ -81,11 +81,12 @@ class AuthProvider extends ChangeNotifier {
     try {
       final res = await dio.get('/auth/profile');
       final data = res.data['data'];
-      final ortuData = data['ortu'];
-      if (ortuData != null && ortuData['children'] != null) {
-        _children = (ortuData['children'] as List).map((c) => Child.fromJson(c)).toList();
-      } else if (data['siswa'] != null) {
-        _children = [Child.fromJson(data['siswa'])];
+      final ortuList = data['ortu'] as List?;
+      if (ortuList != null) {
+        _children = ortuList
+            .where((o) => o['siswa'] != null)
+            .map((o) => Child.fromJson(o['siswa'] as Map<String, dynamic>))
+            .toList();
       }
       if (_children.isNotEmpty) _selectedChild = _children.first;
       notifyListeners();
