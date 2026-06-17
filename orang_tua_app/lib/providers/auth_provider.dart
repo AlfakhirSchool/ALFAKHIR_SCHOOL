@@ -57,7 +57,7 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true; _error = null; notifyListeners();
 
     try {
-      final res = await dio.post('/auth/login', data: {'email': email, 'password': password});
+      final res = await dio.post('/auth/login', data: {'nis': email, 'password': password, 'role': 'ortu'});
       final data = res.data['data'];
       final user = OrangTuaUser.fromJson(data['user']);
 

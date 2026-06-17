@@ -38,8 +38,9 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final res = await dio.post('/auth/login', data: {
-        'email': email,
+        'nis': email,
         'password': password,
+        'role': 'siswa',
       });
       final data = res.data['data'];
       final user = User.fromJson(data['user']);

@@ -23,22 +23,49 @@ const generateTokens = (user: { id: string; email: string; nama: string; role: s
 };
 
 export const login = async (req: Request, res: Response): Promise<void> => {
-  const { email, password } = req.body;
+  const { email, nis, password, role: loginRole } = req.body;
 
-  if (!email || !password) {
-    res.status(400).json({ success: false, message: 'Email dan password wajib diisi' });
+  if (!password || (!email && !nis)) {
+    res.status(400).json({ success: false, message: 'NIS/email dan password wajib diisi' });
     return;
   }
 
-  const user = await User.findOne({ where: { email, is_active: true } });
-  if (!user) {
-    res.status(401).json({ success: false, message: 'Email atau password salah' });
+  let user: InstanceType<typeof User> | null = null;
+
+  if (nis) {
+    const siswa = await Siswa.findOne({
+      where: { nis },
+      include: [{ model: User, as: 'user' }],
+    });
+    if (!siswa) {
+      res.status(401).json({ success: false, message: 'NIS atau password salah' });
+      return;
+    }
+    const targetRole = loginRole || 'siswa';
+    if (targetRole === 'ortu') {
+      const ortu = await OrangTua.findOne({
+        where: { siswa_id: siswa.id },
+        include: [{ model: User, as: 'user' }],
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      user = (ortu as any)?.user ?? null;
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      user = (siswa as any).user ?? null;
+    }
+  } else {
+    user = await User.findOne({ where: { email, is_active: true } });
+  }
+
+  if (!user || !(user as any).is_active) {
+    res.status(401).json({ success: false, message: 'NIS/email atau password salah' });
     return;
   }
 
-  const validPassword = await bcrypt.compare(password, user.password_hash);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const validPassword = await bcrypt.compare(password, (user as any).password_hash);
   if (!validPassword) {
-    res.status(401).json({ success: false, message: 'Email atau password salah' });
+    res.status(401).json({ success: false, message: 'NIS/email atau password salah' });
     return;
   }
 

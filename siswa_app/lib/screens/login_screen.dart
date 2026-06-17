@@ -12,13 +12,13 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
+  final _nisCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscure = true;
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
+    _nisCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
   }
@@ -26,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     final auth = context.read<AuthProvider>();
-    final ok = await auth.login(_emailCtrl.text.trim(), _passwordCtrl.text);
+    final ok = await auth.login(_nisCtrl.text.trim(), _passwordCtrl.text);
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -80,19 +80,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             const Text('Masuk', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorNavy)),
                             const SizedBox(height: 4),
-                            const Text('Masukkan email dan password kamu', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                            const Text('Masukkan NIS dan password kamu', style: TextStyle(color: Colors.grey, fontSize: 13)),
                             const SizedBox(height: 24),
 
                             TextFormField(
-                              controller: _emailCtrl,
-                              keyboardType: TextInputType.emailAddress,
+                              controller: _nisCtrl,
+                              keyboardType: TextInputType.number,
                               style: const TextStyle(color: Colors.black87),
                               decoration: const InputDecoration(
-                                labelText: 'Email',
-                                prefixIcon: Icon(Icons.email_outlined),
-                                hintText: 'siswa@alfakhirschool.id',
+                                labelText: 'NIS',
+                                prefixIcon: Icon(Icons.badge_outlined),
+                                hintText: 'Nomor Induk Siswa',
                               ),
-                              validator: (v) => v == null || !v.contains('@') ? 'Email tidak valid' : null,
+                              validator: (v) => v == null || v.isEmpty ? 'NIS diperlukan' : null,
                             ),
                             const SizedBox(height: 16),
 
