@@ -95,9 +95,12 @@ class AuthProvider extends ChangeNotifier {
 
   String _parseError(dynamic e) {
     try {
-      return e.response?.data?['message'] ?? 'Login gagal';
+      if (e.response != null) {
+        return e.response?.data?['message'] ?? 'Login gagal (${e.response?.statusCode})';
+      }
+      return 'Koneksi bermasalah: ${e.message ?? e.toString()}';
     } catch (_) {
-      return 'Koneksi bermasalah';
+      return 'Error: ${e.toString()}';
     }
   }
 }
