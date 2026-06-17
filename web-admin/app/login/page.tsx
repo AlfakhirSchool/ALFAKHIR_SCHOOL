@@ -41,8 +41,8 @@ export default function LoginPage() {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         {/* Logo & Header */}
         <div className="text-center mb-8">
-          <div className="w-24 h-24 bg-gradient-to-br from-[#3B7FD1] to-[#1A2332] rounded-full mx-auto flex items-center justify-center mb-4">
-            <span className="text-white text-3xl font-bold">AF</span>
+          <div className="mx-auto mb-4 w-32 h-32 flex items-center justify-center">
+            <img src="/logo.png" alt="Al Fakhir School" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-[#1A2332]">Al Fakhir School</h1>
           <p className="text-gray-500 text-sm mt-1">Admin Control Center</p>

@@ -30,8 +30,8 @@ export default function Sidebar() {
     <aside className="w-64 bg-[#1A2332] text-white flex flex-col min-h-screen fixed left-0 top-0 z-40">
       <div className="p-5 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#1B8B87] rounded-lg flex items-center justify-center font-bold text-lg">
-            AF
+          <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center">
+            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain p-0.5" />
           </div>
           <div>
             <p className="font-bold text-sm">Al Fakhir School</p>
