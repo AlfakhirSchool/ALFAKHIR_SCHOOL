@@ -9,5 +9,6 @@ router.post('/logout', authenticate, authController.logout);
 router.post('/refresh', authController.refreshToken);
 router.get('/profile', authenticate, authController.getProfile);
 router.post('/change-password', authenticate, authController.changePassword);
+router.post('/upload-photo', authenticate, authController.upload.single('photo'), authController.uploadProfilePhoto);
 
 export default router;

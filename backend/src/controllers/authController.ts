@@ -1,9 +1,30 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { User, Guru, Siswa, OrangTua, Kelas, Sekolah } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+
+const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'profiles');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+export const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Hanya file gambar yang diizinkan'));
+  },
+});
 
 const generateTokens = (user: { id: string; email: string; nama: string; role: string }) => {
   const accessOpts: SignOptions = { expiresIn: (process.env.JWT_EXPIRES_IN || '24h') as SignOptions['expiresIn'] };
@@ -159,6 +180,28 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
   }
 
   res.json({ success: true, data: profileData });
+};
+
+export const uploadProfilePhoto = async (req: AuthRequest, res: Response): Promise<void> => {
+  const file = (req as any).file;
+  if (!file) {
+    res.status(400).json({ success: false, message: 'File tidak ditemukan' });
+    return;
+  }
+
+  const user = await User.findByPk(req.user!.id);
+  if (!user) throw createError('User tidak ditemukan', 404);
+
+  // Delete old photo if exists
+  if (user.profile_pic) {
+    const oldPath = path.join(__dirname, '..', '..', user.profile_pic.replace(/^\//, ''));
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+  }
+
+  const profilePicUrl = `/uploads/profiles/${file.filename}`;
+  await user.update({ profile_pic: profilePicUrl });
+
+  res.json({ success: true, data: { profile_pic: profilePicUrl } });
 };
 
 export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {

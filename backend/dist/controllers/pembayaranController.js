@@ -86,6 +86,26 @@ const bayar = async (req, res) => {
         tanggal_bayar: newStatus === 'lunas' ? new Date() : pembayaran.tanggal_bayar,
         metode_bayar: bank,
     });
+    if (newStatus === 'lunas' && process.env.N8N_WEBHOOK_URL) {
+        const siswaData = await models_1.Pembayaran.findByPk(pembayaran.id, {
+            include: [{ model: models_1.Siswa, as: 'siswa', include: [{ model: models_1.User, as: 'user', attributes: ['nama', 'email'] }] }],
+        });
+        const email = siswaData?.siswa?.user?.email;
+        const nama_siswa = siswaData?.siswa?.user?.nama;
+        if (email) {
+            fetch(`${process.env.N8N_WEBHOOK_URL}/payment-confirmed`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email,
+                    nama_siswa,
+                    jenis_pembayaran: pembayaran.jenis_biaya,
+                    nominal: totalTerbayar,
+                    tahun_ajaran: pembayaran.tahun_ajaran,
+                }),
+            }).catch((err) => logger_1.default.error({ event: 'n8n_webhook_error', error: err.message }));
+        }
+    }
     res.json({ success: true, message: 'Pembayaran berhasil dicatat', data: { status: newStatus, total_terbayar: totalTerbayar } });
 };
 exports.bayar = bayar;

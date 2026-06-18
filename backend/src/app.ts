@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
 
 import authRoutes from './routes/auth';
 import siswaRoutes from './routes/siswa';
@@ -50,6 +51,7 @@ app.use(morgan('combined', {
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 const PREFIX = process.env.API_PREFIX || '/api';
 

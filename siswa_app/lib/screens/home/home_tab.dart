@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../core/api.dart';
 import '../../core/theme.dart';
 import '../../core/school_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/data_provider.dart';
+import '../profile/profile_screen.dart';
 
 class HomeTab extends StatelessWidget {
   const HomeTab({super.key});
@@ -16,7 +18,6 @@ class HomeTab extends StatelessWidget {
     final user = auth.user;
     final profile = auth.profile;
     final summary = data.absensiSummary;
-    final pembayaran = data.pembayaranList;
     final jadwal = data.jadwalList;
 
     final school = SchoolTheme.fromLevel(profile?.sekolahLevel);
@@ -24,8 +25,6 @@ class HomeTab extends StatelessWidget {
     final today = DateFormat('EEEE', 'id_ID').format(DateTime.now());
     final jadwalHariIni = jadwal.where((j) => j.hari == today).toList()
       ..sort((a, b) => a.jamMulai.compareTo(b.jamMulai));
-
-    final tunggakan = pembayaran.where((p) => !p.isLunas).length;
 
     return Scaffold(
       backgroundColor: colorBg,
@@ -35,7 +34,6 @@ class HomeTab extends StatelessWidget {
           if (profile != null) {
             await context.read<DataProvider>().loadDashboard();
             await context.read<DataProvider>().loadAbsensi(profile.id);
-            await context.read<DataProvider>().loadPembayaran(profile.id);
           }
         },
         child: CustomScrollView(
@@ -60,17 +58,17 @@ class HomeTab extends StatelessWidget {
                         children: [
                           // Logo sekolah
                           Container(
-                            width: 64,
-                            height: 64,
+                            width: 48,
+                            height: 48,
                             decoration: BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
                               boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8)],
                             ),
-                            padding: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(5),
                             child: Image.asset(school.logoAsset, fit: BoxFit.contain),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,6 +90,25 @@ class HomeTab extends StatelessWidget {
                               ],
                             ),
                           ),
+                          // Avatar foto profil
+                          GestureDetector(
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+                            child: Builder(builder: (context) {
+                              final picUrl = user?.profilePic;
+                              final fullUrl = picUrl != null ? '${baseUrl.replaceAll('/api', '')}$picUrl' : null;
+                              return CircleAvatar(
+                                radius: 24,
+                                backgroundColor: Colors.white.withOpacity(0.3),
+                                backgroundImage: fullUrl != null ? NetworkImage(fullUrl) : null,
+                                child: fullUrl == null
+                                    ? Text(
+                                        (user?.nama ?? 'S').substring(0, 1).toUpperCase(),
+                                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                                      )
+                                    : null,
+                              );
+                            }),
+                          ),
                         ],
                       ),
                     ),
@@ -104,22 +121,11 @@ class HomeTab extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  Row(
-                    children: [
-                      _StatCard(
-                        label: 'Kehadiran',
-                        value: summary != null ? '${summary.persentaseHadir.toStringAsFixed(0)}%' : '-',
-                        icon: Icons.check_circle_outline,
-                        color: colorSuccess,
-                      ),
-                      const SizedBox(width: 12),
-                      _StatCard(
-                        label: 'Tunggakan',
-                        value: '$tunggakan tagihan',
-                        icon: Icons.payment_outlined,
-                        color: tunggakan > 0 ? colorError : colorSuccess,
-                      ),
-                    ],
+                  _StatCard(
+                    label: 'Kehadiran',
+                    value: summary != null ? '${summary.persentaseHadir.toStringAsFixed(0)}%' : '-',
+                    icon: Icons.check_circle_outline,
+                    color: colorSuccess,
                   ),
                   const SizedBox(height: 16),
 
@@ -169,30 +175,28 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                child: Icon(icon, color: color, size: 20),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: color)),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                    Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: color)),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

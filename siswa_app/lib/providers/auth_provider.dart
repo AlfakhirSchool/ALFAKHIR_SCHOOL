@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:io';
+import 'package:dio/dio.dart';
 import '../core/api.dart';
 import '../core/storage.dart';
 import '../models/user.dart';
@@ -90,6 +92,30 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (_) {}
+  }
+
+  Future<String?> uploadProfilePhoto(File imageFile) async {
+    try {
+      final formData = FormData.fromMap({
+        'photo': await MultipartFile.fromFile(imageFile.path, filename: 'profile.jpg'),
+      });
+      final res = await dio.post('/auth/upload-photo', data: formData);
+      final picUrl = res.data['data']['profile_pic'] as String;
+      _user = User(
+        id: _user!.id,
+        email: _user!.email,
+        nama: _user!.nama,
+        role: _user!.role,
+        isActive: _user!.isActive,
+        profilePic: picUrl,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('current_user', jsonEncode(_user!.toJson()));
+      notifyListeners();
+      return picUrl;
+    } catch (e) {
+      return null;
+    }
   }
 
   Future<void> logout() async {

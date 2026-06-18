@@ -7,7 +7,6 @@ import 'home/home_tab.dart';
 import 'nilai/nilai_tab.dart';
 import 'absensi/absensi_tab.dart';
 import 'jadwal/jadwal_tab.dart';
-import 'pembayaran/pembayaran_tab.dart';
 import 'rapor/rapor_tab.dart';
 import 'notifikasi/notifikasi_tab.dart';
 
@@ -26,7 +25,6 @@ class _MainScreenState extends State<MainScreen> {
     NilaiTab(),
     AbsensiTab(),
     JadwalTab(),
-    PembayaranTab(),
     RaporTab(),
     NotifikasiTab(),
   ];
@@ -44,7 +42,6 @@ class _MainScreenState extends State<MainScreen> {
       data.loadDashboard();
       data.loadNilai(auth.profile!.id);
       data.loadAbsensi(auth.profile!.id);
-      data.loadPembayaran(auth.profile!.id);
       data.loadNotifikasi();
       if (auth.profile!.kelasId != null) {
         data.loadJadwal(auth.profile!.kelasId!);
@@ -66,7 +63,6 @@ class _MainScreenState extends State<MainScreen> {
           const BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart), label: 'Nilai'),
           const BottomNavigationBarItem(icon: Icon(Icons.check_circle_outline), activeIcon: Icon(Icons.check_circle), label: 'Absensi'),
           const BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), activeIcon: Icon(Icons.calendar_today), label: 'Jadwal'),
-          const BottomNavigationBarItem(icon: Icon(Icons.payment_outlined), activeIcon: Icon(Icons.payment), label: 'Bayar'),
           const BottomNavigationBarItem(icon: Icon(Icons.description_outlined), activeIcon: Icon(Icons.description), label: 'Rapor'),
           BottomNavigationBarItem(
             icon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: const Icon(Icons.notifications_outlined)),

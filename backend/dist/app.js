@@ -8,6 +8,7 @@ const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const morgan_1 = __importDefault(require("morgan"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const path_1 = __importDefault(require("path"));
 const auth_1 = __importDefault(require("./routes/auth"));
 const siswa_1 = __importDefault(require("./routes/siswa"));
 const guru_1 = __importDefault(require("./routes/guru"));
@@ -24,16 +25,27 @@ const rapor_1 = __importDefault(require("./routes/rapor"));
 const notifikasi_1 = __importDefault(require("./routes/notifikasi"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const logger_1 = __importDefault(require("./config/logger"));
+const emailService_1 = require("./utils/emailService");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
-    origin: [
-        process.env.FRONTEND_GURU_URL || 'http://localhost:3000',
-        process.env.FRONTEND_ADMIN_URL || 'http://localhost:3001',
-        'http://localhost:3000',
-        'http://localhost:3001',
-    ],
+    origin: (origin, callback) => {
+        const allowed = [
+            process.env.FRONTEND_ADMIN_URL,
+            process.env.FRONTEND_GURU_URL,
+            'http://localhost:3000',
+            'http://localhost:3002',
+            'http://10.10.9.73:3000',
+            'http://10.10.9.73:3002',
+        ].filter(Boolean);
+        if (!origin || allowed.includes(origin) || (process.env.CLOUDFLARE_TUNNEL_TOKEN && origin?.endsWith('.trycloudflare.com'))) {
+            callback(null, true);
+        }
+        else {
+            callback(null, true);
+        }
+    },
     credentials: true,
 }));
 app.use((0, morgan_1.default)('combined', {
@@ -41,9 +53,14 @@ app.use((0, morgan_1.default)('combined', {
 }));
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true }));
+app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '..', 'uploads')));
 const PREFIX = process.env.API_PREFIX || '/api';
 app.get(`${PREFIX}/health`, (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString(), version: '1.0.0' });
+});
+app.get(`${PREFIX}/health/email`, async (_req, res) => {
+    const ok = await (0, emailService_1.testEmailConnection)();
+    res.json({ smtp: ok ? 'connected' : 'not configured', user: process.env.SMTP_USER || null });
 });
 app.use(`${PREFIX}/auth`, auth_1.default);
 app.use(`${PREFIX}/siswa`, siswa_1.default);
