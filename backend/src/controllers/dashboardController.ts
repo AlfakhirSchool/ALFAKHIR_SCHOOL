@@ -1,23 +1,50 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
 import sequelize from '../config/database';
-import { User, Siswa, Guru, Kelas, Absensi, Nilai, Pembayaran, JurnalGuru } from '../models';
+import { User, Siswa, Guru, Kelas, Sekolah, Absensi, Nilai, Pembayaran, JurnalGuru } from '../models';
 import { AuthRequest } from '../middleware/auth';
 
-export const adminDashboard = async (_req: AuthRequest, res: Response): Promise<void> => {
-  const [totalSiswa, totalGuru, totalKelas, absensiHariIni, pendingJurnal, tunggakanCount] = await Promise.all([
-    Siswa.count(),
-    Guru.count(),
-    Kelas.count(),
-    Absensi.count({ where: { tanggal: new Date().toISOString().split('T')[0] } }),
-    JurnalGuru.count({ where: { status: 'submitted' } }),
-    Pembayaran.count({ where: { status: { [Op.in]: ['belum_bayar', 'sebagian'] } } }),
+const getStatsForLevel = async (level: string): Promise<{ sekolahId?: string; namaSekolah?: string; totalSiswa: number; totalKelas: number; absensiHariIni: number }> => {
+  const sekolah = await Sekolah.findOne({ where: { level } });
+  if (!sekolah) return { totalSiswa: 0, totalKelas: 0, absensiHariIni: 0 };
+
+  const kelasList = await Kelas.findAll({ where: { sekolah_id: sekolah.id }, attributes: ['id'] });
+  const kelasIds = kelasList.map((k: any) => k.id as string);
+  const totalKelas = kelasIds.length;
+
+  if (totalKelas === 0) return { sekolahId: sekolah.id, namaSekolah: sekolah.nama, totalSiswa: 0, totalKelas: 0, absensiHariIni: 0 };
+
+  const [totalSiswa, absensiHariIni] = await Promise.all([
+    Siswa.count({ where: { kelas_id: { [Op.in]: kelasIds } } }) as Promise<number>,
+    Absensi.count({
+      where: { tanggal: new Date().toISOString().split('T')[0] },
+      include: [{ model: Siswa, as: 'siswa', where: { kelas_id: { [Op.in]: kelasIds } }, attributes: [] }],
+    }) as Promise<number>,
   ]);
+
+  return { sekolahId: sekolah.id, namaSekolah: sekolah.nama, totalSiswa, totalKelas, absensiHariIni };
+};
+
+export const adminDashboard = async (_req: AuthRequest, res: Response): Promise<void> => {
+  const today = new Date().toISOString().split('T')[0];
+
+  const [sd, smp, sma, totalGuru, pendingJurnal] = await Promise.all([
+    getStatsForLevel('SD'),
+    getStatsForLevel('SMP'),
+    getStatsForLevel('SMA'),
+    Guru.count(),
+    JurnalGuru.count({ where: { status: 'submitted' } }),
+  ]);
+
+  const totalSiswa = sd.totalSiswa + smp.totalSiswa + sma.totalSiswa;
+  const totalKelas = sd.totalKelas + smp.totalKelas + sma.totalKelas;
+  const absensiHariIni = sd.absensiHariIni + smp.absensiHariIni + sma.absensiHariIni;
 
   res.json({
     success: true,
     data: {
-      kpi: { totalSiswa, totalGuru, totalKelas, absensiHariIni, pendingJurnal, tunggakanCount },
+      kpi: { totalSiswa, totalGuru, totalKelas, absensiHariIni, pendingJurnal },
+      sekolah: { sd, smp, sma },
     },
   });
 };

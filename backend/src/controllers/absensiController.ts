@@ -26,7 +26,8 @@ export const createQrSession = async (req: AuthRequest, res: Response): Promise<
     where: { jadwal_pelajaran_id, tanggal, aktif: true },
   });
   if (existingSession) {
-    res.json({ success: true, message: 'Session QR masih aktif', data: existingSession });
+    const qr_image = await QRCode.toDataURL(existingSession.qr_data);
+    res.json({ success: true, message: 'Session QR masih aktif', data: { ...existingSession.toJSON(), qr_image } });
     return;
   }
 
