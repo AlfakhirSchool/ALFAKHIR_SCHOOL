@@ -6,7 +6,9 @@ import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
 
 const menuItems = [
-  { href: '/dashboard', icon: '📊', label: 'Dashboard' },
+  { href: '/dashboard/sd',  icon: '🟢', label: 'Dashboard SD'  },
+  { href: '/dashboard/smp', icon: '🔵', label: 'Dashboard SMP' },
+  { href: '/dashboard/sma', icon: '🟣', label: 'Dashboard SMA' },
   { href: '/siswa', icon: '👨‍🎓', label: 'Siswa' },
   { href: '/guru', icon: '👨‍🏫', label: 'Guru' },
   { href: '/kelas', icon: '🏫', label: 'Kelas' },
