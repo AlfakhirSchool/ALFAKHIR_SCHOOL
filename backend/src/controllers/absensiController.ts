@@ -98,17 +98,16 @@ export const scanQr = async (req: AuthRequest, res: Response): Promise<void> => 
 };
 
 export const inputCode = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { code, siswa_id, jadwal_pelajaran_id, tanggal } = req.body as {
-    code: string; siswa_id: string; jadwal_pelajaran_id: string; tanggal: string;
-  };
+  const { code, siswa_id } = req.body as { code: string; siswa_id: string };
 
-  const session = await QrCodeSession.findOne({
-    where: { jadwal_pelajaran_id, tanggal, aktif: true, unique_code: code },
-  });
+  const session = await QrCodeSession.findOne({ where: { unique_code: code, aktif: true } });
   if (!session) {
     res.status(400).json({ success: false, message: 'Kode tidak valid atau session sudah berakhir' });
     return;
   }
+
+  const jadwal_pelajaran_id = session.jadwal_pelajaran_id;
+  const tanggal = typeof session.tanggal === 'string' ? session.tanggal : (session.tanggal as Date).toISOString().split('T')[0];
 
   const existing = await Absensi.findOne({ where: { siswa_id, jadwal_pelajaran_id, tanggal } });
   if (existing) {

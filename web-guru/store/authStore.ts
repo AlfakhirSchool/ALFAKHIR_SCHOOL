@@ -16,6 +16,7 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (user: User, accessToken: string, refreshToken: string) => void;
   logout: () => void;
+  updateUser: (updates: Partial<User>) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -35,6 +36,7 @@ export const useAuthStore = create<AuthState>()(
         localStorage.removeItem('refresh_token');
         set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
       },
+      updateUser: (updates) => set((state) => ({ user: state.user ? { ...state.user, ...updates } : null })),
     }),
     { name: 'alfakhir-guru-auth' }
   )

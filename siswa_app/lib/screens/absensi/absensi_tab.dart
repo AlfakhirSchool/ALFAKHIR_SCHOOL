@@ -5,6 +5,7 @@ import '../../core/theme.dart';
 import '../../providers/data_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/absensi.dart';
+import 'absensi_scan_screen.dart';
 
 class AbsensiTab extends StatelessWidget {
   const AbsensiTab({super.key});
@@ -27,6 +28,13 @@ class AbsensiTab extends StatelessWidget {
             },
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AbsensiScanScreen())),
+        backgroundColor: colorSMP,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.qr_code_scanner),
+        label: const Text('Absen Sekarang'),
       ),
       body: data.absensiLoading
           ? const Center(child: CircularProgressIndicator(color: colorSMA))

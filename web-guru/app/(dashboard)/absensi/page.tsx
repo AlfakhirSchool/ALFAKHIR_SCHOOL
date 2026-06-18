@@ -126,9 +126,9 @@ export default function AbsensiPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white rounded-xl shadow-sm p-6 text-center">
                 <h3 className="font-semibold text-[#1A2332] mb-4">QR Code Absensi</h3>
-                {activeSession.qr_data ? (
+                {activeSession.qr_image ? (
                   <img
-                    src={activeSession.qr_data}
+                    src={activeSession.qr_image}
                     alt="QR Absensi"
                     className="w-48 h-48 mx-auto border-4 border-[#1B8B87] rounded-xl"
                   />
