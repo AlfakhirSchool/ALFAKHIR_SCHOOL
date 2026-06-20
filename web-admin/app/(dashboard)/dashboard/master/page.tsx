@@ -154,6 +154,27 @@ export default function MasterDashboard() {
           </>
         )}
 
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { href: '/users', icon: '🔑', label: 'Reset Password', desc: 'Pulihkan akun lupa sandi', color: '#2563EB' },
+            { href: '/users', icon: '➕', label: 'Daftar Akun Baru', desc: 'Tambah user guru/siswa', color: '#F97316' },
+            { href: '/audit-log', icon: '🔍', label: 'Audit Log', desc: 'Riwayat semua aktivitas', color: '#7C3AED' },
+            { href: '/settings', icon: '⚙️', label: 'Pengaturan', desc: 'Konfigurasi sistem', color: '#16A34A' },
+          ].map(item => (
+            <a key={item.label} href={item.href}
+              className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all border border-gray-100 hover:border-gray-200 flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0" style={{ backgroundColor: item.color + '15' }}>
+                {item.icon}
+              </div>
+              <div>
+                <p className="font-bold text-sm text-[#1A2332]">{item.label}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{item.desc}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+
         {/* Live Activity Feed */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
