@@ -1,8 +1,11 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 
 const LEVEL_CONFIG = {
   SD:  { color: '#16A34A', bg: 'bg-green-600',  border: 'border-green-500',  light: 'bg-green-50',   text: 'text-green-700',  fullName: 'Sekolah Dasar',            icon: '🏫' },
@@ -22,6 +25,14 @@ const StatBox = ({ label, value, sub, color }: { label: string; value: string | 
 
 export default function SchoolDashboard({ level }: { level: Level }) {
   const cfg = LEVEL_CONFIG[level];
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    if (!isAuthenticated) { router.replace('/login'); return; }
+    const sl = user?.school_level;
+    if (sl && sl !== level) router.replace(`/dashboard/${sl.toLowerCase()}`);
+  }, [isAuthenticated, user, level, router]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-dashboard-v2'],

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models';
-import { UserRole } from '../models/User';
+import { UserRole, SchoolLevel } from '../models/User';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -9,6 +9,7 @@ export interface AuthRequest extends Request {
     email: string;
     nama: string;
     role: UserRole;
+    school_level: SchoolLevel;
   };
 }
 
@@ -22,7 +23,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     const token = authHeader.split(' ')[1];
     const secret = process.env.JWT_SECRET as string;
-    const decoded = jwt.verify(token, secret) as { id: string; email: string; nama: string; role: UserRole };
+    const decoded = jwt.verify(token, secret) as { id: string; email: string; nama: string; role: UserRole; school_level: SchoolLevel };
 
     const user = await User.findOne({ where: { id: decoded.id, is_active: true } });
     if (!user) {
@@ -30,7 +31,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       return;
     }
 
-    req.user = { id: decoded.id, email: decoded.email, nama: decoded.nama, role: decoded.role };
+    req.user = { id: decoded.id, email: decoded.email, nama: decoded.nama, role: decoded.role, school_level: user.school_level };
     next();
   } catch {
     res.status(401).json({ success: false, message: 'Token tidak valid atau sudah kadaluarsa' });

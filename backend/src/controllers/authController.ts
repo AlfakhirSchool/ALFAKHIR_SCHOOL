@@ -26,12 +26,12 @@ export const upload = multer({
   },
 });
 
-const generateTokens = (user: { id: string; email: string; nama: string; role: string }) => {
+const generateTokens = (user: { id: string; email: string; nama: string; role: string; school_level?: string | null }) => {
   const accessOpts: SignOptions = { expiresIn: (process.env.JWT_EXPIRES_IN || '24h') as SignOptions['expiresIn'] };
   const refreshOpts: SignOptions = { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as SignOptions['expiresIn'] };
 
   const accessToken = jwt.sign(
-    { id: user.id, email: user.email, nama: user.nama, role: user.role },
+    { id: user.id, email: user.email, nama: user.nama, role: user.role, school_level: user.school_level ?? null },
     process.env.JWT_SECRET as string,
     accessOpts
   );
@@ -111,6 +111,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         email: user.email,
         nama: user.nama,
         role: user.role,
+        school_level: user.school_level ?? null,
         profile_pic: user.profile_pic,
         profile_detail: profileDetail,
       },

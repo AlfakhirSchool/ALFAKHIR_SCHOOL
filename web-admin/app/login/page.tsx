@@ -29,6 +29,10 @@ export default function LoginPage() {
       }
 
       login(user, accessToken, refreshToken);
+      // Redirect berdasarkan school_level
+      if (user.school_level === 'SD')  { router.push('/dashboard/sd');  return; }
+      if (user.school_level === 'SMP') { router.push('/dashboard/smp'); return; }
+      if (user.school_level === 'SMA') { router.push('/dashboard/sma'); return; }
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login gagal');

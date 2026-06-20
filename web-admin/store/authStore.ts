@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export type SchoolLevel = 'SD' | 'SMP' | 'SMA' | null;
+
 interface User {
   id: string;
   email: string;
   nama: string;
   role: string;
+  school_level: SchoolLevel;
   profile_pic?: string;
 }
 
@@ -16,11 +19,12 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (user: User, accessToken: string, refreshToken: string) => void;
   logout: () => void;
+  updateUser: (partial: Partial<User>) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
@@ -34,6 +38,10 @@ export const useAuthStore = create<AuthState>()(
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
+      },
+      updateUser: (partial) => {
+        const current = get().user;
+        if (current) set({ user: { ...current, ...partial } });
       },
     }),
     { name: 'alfakhir-admin-auth' }

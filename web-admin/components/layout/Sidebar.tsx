@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore, SchoolLevel } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
 
-const menuItems = [
+const masterMenu = [
   { href: '/dashboard', icon: '📊', label: 'Dashboard' },
   { href: '/siswa', icon: '👨‍🎓', label: 'Siswa' },
   { href: '/guru', icon: '👨‍🏫', label: 'Guru' },
@@ -21,10 +21,30 @@ const menuItems = [
   { href: '/settings', icon: '⚙️', label: 'Pengaturan' },
 ];
 
+const levelMenu = (level: string) => [
+  { href: `/dashboard/${level.toLowerCase()}`, icon: '📊', label: `Dashboard ${level}` },
+  { href: '/siswa', icon: '👨‍🎓', label: 'Siswa' },
+  { href: '/kelas', icon: '🏫', label: 'Kelas' },
+  { href: '/jadwal', icon: '📅', label: 'Jadwal' },
+  { href: '/absensi', icon: '✅', label: 'Absensi' },
+  { href: '/nilai', icon: '📝', label: 'Nilai' },
+  { href: '/laporan', icon: '📄', label: 'Laporan' },
+];
+
+const LEVEL_COLOR: Record<string, string> = {
+  SD:  '#16A34A',
+  SMP: '#3B7FD1',
+  SMA: '#9333EA',
+};
+
 export default function Sidebar() {
   const pathname = usePathname();
-  const { logout } = useAuthStore();
+  const { logout, user } = useAuthStore();
   const router = useRouter();
+  const level = user?.school_level as SchoolLevel;
+
+  const menuItems = level ? levelMenu(level) : masterMenu;
+  const accentColor = level ? LEVEL_COLOR[level] : '#3B7FD1';
 
   const handleLogout = () => {
     logout();
@@ -41,9 +61,16 @@ export default function Sidebar() {
           </div>
           <div>
             <p className="font-bold text-sm">Al Fakhir School</p>
-            <p className="text-xs text-gray-400">Admin Control Center</p>
+            <p className="text-xs" style={{ color: accentColor }}>
+              {level ? `Admin ${level}` : 'Admin Control Center'}
+            </p>
           </div>
         </div>
+        {level && (
+          <div className="mt-3 px-2 py-1 rounded-lg text-xs font-bold text-white text-center" style={{ backgroundColor: accentColor }}>
+            Dashboard {level}
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
@@ -56,10 +83,9 @@ export default function Sidebar() {
                 <Link
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                    active
-                      ? 'bg-[#3B7FD1] text-white font-medium'
-                      : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                    active ? 'text-white font-medium' : 'text-gray-300 hover:bg-white/10 hover:text-white'
                   }`}
+                  style={active ? { backgroundColor: accentColor } : {}}
                 >
                   <span>{item.icon}</span>
                   {item.label}
@@ -72,6 +98,10 @@ export default function Sidebar() {
 
       {/* Logout */}
       <div className="p-4 border-t border-white/10">
+        <div className="px-3 py-2 mb-2">
+          <p className="text-xs text-gray-400 truncate">{user?.nama}</p>
+          <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+        </div>
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-red-500/20 hover:text-red-300 transition-colors"
