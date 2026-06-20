@@ -16,6 +16,7 @@ ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nodejs:nodejs /app/src/migrations ./dist/migrations
 
 RUN mkdir -p uploads logs && chown -R nodejs:nodejs uploads logs
 

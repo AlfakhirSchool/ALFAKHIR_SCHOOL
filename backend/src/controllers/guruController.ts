@@ -1,18 +1,43 @@
 import { Response } from 'express';
 import bcrypt from 'bcrypt';
-import { Op } from 'sequelize';
+import { Op, literal } from 'sequelize';
 import { User, Guru } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 
+const levelWhere = (school_level: string | null | undefined) => {
+  if (!school_level) return {};
+  return {
+    [Op.or]: [
+      literal(`'${school_level}' = ANY(school_levels)`),
+      literal(`school_levels IS NULL`),
+      literal(`school_levels = '{}'`),
+    ],
+  };
+};
+
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { search, page = '1', limit = '20' } = req.query;
+  const { search, jenjang, page = '1', limit = '20' } = req.query;
   const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
   const userWhere: Record<string, unknown> = {};
   if (search) userWhere.nama = { [Op.iLike]: `%${search}%` };
 
+  // Build guru where clause
+  const guruWhere: Record<string, unknown> = {};
+
+  // If admin has school_level, filter gurus assigned to that level
+  if (req.user?.school_level) {
+    Object.assign(guruWhere, levelWhere(req.user.school_level));
+  }
+
+  // Additional jenjang filter from query param (for master admin)
+  if (jenjang) {
+    Object.assign(guruWhere, { [Op.or]: [literal(`'${jenjang}' = ANY(school_levels)`)] });
+  }
+
   const { count, rows } = await Guru.findAndCountAll({
+    where: Object.keys(guruWhere).length > 0 ? guruWhere : undefined,
     include: [{ model: User, as: 'user', where: userWhere, attributes: { exclude: ['password_hash'] } }],
     limit: parseInt(limit as string),
     offset,
@@ -34,7 +59,7 @@ export const getById = async (req: AuthRequest, res: Response): Promise<void> =>
 };
 
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { email, password, nama, nip, spesialisasi, no_telp } = req.body;
+  const { email, password, nama, nip, spesialisasi, no_telp, school_levels } = req.body;
 
   const existing = await User.findOne({ where: { email } });
   if (existing) {
@@ -44,7 +69,10 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
 
   const password_hash = await bcrypt.hash(password || '12345678', 12);
   const user = await User.create({ email, password_hash, nama, role: 'guru' });
-  const guru = await Guru.create({ user_id: user.id, nip, spesialisasi, no_telp });
+  const guru = await Guru.create({
+    user_id: user.id, nip, spesialisasi, no_telp,
+    school_levels: Array.isArray(school_levels) ? school_levels : [],
+  });
 
   res.status(201).json({ success: true, message: 'Guru berhasil dibuat', data: { user, guru } });
 };
@@ -53,9 +81,12 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
   const guru = await Guru.findByPk(req.params.id as string, { include: [{ model: User, as: 'user' }] });
   if (!guru) throw createError('Guru tidak ditemukan', 404);
 
-  const { nama, email, nip, spesialisasi, no_telp, is_active } = req.body;
+  const { nama, email, nip, spesialisasi, no_telp, is_active, school_levels } = req.body;
   await (guru as any).user.update({ nama, email, is_active });
-  await guru.update({ nip, spesialisasi, no_telp });
+  await guru.update({
+    nip, spesialisasi, no_telp,
+    school_levels: Array.isArray(school_levels) ? school_levels : guru.school_levels,
+  });
 
   res.json({ success: true, message: 'Data guru berhasil diperbarui' });
 };
