@@ -5,6 +5,7 @@ import { Op } from 'sequelize';
 import { Absensi, QrCodeSession, JadwalPelajaran, Siswa, Kelas, MataPelajaran, Guru, User } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { kelasIdFilter } from '../utils/levelFilter';
 
 const generateUniqueCode = (): string => {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -167,10 +168,18 @@ export const getLaporan = async (req: AuthRequest, res: Response): Promise<void>
   const { siswa_id, jadwal_id, start_date, end_date } = req.query;
 
   const where: Record<string, unknown> = {};
-  if (siswa_id) where.siswa_id = siswa_id as string;
   if (jadwal_id) where.jadwal_pelajaran_id = jadwal_id as string;
   if (start_date && end_date) {
     where.tanggal = { [Op.between]: [new Date(start_date as string), new Date(end_date as string)] };
+  }
+
+  // Filter siswa berdasarkan level admin
+  if (siswa_id) {
+    where.siswa_id = siswa_id as string;
+  } else if (req.user?.school_level) {
+    const levelWhere = await kelasIdFilter(req.user.school_level);
+    const siswaList = await Siswa.findAll({ where: levelWhere, attributes: ['id'] });
+    where.siswa_id = { [Op.in]: siswaList.map((s: any) => s.id) };
   }
 
   const absensiList = await Absensi.findAll({
