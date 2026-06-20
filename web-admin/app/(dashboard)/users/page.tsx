@@ -53,7 +53,6 @@ export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [page, setPage] = useState(1);
-  const [showPw, setShowPw] = useState<Record<string, boolean>>({});
 
   // Modal reset password
   const [resetModal, setResetModal] = useState<{ id: string; nama: string; role: string } | null>(null);
