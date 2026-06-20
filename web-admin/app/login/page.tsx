@@ -1,11 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
 const DOMAIN = '@alfakhirschool.sch.id';
+
+type JenjangInfo = { logo: string; name: string; sub: string; gradient: string; accent: string };
+
+const getJenjangFromHostname = (): JenjangInfo => {
+  if (typeof window === 'undefined') return { logo: '/logo-master.png', name: 'Al Fakhir School', sub: 'Admin Control Center', gradient: 'from-[#1A2332] to-[#3B7FD1]', accent: '#3B7FD1' };
+  const h = window.location.hostname;
+  if (h.startsWith('admin-sd.'))  return { logo: '/logo-sd.png',     name: 'SD Islam Modern Al-Fakhir',  sub: 'Admin SD',  gradient: 'from-[#92400E] to-[#F97316]', accent: '#F97316' };
+  if (h.startsWith('admin-smp.')) return { logo: '/logo-smp.png',    name: 'SMP Islam Modern Al-Fakhir', sub: 'Admin SMP', gradient: 'from-[#134E4A] to-[#1B8B87]', accent: '#1B8B87' };
+  if (h.startsWith('admin-sma.')) return { logo: '/logo-sma.png',    name: 'SMA Islam Modern Al-Fakhir', sub: 'Admin SMA', gradient: 'from-[#1E3A8A] to-[#3B82F6]', accent: '#3B82F6' };
+  return { logo: '/logo-master.png', name: 'Al Fakhir School', sub: 'Admin Control Center', gradient: 'from-[#1A2332] to-[#3B7FD1]', accent: '#3B7FD1' };
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +26,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [jenjang, setJenjang] = useState<JenjangInfo>({ logo: '/logo-master.png', name: 'Al Fakhir School', sub: 'Admin Control Center', gradient: 'from-[#1A2332] to-[#3B7FD1]', accent: '#3B7FD1' });
+
+  useEffect(() => { setJenjang(getJenjangFromHostname()); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,15 +60,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1A2332] to-[#3B7FD1] flex items-center justify-center p-4">
+    <div className={`min-h-screen bg-gradient-to-br ${jenjang.gradient} flex items-center justify-center p-4`}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
         {/* Logo & Header */}
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 w-32 h-32 flex items-center justify-center">
-            <img src="/logo.png" alt="Al Fakhir School" className="w-full h-full object-contain" />
+            <img src={jenjang.logo} alt={jenjang.name} className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-2xl font-bold text-[#1A2332]">Al Fakhir School</h1>
-          <p className="text-gray-500 text-sm mt-1">Admin Control Center</p>
+          <h1 className="text-2xl font-bold text-[#1A2332]">{jenjang.name}</h1>
+          <p className="text-gray-500 text-sm mt-1">{jenjang.sub}</p>
         </div>
 
         {error && (
@@ -82,7 +96,7 @@ export default function LoginPage() {
             </div>
             {username && !username.includes('@') && (
               <p className="text-xs text-gray-400 mt-1">
-                Login sebagai: <span className="font-medium text-[#3B7FD1]">{username}{DOMAIN}</span>
+                Login sebagai: <span className="font-medium" style={{ color: jenjang.accent }}>{username}{DOMAIN}</span>
               </p>
             )}
           </div>
@@ -121,14 +135,15 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#3B7FD1] text-white py-3 rounded-lg font-semibold hover:bg-[#2d6ab5] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ backgroundColor: jenjang.accent }}
           >
             {loading ? 'Masuk...' : 'Masuk'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-xs text-gray-400">SD/SMP/SMA Islam Modern Al Fakhir</p>
+          <p className="text-xs text-gray-400">SD/SMP/SMA Islam Modern Al-Fakhir</p>
         </div>
       </div>
     </div>

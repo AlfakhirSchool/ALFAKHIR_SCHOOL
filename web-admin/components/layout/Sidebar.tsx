@@ -38,8 +38,20 @@ const levelMenu = (level: string) => [
 
 const LEVEL_COLOR: Record<string, string> = {
   SD:  '#F97316',
-  SMP: '#2563EB',
-  SMA: '#7C3AED',
+  SMP: '#1B8B87',
+  SMA: '#3B82F6',
+};
+
+const LEVEL_LOGO: Record<string, string> = {
+  SD:  '/logo-sd.png',
+  SMP: '/logo-smp.png',
+  SMA: '/logo-sma.png',
+};
+
+const LEVEL_NAME: Record<string, string> = {
+  SD:  'SD Islam Modern Al-Fakhir',
+  SMP: 'SMP Islam Modern Al-Fakhir',
+  SMA: 'SMA Islam Modern Al-Fakhir',
 };
 
 export default function Sidebar() {
@@ -50,6 +62,8 @@ export default function Sidebar() {
 
   const menuItems = level ? levelMenu(level) : masterMenu;
   const accentColor = level ? LEVEL_COLOR[level] : '#3B7FD1';
+  const logo = level ? (LEVEL_LOGO[level] ?? '/logo-master.png') : '/logo-master.png';
+  const schoolName = level ? (LEVEL_NAME[level] ?? 'Al Fakhir School') : 'Al Fakhir School';
 
   const handleLogout = () => {
     logout();
@@ -62,10 +76,10 @@ export default function Sidebar() {
       <div className="p-5 border-b border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center">
-            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain p-0.5" />
+            <img src={logo} alt="Logo" className="w-full h-full object-contain p-0.5" />
           </div>
           <div>
-            <p className="font-bold text-sm">Al Fakhir School</p>
+            <p className="font-bold text-sm leading-tight">{schoolName}</p>
             <p className="text-xs" style={{ color: accentColor }}>
               {level ? `Admin ${level}` : 'Admin Control Center'}
             </p>
