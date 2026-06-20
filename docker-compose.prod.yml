@@ -116,6 +116,7 @@ services:
       FRONTEND_ADMIN_URL: ${FRONTEND_ADMIN_URL}
       FRONTEND_GURU_URL: ${FRONTEND_GURU_URL}
       N8N_WEBHOOK_URL: http://n8n:5678/webhook
+      WAHA_URL: http://waha:3000
       FONNTE_TOKEN: ${FONNTE_TOKEN:-}
       FCM_SERVER_KEY: ${FCM_SERVER_KEY}
       DB_HOST: postgres
@@ -182,6 +183,17 @@ services:
     networks:
       - alfakhir_net
 
+  waha:
+    image: devlikeapro/waha
+    container_name: alfakhir_waha
+    restart: unless-stopped
+    volumes:
+      - waha_data:/app/.sessions
+    ports:
+      - "127.0.0.1:3003:3000"
+    networks:
+      - alfakhir_net
+
   web-admin:
     build:
       context: ./web-admin
@@ -219,6 +231,7 @@ volumes:
   n8n_data:
   nginx_logs:
   backend_uploads:
+  waha_data:
 
 networks:
   alfakhir_net:
