@@ -127,6 +127,8 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
+    volumes:
+      - backend_uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -215,6 +217,7 @@ volumes:
   minio_data:
   n8n_data:
   nginx_logs:
+  backend_uploads:
 
 networks:
   alfakhir_net:

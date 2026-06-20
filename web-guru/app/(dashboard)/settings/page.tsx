@@ -6,8 +6,6 @@ import Header from '@/components/layout/Header';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
-
 export default function SettingsPage() {
   const { user, updateUser } = useAuthStore();
   const [pwForm, setPwForm] = useState({ current_password: '', new_password: '', confirm: '' });
@@ -15,8 +13,12 @@ export default function SettingsPage() {
   const [photoMsg, setPhotoMsg] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Build absolute URL: strip /api suffix, then prepend to relative path
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
   const profilePicUrl = user?.profile_pic
-    ? user.profile_pic.startsWith('http') ? user.profile_pic : `${API_BASE}${user.profile_pic}`
+    ? user.profile_pic.startsWith('http')
+      ? user.profile_pic
+      : `${apiBase}${user.profile_pic}`
     : null;
 
   const uploadPhoto = useMutation({
