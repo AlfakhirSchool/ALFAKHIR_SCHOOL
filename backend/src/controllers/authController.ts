@@ -7,6 +7,7 @@ import fs from 'fs';
 import { User, Guru, Siswa, OrangTua, Kelas, Sekolah } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { logAction } from '../middleware/auditLog';
 
 const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'profiles');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
@@ -100,6 +101,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   } else if (user.role === 'ortu') {
     profileDetail = await OrangTua.findOne({ where: { user_id: user.id } });
   }
+
+  logAction({
+    user_id: user.id, nama: user.nama, role: user.role,
+    school_level: user.school_level,
+    app_source: (req.headers['x-app-source'] as string) ||
+      ((req.headers['user-agent'] || '').toLowerCase().includes('dart') ? 'Mobile App' : 'Web'),
+    action: 'Login', table: 'users', record_id: user.id,
+    ip: req.ip || undefined, user_agent: req.headers['user-agent'],
+  });
 
   res.json({
     success: true,

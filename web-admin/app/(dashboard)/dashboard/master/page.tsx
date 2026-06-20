@@ -1,8 +1,28 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
+
+const ROLE_ICON: Record<string, string> = {
+  admin: '🛡️', guru: '👨‍🏫', siswa: '👨‍🎓', ortu: '👨‍👧',
+};
+const ROLE_COLOR: Record<string, string> = {
+  admin: '#F97316', guru: '#2563EB', siswa: '#16A34A', ortu: '#9333EA',
+};
+const APP_ICON: Record<string, string> = {
+  'Web': '🌐', 'Siswa App': '📱', 'Guru App': '📱', 'Orang Tua App': '📱',
+  'Mobile App': '📱', 'API': '🔌',
+};
+
+function timeAgo(dateStr: string) {
+  const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+  if (diff < 60) return `${Math.floor(diff)}d lalu`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m lalu`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}j lalu`;
+  return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
 
 const StatCard = ({ label, value, icon, color }: { label: string; value: number | string; icon: string; color: string }) => (
   <div className="bg-white rounded-xl p-5 shadow-sm border-l-4" style={{ borderLeftColor: color }}>
@@ -21,7 +41,9 @@ const LevelRow = ({ label, color, d }: { label: string; color: string; d: any })
   return (
     <div className="bg-white rounded-xl p-5 shadow-sm">
       <div className="flex items-center gap-4 mb-3">
-        <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-black" style={{ backgroundColor: color }}>{label}</div>
+        <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-black" style={{ backgroundColor: color }}>
+          {label}
+        </div>
         <div className="flex-1">
           <div className="flex justify-between text-sm mb-1">
             <span className="font-semibold text-[#1A2332]">{d.namaSekolah || `Al Fakhir ${label}`}</span>
@@ -42,11 +64,28 @@ const LevelRow = ({ label, color, d }: { label: string; color: string; d: any })
 };
 
 export default function MasterDashboard() {
+  const [feed, setFeed] = useState<any[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
+
   const { data, isLoading } = useQuery({
     queryKey: ['admin-dashboard-v2'],
     queryFn: () => api.get('/dashboard/admin').then(r => r.data.data),
     refetchInterval: 15000,
   });
+
+  const fetchFeed = async () => {
+    try {
+      const r = await api.get('/audit-log/live?limit=30');
+      setFeed(r.data.data || []);
+    } catch {}
+    setFeedLoading(false);
+  };
+
+  useEffect(() => {
+    fetchFeed();
+    const t = setInterval(fetchFeed, 10000);
+    return () => clearInterval(t);
+  }, []);
 
   const kpi = data?.kpi || {};
   const s = data?.sekolah || {};
@@ -59,29 +98,47 @@ export default function MasterDashboard() {
       <Header title="Master Monitoring" />
       <div className="p-6 space-y-6">
 
-        <div className="bg-[#1A2332] rounded-2xl p-5 flex items-center gap-3">
-          <span className="text-2xl">🔒</span>
-          <div>
-            <p className="font-bold text-white">Master Control Center</p>
-            <p className="text-gray-400 text-xs">Monitoring seluruh jenjang — SD, SMP, SMA</p>
+        {/* Banner tri-color */}
+        <div className="rounded-2xl overflow-hidden shadow-sm">
+          <div className="flex h-3">
+            <div className="flex-1" style={{ backgroundColor: '#F97316' }} />
+            <div className="flex-1" style={{ backgroundColor: '#2563EB' }} />
+            <div className="flex-1" style={{ backgroundColor: '#7C3AED' }} />
+          </div>
+          <div className="bg-[#1A2332] p-5 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex gap-1">
+                <span className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-black" style={{ backgroundColor: '#F97316' }}>SD</span>
+                <span className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-black" style={{ backgroundColor: '#2563EB' }}>SMP</span>
+                <span className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-black" style={{ backgroundColor: '#7C3AED' }}>SMA</span>
+              </div>
+              <div>
+                <p className="font-bold text-white text-lg">Master Control Center</p>
+                <p className="text-gray-400 text-xs">Monitoring seluruh jenjang & aktivitas user secara real-time</p>
+              </div>
+            </div>
+            <a href="/audit-log" className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors">
+              Lihat Semua Log →
+            </a>
           </div>
         </div>
 
-        {isLoading ? <div className="text-center py-20 text-gray-400">Memuat data...</div> : (
+        {isLoading ? <div className="text-center py-10 text-gray-400">Memuat data...</div> : (
           <>
+            {/* KPI */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Total Siswa"    value={kpi.totalSiswa    ?? 0} icon="👨‍🎓" color="#3B7FD1" />
-              <StatCard label="Total Guru"     value={kpi.totalGuru     ?? 0} icon="👨‍🏫" color="#1B8B87" />
-              <StatCard label="Total Kelas"    value={kpi.totalKelas    ?? 0} icon="🏫"  color="#FF8C42" />
+              <StatCard label="Total Siswa"    value={kpi.totalSiswa    ?? 0} icon="👨‍🎓" color="#2563EB" />
+              <StatCard label="Total Guru"     value={kpi.totalGuru     ?? 0} icon="👨‍🏫" color="#F97316" />
+              <StatCard label="Total Kelas"    value={kpi.totalKelas    ?? 0} icon="🏫"  color="#7C3AED" />
               <StatCard label="Hadir Hari Ini" value={kpi.absensiHariIni ?? 0} icon="✅" color="#16A34A" />
             </div>
 
+            {/* Per jenjang */}
             <h2 className="font-bold text-[#1A2332]">Kehadiran Per Jenjang</h2>
-
             <div className="space-y-4">
-              <LevelRow label="SD"  color="#16A34A" d={sd}  />
-              <LevelRow label="SMP" color="#3B7FD1" d={smp} />
-              <LevelRow label="SMA" color="#9333EA" d={sma} />
+              <LevelRow label="SD"  color="#F97316" d={sd}  />
+              <LevelRow label="SMP" color="#2563EB" d={smp} />
+              <LevelRow label="SMA" color="#7C3AED" d={sma} />
             </div>
 
             {(kpi.pendingJurnal ?? 0) > 0 && (
@@ -96,6 +153,72 @@ export default function MasterDashboard() {
             )}
           </>
         )}
+
+        {/* Live Activity Feed */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <h3 className="font-bold text-[#1A2332]">Aktivitas Live</h3>
+              <span className="text-xs text-gray-400">· refresh setiap 10 detik</span>
+            </div>
+            <a href="/audit-log" className="text-xs text-blue-600 hover:underline">Lihat semua →</a>
+          </div>
+
+          {feedLoading ? (
+            <div className="text-center py-10 text-gray-400 text-sm">Memuat aktivitas...</div>
+          ) : feed.length === 0 ? (
+            <div className="text-center py-10 text-gray-400 text-sm">Belum ada aktivitas tercatat</div>
+          ) : (
+            <ul className="divide-y divide-gray-50">
+              {feed.map((log) => (
+                <li key={log.id} className="flex items-start gap-3 px-6 py-3 hover:bg-gray-50 transition-colors">
+                  {/* Role badge */}
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-base flex-shrink-0 mt-0.5"
+                    style={{ backgroundColor: (ROLE_COLOR[log.role] || '#888') + '20' }}
+                  >
+                    {ROLE_ICON[log.role] || '👤'}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm text-[#1A2332] truncate">{log.nama || 'Anonim'}</span>
+                      {log.role && (
+                        <span
+                          className="text-xs px-1.5 py-0.5 rounded font-medium text-white"
+                          style={{ backgroundColor: ROLE_COLOR[log.role] || '#888' }}
+                        >
+                          {log.role}
+                        </span>
+                      )}
+                      {log.school_level && (
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">
+                          {log.school_level}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-sm text-gray-700">{log.action}</span>
+                      {log.table_name && (
+                        <span className="text-xs text-gray-400">· {log.table_name}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-shrink-0 text-right">
+                    <div className="flex items-center gap-1 text-xs text-gray-400 justify-end">
+                      <span>{APP_ICON[log.app_source] || '🌐'}</span>
+                      <span>{log.app_source || 'Web'}</span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5">{timeAgo(log.created_at)}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
       </div>
     </div>
   );

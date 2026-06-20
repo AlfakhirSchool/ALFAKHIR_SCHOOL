@@ -20,6 +20,7 @@ import auditLogRoutes from './routes/auditLog';
 import raporRoutes from './routes/rapor';
 import notifikasiRoutes from './routes/notifikasi';
 import { errorHandler, notFound } from './middleware/errorHandler';
+import { globalAuditLogger } from './middleware/auditLog';
 import logger from './config/logger';
 import { testEmailConnection } from './utils/emailService';
 
@@ -52,6 +53,7 @@ app.use(morgan('combined', {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use(globalAuditLogger as any);
 
 const PREFIX = process.env.API_PREFIX || '/api';
 
