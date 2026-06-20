@@ -35,7 +35,7 @@ export const listUsers = async (req: AuthRequest, res: Response): Promise<void> 
 };
 
 export const getUserDetail = async (req: AuthRequest, res: Response): Promise<void> => {
-  const user = await User.findByPk(req.params.id, { attributes: { exclude: ['password_hash'] } });
+  const user = await User.findByPk(req.params.id as string, { attributes: { exclude: ['password_hash'] } });
   if (!user) { res.status(404).json({ success: false, message: 'User tidak ditemukan' }); return; }
 
   const detail: any = user.toJSON();
@@ -80,7 +80,7 @@ export const resetPassword = async (req: AuthRequest, res: Response): Promise<vo
     return;
   }
 
-  const user = await User.findByPk(req.params.id);
+  const user = await User.findByPk(req.params.id as string);
   if (!user) { res.status(404).json({ success: false, message: 'User tidak ditemukan' }); return; }
 
   const password_hash = await bcrypt.hash(password, 12);
@@ -90,7 +90,7 @@ export const resetPassword = async (req: AuthRequest, res: Response): Promise<vo
 };
 
 export const toggleActive = async (req: AuthRequest, res: Response): Promise<void> => {
-  const user = await User.findByPk(req.params.id);
+  const user = await User.findByPk(req.params.id as string);
   if (!user) { res.status(404).json({ success: false, message: 'User tidak ditemukan' }); return; }
 
   // Jangan nonaktifkan diri sendiri

@@ -44,7 +44,7 @@ router.post('/', authorize('admin'), async (req: AuthRequest, res: Response): Pr
 });
 
 router.put('/:id', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
-  const kelas = await Kelas.findByPk(req.params.id, { include: [{ model: Sekolah, as: 'sekolah' }] });
+  const kelas = await Kelas.findByPk(req.params.id as string, { include: [{ model: Sekolah, as: 'sekolah' }] });
   if (!kelas) { res.status(404).json({ success: false, message: 'Kelas tidak ditemukan' }); return; }
 
   // Cek kepemilikan level
@@ -56,7 +56,7 @@ router.put('/:id', authorize('admin'), async (req: AuthRequest, res: Response): 
 });
 
 router.delete('/:id', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
-  const kelas = await Kelas.findByPk(req.params.id, { include: [{ model: Sekolah, as: 'sekolah' }] });
+  const kelas = await Kelas.findByPk(req.params.id as string, { include: [{ model: Sekolah, as: 'sekolah' }] });
   if (!kelas) { res.status(404).json({ success: false, message: 'Kelas tidak ditemukan' }); return; }
 
   if (req.user?.school_level && (kelas as any).sekolah?.level !== req.user.school_level) {
