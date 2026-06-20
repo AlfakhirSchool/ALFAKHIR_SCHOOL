@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
+const DOMAIN = '@alfakhirschool.sch.id';
+
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuthStore();
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -18,8 +21,10 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
+    const email = username.includes('@') ? username : `${username}${DOMAIN}`;
+
     try {
-      const res = await api.post('/auth/login', form);
+      const res = await api.post('/auth/login', { email, password });
       const { user, accessToken, refreshToken } = res.data.data;
 
       if (!['admin'].includes(user.role)) {
@@ -29,7 +34,6 @@ export default function LoginPage() {
       }
 
       login(user, accessToken, refreshToken);
-      // Redirect berdasarkan school_level
       if (user.school_level === 'SD')  { router.push('/dashboard/sd');  return; }
       if (user.school_level === 'SMP') { router.push('/dashboard/smp'); return; }
       if (user.school_level === 'SMA') { router.push('/dashboard/sma'); return; }
@@ -61,15 +65,26 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              required
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B7FD1] focus:border-transparent"
-              placeholder="admin@alfakhirschool.id"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+            <div className="flex rounded-lg border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#3B7FD1] focus-within:border-transparent">
+              <input
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value.trim())}
+                className="flex-1 px-4 py-3 focus:outline-none text-[#1A2332]"
+                placeholder="nama.admin"
+                autoComplete="username"
+              />
+              <span className="bg-gray-50 border-l border-gray-200 px-3 py-3 text-sm text-gray-400 flex items-center whitespace-nowrap select-none">
+                {DOMAIN}
+              </span>
+            </div>
+            {username && !username.includes('@') && (
+              <p className="text-xs text-gray-400 mt-1">
+                Login sebagai: <span className="font-medium text-[#3B7FD1]">{username}{DOMAIN}</span>
+              </p>
+            )}
           </div>
 
           <div>
@@ -78,10 +93,11 @@ export default function LoginPage() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B7FD1] focus:border-transparent"
                 placeholder="••••••••"
+                autoComplete="current-password"
               />
               <button
                 type="button"
@@ -112,9 +128,7 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-xs text-gray-400">
-            SD/SMP/SMA Islam Modern Al Fakhir
-          </p>
+          <p className="text-xs text-gray-400">SD/SMP/SMA Islam Modern Al Fakhir</p>
         </div>
       </div>
     </div>

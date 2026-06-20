@@ -7,6 +7,8 @@ import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
+const DOMAIN = '@alfakhirschool.sch.id';
+
 const ROLE_COLOR: Record<string, string> = {
   admin: '#F97316', guru: '#2563EB', siswa: '#16A34A', ortu: '#9333EA',
 };
@@ -128,8 +130,10 @@ export default function UsersPage() {
   });
 
   const createMut = useMutation({
-    mutationFn: (form: CreateForm) =>
-      api.post('/users', { ...form, school_level: form.school_level || null }).then(r => r.data),
+    mutationFn: (form: CreateForm) => {
+      const email = form.email.includes('@') ? form.email : `${form.email}${DOMAIN}`;
+      return api.post('/users', { ...form, email, school_level: form.school_level || null }).then(r => r.data);
+    },
     onSuccess: (d) => {
       showFeedback('success', d.message);
       setCreateModal(false);
@@ -324,7 +328,11 @@ export default function UsersPage() {
               <p className="text-sm text-purple-100 mt-0.5">Guru: <strong>{jenjangModal.nama}</strong></p>
             </div>
             <div className="p-6">
-              <p className="text-xs text-gray-500 mb-4">Pilih satu atau lebih jenjang yang diajar guru ini. Pilih semua untuk Guru Gabungan.</p>
+              <p className="text-xs text-gray-500 mb-3">Pilih satu atau lebih jenjang yang diajar guru ini. Pilih semua untuk Guru Gabungan.</p>
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 flex gap-2 text-xs text-green-700">
+                <span className="flex-shrink-0">✅</span>
+                <span>Data nilai, absensi, dan jadwal guru <strong>tidak akan hilang</strong> ketika jenjang diubah. Perubahan ini hanya mengatur di jenjang mana guru terlihat.</span>
+              </div>
 
               {/* Jenjang checkboxes */}
               <div className="space-y-3 mb-5">
@@ -443,10 +451,22 @@ export default function UsersPage() {
                   placeholder="Nama lengkap" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email <span className="text-red-400">*</span></label>
-                <input type="email" value={createForm.email} onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
-                  placeholder="email@alfakhirschool.id" />
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Username <span className="text-red-400">*</span></label>
+                <div className="flex rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#F97316]">
+                  <input
+                    type="text"
+                    value={createForm.email}
+                    onChange={e => setCreateForm(f => ({ ...f, email: e.target.value.trim().replace(/[@\s]/g, '') }))}
+                    className="flex-1 px-4 py-2.5 focus:outline-none text-sm"
+                    placeholder="nama.guru"
+                  />
+                  <span className="bg-gray-50 border-l border-gray-200 px-3 flex items-center text-xs text-gray-400 whitespace-nowrap select-none">
+                    {DOMAIN}
+                  </span>
+                </div>
+                {createForm.email && (
+                  <p className="text-xs text-gray-400 mt-1">Email: <span className="text-[#F97316] font-medium">{createForm.email}{DOMAIN}</span></p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password <span className="text-red-400">*</span></label>

@@ -76,7 +76,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       user = (siswa as any).user ?? null;
     }
   } else {
-    user = await User.findOne({ where: { email, is_active: true } });
+    // Auto-append school domain if user typed username without @
+    const lookupEmail = email && !String(email).includes('@')
+      ? `${email}@alfakhirschool.sch.id`
+      : email;
+    user = await User.findOne({ where: { email: lookupEmail, is_active: true } });
   }
 
   if (!user || !(user as any).is_active) {
