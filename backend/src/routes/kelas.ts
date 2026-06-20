@@ -1,4 +1,6 @@
 import { Router, Response } from 'express';
+import { Op } from 'sequelize';
+import sequelize from '../config/database';
 import { Kelas, Sekolah, Guru, Siswa, User, JadwalPelajaran, MataPelajaran } from '../models';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
 import { getSekolahIdForLevel } from '../utils/levelFilter';
@@ -11,8 +13,19 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   const { sekolah_id, tahun_ajaran } = req.query;
   const where: Record<string, unknown> = {};
 
-  // Level admin hanya lihat kelas sekolahnya
-  if (req.user?.school_level) {
+  if (req.user?.role === 'guru') {
+    // Guru hanya melihat kelas yang menjadi wali kelas atau mengajar via jadwal
+    const guru = await Guru.findOne({ where: { user_id: req.user.id } });
+    if (!guru) { res.json({ success: true, data: [] }); return; }
+
+    where[Op.or as any] = [
+      { wali_kelas_id: guru.id },
+      sequelize.literal(
+        `EXISTS (SELECT 1 FROM jadwal_pelajaran jp WHERE jp.kelas_id = "Kelas"."id" AND jp.guru_id = '${guru.id}')`
+      ),
+    ];
+  } else if (req.user?.school_level) {
+    // Admin jenjang hanya lihat kelas sekolahnya
     const sid = await getSekolahIdForLevel(req.user.school_level);
     where.sekolah_id = sid;
   } else if (sekolah_id) {
