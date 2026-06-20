@@ -2,6 +2,7 @@ import logger from '../config/logger';
 
 const WAHA_URL     = process.env.WAHA_URL     || 'http://waha:3000';
 const WAHA_SESSION = process.env.WAHA_SESSION || 'default';
+const WAHA_API_KEY = process.env.WAHA_API_KEY || 'alfakhir-waha-2025';
 const N8N_WEBHOOK  = process.env.N8N_WEBHOOK_URL || 'http://n8n:5678/webhook';
 const FONNTE_TOKEN = process.env.FONNTE_TOKEN;
 
@@ -25,7 +26,7 @@ export const sendWAMessage = async (noTelp: string, message: string): Promise<vo
     const chatId = `${phone}@c.us`;
     const res = await fetch(`${WAHA_URL}/api/sendText`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Api-Key': WAHA_API_KEY },
       body: JSON.stringify({ chatId, text: message, session: WAHA_SESSION }),
     });
     if (res.ok) {
