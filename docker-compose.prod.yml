@@ -116,6 +116,7 @@ services:
       FRONTEND_ADMIN_URL: ${FRONTEND_ADMIN_URL}
       FRONTEND_GURU_URL: ${FRONTEND_GURU_URL}
       N8N_WEBHOOK_URL: http://n8n:5678/webhook
+      FONNTE_TOKEN: ${FONNTE_TOKEN:-}
       FCM_SERVER_KEY: ${FCM_SERVER_KEY}
       DB_HOST: postgres
       DB_PORT: "5432"
