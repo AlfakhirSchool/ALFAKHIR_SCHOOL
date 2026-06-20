@@ -4,6 +4,7 @@ import { Nilai, Siswa, MataPelajaran, Guru, User, Kelas } from '../models';
 import { hitungNilaiAkhir, hitungGrade } from '../models/Nilai';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { kelasIdFilter } from '../utils/levelFilter';
 
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
   const { siswa_id, mata_pelajaran_id, semester, tahun_ajaran, kuis, tugas, uts, uas, catatan } = req.body;
@@ -111,13 +112,18 @@ export const remove = async (req: AuthRequest, res: Response): Promise<void> => 
 export const getLaporan = async (req: AuthRequest, res: Response): Promise<void> => {
   const { kelas_id, mata_pelajaran_id, semester, tahun_ajaran } = req.query;
 
+  // Filter kelas berdasarkan school_level admin
+  const levelWhere = await kelasIdFilter(req.user?.school_level);
+  const kelasFilter = kelas_id ? { id: kelas_id } : (levelWhere.kelas_id ? { id: levelWhere.kelas_id } : undefined);
+
   const include: any[] = [
     { model: MataPelajaran, as: 'mata_pelajaran' },
     {
       model: Siswa, as: 'siswa',
+      required: !!kelasFilter,
       include: [
         { model: User, as: 'user', attributes: ['nama'] },
-        ...(kelas_id ? [{ model: Kelas, as: 'kelas', where: { id: kelas_id } }] : []),
+        ...(kelasFilter ? [{ model: Kelas, as: 'kelas', where: kelasFilter }] : [{ model: Kelas, as: 'kelas' }]),
       ],
     },
   ];
@@ -127,7 +133,12 @@ export const getLaporan = async (req: AuthRequest, res: Response): Promise<void>
   if (semester) where.semester = semester;
   if (tahun_ajaran) where.tahun_ajaran = tahun_ajaran;
 
-  const nilaiList = await Nilai.findAll({ where, include, order: [['nilai_akhir', 'DESC']] });
+  // Filter siswa_id jika ada levelWhere langsung
+  if (!kelas_id && levelWhere.kelas_id) {
+    const siswaList = await Siswa.findAll({ where: levelWhere, attributes: ['id'] });
+    where.siswa_id = { [Op.in]: siswaList.map((s: any) => s.id) };
+  }
 
+  const nilaiList = await Nilai.findAll({ where, include, order: [['nilai_akhir', 'DESC']] });
   res.json({ success: true, data: nilaiList });
 };

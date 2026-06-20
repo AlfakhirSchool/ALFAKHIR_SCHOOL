@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { JurnalGuru, Guru, Kelas, MataPelajaran, User } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { kelasIdFilter } from '../utils/levelFilter';
 
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
   const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
@@ -45,7 +46,8 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
   const { kelas_id, guru_id, status, start_date, end_date, page = '1', limit = '20' } = req.query;
   const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-  const where: Record<string, unknown> = {};
+  const levelWhere = await kelasIdFilter(req.user?.school_level);
+  const where: Record<string, unknown> = { ...levelWhere };
   if (kelas_id) where.kelas_id = kelas_id;
   if (status) where.status = status;
   if (start_date && end_date) {

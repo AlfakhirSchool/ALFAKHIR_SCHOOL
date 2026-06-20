@@ -4,6 +4,7 @@ import { Pembayaran, PembayaranDetail, Siswa, User } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 import logger from '../config/logger';
+import { kelasIdFilter } from '../utils/levelFilter';
 
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
   const { siswa_id, status, tahun_ajaran, page = '1', limit = '20' } = req.query;
@@ -14,8 +15,11 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
   if (status) where.status = status;
   if (tahun_ajaran) where.tahun_ajaran = tahun_ajaran;
 
-  if (req.user!.role === 'ortu') {
-    // filter hanya anak milik ortu ini - akan di-handle nanti via middleware
+  // Filter by school level — cari siswa_ids yang termasuk level ini
+  if (req.user?.school_level && !siswa_id) {
+    const levelWhere = await kelasIdFilter(req.user.school_level);
+    const siswaList = await Siswa.findAll({ where: levelWhere, attributes: ['id'] });
+    where.siswa_id = { [Op.in]: siswaList.map((s: any) => s.id) };
   }
 
   const { count, rows } = await Pembayaran.findAndCountAll({

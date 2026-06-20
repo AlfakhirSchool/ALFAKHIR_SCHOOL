@@ -4,13 +4,15 @@ import { Op } from 'sequelize';
 import { User, Siswa, Kelas, Sekolah } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { kelasIdFilter } from '../utils/levelFilter';
 
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
   const { kelas_id, tahun_ajaran, search, page = '1', limit = '20' } = req.query;
   const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
-  const where: Record<string, unknown> = {};
-  if (kelas_id) where.kelas_id = kelas_id;
+  const levelWhere = await kelasIdFilter(req.user?.school_level);
+  const where: Record<string, unknown> = { ...levelWhere };
+  if (kelas_id) where.kelas_id = kelas_id; // override jika spesifik
 
   const kelasWhere: Record<string, unknown> = {};
   if (tahun_ajaran) kelasWhere.tahun_ajaran = tahun_ajaran;

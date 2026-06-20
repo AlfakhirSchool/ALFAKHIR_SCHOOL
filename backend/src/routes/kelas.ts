@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { Kelas, Sekolah, Guru, Siswa, User, JadwalPelajaran, MataPelajaran } from '../models';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
-import { createError } from '../middleware/errorHandler';
+import { getSekolahIdForLevel } from '../utils/levelFilter';
 
 const router = Router();
 
@@ -10,7 +10,15 @@ router.use(authenticate);
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   const { sekolah_id, tahun_ajaran } = req.query;
   const where: Record<string, unknown> = {};
-  if (sekolah_id) where.sekolah_id = sekolah_id;
+
+  // Level admin hanya lihat kelas sekolahnya
+  if (req.user?.school_level) {
+    const sid = await getSekolahIdForLevel(req.user.school_level);
+    where.sekolah_id = sid;
+  } else if (sekolah_id) {
+    where.sekolah_id = sekolah_id;
+  }
+
   if (tahun_ajaran) where.tahun_ajaran = tahun_ajaran;
 
   const kelasList = await Kelas.findAll({
@@ -26,8 +34,36 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 router.post('/', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  // Level admin hanya bisa tambah kelas di sekolahnya
+  if (req.user?.school_level) {
+    const sid = await getSekolahIdForLevel(req.user.school_level);
+    req.body.sekolah_id = sid;
+  }
   const kelas = await Kelas.create(req.body);
   res.status(201).json({ success: true, data: kelas });
+});
+
+router.put('/:id', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const kelas = await Kelas.findByPk(req.params.id, { include: [{ model: Sekolah, as: 'sekolah' }] });
+  if (!kelas) { res.status(404).json({ success: false, message: 'Kelas tidak ditemukan' }); return; }
+
+  // Cek kepemilikan level
+  if (req.user?.school_level && (kelas as any).sekolah?.level !== req.user.school_level) {
+    res.status(403).json({ success: false, message: 'Akses ditolak' }); return;
+  }
+  await kelas.update(req.body);
+  res.json({ success: true, data: kelas });
+});
+
+router.delete('/:id', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const kelas = await Kelas.findByPk(req.params.id, { include: [{ model: Sekolah, as: 'sekolah' }] });
+  if (!kelas) { res.status(404).json({ success: false, message: 'Kelas tidak ditemukan' }); return; }
+
+  if (req.user?.school_level && (kelas as any).sekolah?.level !== req.user.school_level) {
+    res.status(403).json({ success: false, message: 'Akses ditolak' }); return;
+  }
+  await kelas.destroy();
+  res.json({ success: true, message: 'Kelas berhasil dihapus' });
 });
 
 router.get('/:id/siswa', async (req: AuthRequest, res: Response): Promise<void> => {

@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { JadwalPelajaran, Guru, Kelas, MataPelajaran, User } from '../models';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { kelasIdFilter } from '../utils/levelFilter';
 
 const router = Router();
 
@@ -9,7 +10,8 @@ router.use(authenticate);
 
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   const { guru_id, kelas_id } = req.query;
-  const where: Record<string, unknown> = {};
+  const levelWhere = await kelasIdFilter(req.user?.school_level);
+  const where: Record<string, unknown> = { ...levelWhere };
   if (guru_id) where.guru_id = guru_id;
   if (kelas_id) where.kelas_id = kelas_id;
 
