@@ -21,7 +21,7 @@ const https = require("https");
 // Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 const BASE_URL   = process.env.BASE_URL || "http://localhost:3001/api";
-const ADMIN_EMAIL    = process.env.ADMIN_EMAIL    || "admin@alfakhirschool.id";
+const ADMIN_EMAIL    = process.env.ADMIN_EMAIL    || "admin@alfakhirschool.sch.id";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin@1234";
 const TIMEOUT_MS = parseInt(process.env.TIMEOUT_MS || "10000", 10);
 

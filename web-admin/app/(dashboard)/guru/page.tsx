@@ -11,6 +11,7 @@ const LEVEL_COLOR: Record<string, string> = {
 };
 
 const LEVELS = ['SD', 'SMP', 'SMA'] as const;
+const DOMAIN = '@alfakhirschool.sch.id';
 
 function LevelBadges({ levels }: { levels: string[] | null }) {
   if (!levels || levels.length === 0) {
@@ -66,8 +67,11 @@ export default function GuruPage() {
     }).then(r => r.data),
   });
 
+  const buildEmail = (username: string) =>
+    username.includes('@') ? username : `${username}${DOMAIN}`;
+
   const createMut = useMutation({
-    mutationFn: (f: GuruForm) => api.post('/guru', f).then(r => r.data),
+    mutationFn: (f: GuruForm) => api.post('/guru', { ...f, email: buildEmail(f.email) }).then(r => r.data),
     onSuccess: (d) => {
       showFeedback('success', d.message);
       setModal(null);
@@ -79,7 +83,7 @@ export default function GuruPage() {
 
   const updateMut = useMutation({
     mutationFn: ({ id, f }: { id: string; f: Partial<GuruForm> }) =>
-      api.put(`/guru/${id}`, f).then(r => r.data),
+      api.put(`/guru/${id}`, { ...f, email: f.email ? buildEmail(f.email) : undefined }).then(r => r.data),
     onSuccess: (d) => {
       showFeedback('success', d.message);
       setModal(null);
@@ -102,7 +106,7 @@ export default function GuruPage() {
     setEditTarget(g);
     setForm({
       nama: g.user?.nama || '',
-      email: g.user?.email || '',
+      email: (g.user?.email || '').replace(/@alfakhirschool(\.sch)?\.id$/, ''),
       password: '',
       nip: g.nip || '',
       spesialisasi: g.spesialisasi || '',
@@ -265,10 +269,22 @@ export default function GuruPage() {
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email <span className="text-red-400">*</span></label>
-                <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
-                  placeholder="guru@alfakhirschool.id" />
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Username <span className="text-red-400">*</span></label>
+                <div className="flex rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#3B7FD1]">
+                  <input
+                    type="text"
+                    value={form.email}
+                    onChange={e => setForm(f => ({ ...f, email: e.target.value.trim().replace(/[@\s]/g, '') }))}
+                    className="flex-1 px-4 py-2.5 focus:outline-none text-sm"
+                    placeholder="nama.guru"
+                  />
+                  <span className="bg-gray-50 border-l border-gray-200 px-3 flex items-center text-xs text-gray-400 whitespace-nowrap select-none">
+                    {DOMAIN}
+                  </span>
+                </div>
+                {form.email && (
+                  <p className="text-xs text-gray-400 mt-1">Email: <span className="text-[#3B7FD1] font-medium">{form.email}{DOMAIN}</span></p>
+                )}
               </div>
 
               {/* Password (hanya saat create) */}

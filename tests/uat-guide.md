@@ -25,10 +25,10 @@ Before starting UAT, verify the following:
 
 | Role        | Email / Username           | Password    |
 |-------------|----------------------------|-------------|
-| Admin       | admin@alfakhirschool.id    | Admin@1234  |
-| Guru        | guru@alfakhirschool.id     | Guru@1234   |
-| Siswa       | siswa@alfakhirschool.id    | Siswa@1234  |
-| Orang Tua   | ortu@alfakhirschool.id     | Ortu@1234   |
+| Admin       | admin@alfakhirschool.sch.id    | Admin@1234  |
+| Guru        | guru@alfakhirschool.sch.id     | Guru@1234   |
+| Siswa       | siswa@alfakhirschool.sch.id    | Siswa@1234  |
+| Orang Tua   | ortu@alfakhirschool.sch.id     | Ortu@1234   |
 
 > **Note:** Change passwords after UAT. Do not use production credentials for testing.
 
@@ -54,7 +54,7 @@ If fail: record the actual result and screenshot.
 ### Scenario A-01 — Login
 
 **Given** the Admin is on the login page at https://admin.alfakhirschool.id  
-**When** they enter `admin@alfakhirschool.id` / `Admin@1234` and click Login  
+**When** they enter `admin@alfakhirschool.sch.id` / `Admin@1234` and click Login  
 **Then** they are redirected to the Admin Dashboard showing statistics
 
 | Check | Expected | Actual | Result |

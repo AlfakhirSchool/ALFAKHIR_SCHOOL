@@ -48,7 +48,7 @@ docker compose -f docker-compose.prod.yml up -d
 bash scripts/health-check.sh
 ```
 
-**Demo credentials:** `admin@alfakhirschool.id` / `Admin@1234`
+**Demo credentials:** `admin@alfakhirschool.sch.id` / `Admin@1234`
 
 ---
 
