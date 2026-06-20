@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
@@ -65,12 +64,10 @@ type CreateForm = { email: string; password: string; nama: string; role: string;
 
 export default function UsersPage() {
   const { user } = useAuthStore();
-  const router = useRouter();
   const qc = useQueryClient();
 
-  useEffect(() => {
-    if (user && user.school_level) router.replace(`/dashboard/${user.school_level.toLowerCase()}`);
-  }, [user, router]);
+  const adminJenjang = user?.school_level ?? null; // null = master admin
+  const isMaster = !adminJenjang;
 
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
@@ -81,7 +78,7 @@ export default function UsersPage() {
   const [showNewPw, setShowNewPw] = useState(false);
 
   const [createModal, setCreateModal] = useState(false);
-  const [createForm, setCreateForm] = useState<CreateForm>({ email: '', password: '', nama: '', role: 'admin', school_level: '' });
+  const [createForm, setCreateForm] = useState<CreateForm>({ email: '', password: '', nama: '', role: 'admin', school_level: adminJenjang || '' });
   const [showCreatePw, setShowCreatePw] = useState(false);
 
   // Modal set jenjang guru
@@ -99,7 +96,6 @@ export default function UsersPage() {
     queryFn: () => api.get('/users', {
       params: { search: search || undefined, role: roleFilter || undefined, page, limit: 30 },
     }).then(r => r.data),
-    enabled: !user?.school_level,
   });
 
   const { data: statsData } = useQuery({
@@ -113,7 +109,6 @@ export default function UsersPage() {
       ]);
       return { admin: a, guru: g, siswa: s, ortu: o };
     },
-    enabled: !user?.school_level,
   });
 
   const resetMut = useMutation({
@@ -137,7 +132,7 @@ export default function UsersPage() {
     onSuccess: (d) => {
       showFeedback('success', d.message);
       setCreateModal(false);
-      setCreateForm({ email: '', password: '', nama: '', role: 'admin', school_level: '' });
+      setCreateForm({ email: '', password: '', nama: '', role: 'admin', school_level: adminJenjang || '' });
       qc.invalidateQueries({ queryKey: ['users'] });
       qc.invalidateQueries({ queryKey: ['users-stats'] });
     },
@@ -163,16 +158,28 @@ export default function UsersPage() {
   const pagination = data?.pagination || {};
   const stats = statsData || { admin: 0, guru: 0, siswa: 0, ortu: 0 };
 
-  if (user?.school_level) return null;
+  const pageTitle = adminJenjang ? `Kelola Akun — ${adminJenjang}` : 'Kelola Akun';
 
   return (
     <div>
-      <Header title="Kelola Akun" />
+      <Header title={pageTitle} />
       <div className="p-6 space-y-6">
 
         {feedback && (
           <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-xl text-white text-sm font-semibold flex items-center gap-2 ${feedback.type === 'success' ? 'bg-green-600' : 'bg-red-500'}`}>
             <span>{feedback.type === 'success' ? '✓' : '✕'}</span> {feedback.msg}
+          </div>
+        )}
+
+        {/* Scope banner untuk jenjang admin */}
+        {adminJenjang && (
+          <div className="rounded-2xl p-4 flex items-center gap-3 text-white"
+            style={{ backgroundColor: LEVEL_COLOR[adminJenjang] }}>
+            <span className="text-2xl">🏫</span>
+            <div>
+              <p className="font-bold text-sm">Mode Admin {adminJenjang}</p>
+              <p className="text-xs opacity-85">Anda hanya melihat dan mengelola akun dalam lingkup {adminJenjang}. Admin Master mengelola semua jenjang.</p>
+            </div>
           </div>
         )}
 
@@ -183,7 +190,7 @@ export default function UsersPage() {
             <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
               <li>Klik <strong>Reset PW</strong> untuk memulihkan password user yang lupa</li>
               <li>Klik <strong>Set Jenjang</strong> (khusus Guru) untuk menentukan di jenjang mana guru mengajar</li>
-              <li>Pilih SD / SMP / SMA atau kombinasi untuk guru gabungan</li>
+              {isMaster && <li>Sebagai Master Admin, Anda dapat mengelola semua jenjang</li>}
             </ul>
           </div>
         </div>
@@ -336,7 +343,7 @@ export default function UsersPage() {
 
               {/* Jenjang checkboxes */}
               <div className="space-y-3 mb-5">
-                {LEVELS.map(level => {
+                {(isMaster ? LEVELS : LEVELS.filter(l => l === adminJenjang)).map(level => {
                   const selected = selectedLevels.includes(level);
                   return (
                     <button key={level} type="button" onClick={() => toggleLevel(level)}
@@ -504,26 +511,36 @@ export default function UsersPage() {
               </div>
               {createForm.role === 'admin' && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Jenjang Admin</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button type="button" onClick={() => setCreateForm(f => ({ ...f, school_level: '' }))}
-                      className={`p-3 rounded-xl border-2 text-left transition-all ${!createForm.school_level ? 'border-gray-600 bg-gray-50' : 'border-gray-100 hover:border-gray-200'}`}>
-                      <p className="font-semibold text-sm">🌐 Master</p>
-                      <p className="text-xs text-gray-400">Akses semua jenjang</p>
-                    </button>
-                    {LEVELS.map(level => (
-                      <button key={level} type="button" onClick={() => setCreateForm(f => ({ ...f, school_level: level }))}
-                        className={`p-3 rounded-xl border-2 text-left transition-all ${createForm.school_level === level ? 'text-white border-transparent' : 'border-gray-100 hover:border-gray-200'}`}
-                        style={createForm.school_level === level ? { backgroundColor: LEVEL_COLOR[level] } : {}}>
-                        <p className="font-semibold text-sm">{level}</p>
-                        <p className={`text-xs ${createForm.school_level === level ? 'text-white/80' : 'text-gray-400'}`}>Hanya {level}</p>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Jenjang Admin
+                    {!isMaster && <span className="ml-2 text-xs font-normal text-gray-400">(dikunci ke {adminJenjang})</span>}
+                  </label>
+                  {isMaster ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button type="button" onClick={() => setCreateForm(f => ({ ...f, school_level: '' }))}
+                        className={`p-3 rounded-xl border-2 text-left transition-all ${!createForm.school_level ? 'border-gray-600 bg-gray-50' : 'border-gray-100 hover:border-gray-200'}`}>
+                        <p className="font-semibold text-sm">🌐 Master</p>
+                        <p className="text-xs text-gray-400">Akses semua jenjang</p>
                       </button>
-                    ))}
-                  </div>
+                      {LEVELS.map(level => (
+                        <button key={level} type="button" onClick={() => setCreateForm(f => ({ ...f, school_level: level }))}
+                          className={`p-3 rounded-xl border-2 text-left transition-all ${createForm.school_level === level ? 'text-white border-transparent' : 'border-gray-100 hover:border-gray-200'}`}
+                          style={createForm.school_level === level ? { backgroundColor: LEVEL_COLOR[level] } : {}}>
+                          <p className="font-semibold text-sm">{level}</p>
+                          <p className={`text-xs ${createForm.school_level === level ? 'text-white/80' : 'text-gray-400'}`}>Hanya {level}</p>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl text-white font-semibold text-sm"
+                      style={{ backgroundColor: LEVEL_COLOR[adminJenjang!] }}>
+                      {adminJenjang} — Admin akan memiliki akses lingkup {adminJenjang} saja
+                    </div>
+                  )}
                 </div>
               )}
               <div className="flex gap-3 pt-2">
-                <button onClick={() => { setCreateModal(false); setCreateForm({ email: '', password: '', nama: '', role: 'admin', school_level: '' }); }}
+                <button onClick={() => { setCreateModal(false); setCreateForm({ email: '', password: '', nama: '', role: 'admin', school_level: adminJenjang || '' }); }}
                   className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50">Batal</button>
                 <button onClick={() => createMut.mutate(createForm)}
                   disabled={!createForm.email || !createForm.password || !createForm.nama || createMut.isPending}

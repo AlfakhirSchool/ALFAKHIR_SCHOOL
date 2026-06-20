@@ -25,11 +25,15 @@ const masterMenu = [
 const levelMenu = (level: string) => [
   { href: `/dashboard/${level.toLowerCase()}`, icon: '📊', label: `Dashboard ${level}` },
   { href: '/siswa', icon: '👨‍🎓', label: 'Siswa' },
+  { href: '/guru', icon: '👨‍🏫', label: 'Guru' },
   { href: '/kelas', icon: '🏫', label: 'Kelas' },
   { href: '/jadwal', icon: '📅', label: 'Jadwal' },
   { href: '/absensi', icon: '✅', label: 'Absensi' },
   { href: '/nilai', icon: '📝', label: 'Nilai' },
+  { href: '/pembayaran', icon: '💰', label: 'Pembayaran' },
   { href: '/laporan', icon: '📄', label: 'Laporan' },
+  { href: '/users', icon: '👥', label: 'Kelola Akun' },
+  { href: '/settings', icon: '⚙️', label: 'Pengaturan' },
 ];
 
 const LEVEL_COLOR: Record<string, string> = {
