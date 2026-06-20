@@ -32,9 +32,9 @@ const levelMenu = (level: string) => [
 ];
 
 const LEVEL_COLOR: Record<string, string> = {
-  SD:  '#16A34A',
-  SMP: '#3B7FD1',
-  SMA: '#9333EA',
+  SD:  '#F97316',
+  SMP: '#2563EB',
+  SMA: '#7C3AED',
 };
 
 export default function Sidebar() {

@@ -8,9 +8,9 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
 const LEVEL_CONFIG = {
-  SD:  { color: '#16A34A', bg: 'bg-green-600',  border: 'border-green-500',  light: 'bg-green-50',   text: 'text-green-700',  fullName: 'Sekolah Dasar',            icon: '🏫' },
-  SMP: { color: '#3B7FD1', bg: 'bg-blue-600',   border: 'border-blue-500',   light: 'bg-blue-50',    text: 'text-blue-700',   fullName: 'Sekolah Menengah Pertama', icon: '🏫' },
-  SMA: { color: '#9333EA', bg: 'bg-purple-600', border: 'border-purple-500', light: 'bg-purple-50',  text: 'text-purple-700', fullName: 'Sekolah Menengah Atas',    icon: '🏫' },
+  SD:  { color: '#F97316', bg: 'bg-orange-500', border: 'border-orange-400', light: 'bg-orange-50',  text: 'text-orange-600', fullName: 'Sekolah Dasar',            icon: '🏫' },
+  SMP: { color: '#2563EB', bg: 'bg-blue-600',   border: 'border-blue-500',   light: 'bg-blue-50',    text: 'text-blue-700',   fullName: 'Sekolah Menengah Pertama', icon: '🏫' },
+  SMA: { color: '#7C3AED', bg: 'bg-purple-700', border: 'border-purple-500', light: 'bg-purple-50',  text: 'text-purple-700', fullName: 'Sekolah Menengah Atas',    icon: '🏫' },
 } as const;
 
 type Level = keyof typeof LEVEL_CONFIG;
