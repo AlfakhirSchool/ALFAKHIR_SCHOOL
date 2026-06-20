@@ -159,6 +159,11 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
     is_active: true,
   });
 
+  // Otomatis buat record guru agar fitur set-jenjang langsung bisa dipakai
+  if (role === 'guru') {
+    await Guru.create({ user_id: user.id, school_levels: [] });
+  }
+
   res.status(201).json({
     success: true,
     message: 'Akun berhasil dibuat',
@@ -208,8 +213,9 @@ export const setGuruJenjang = async (req: AuthRequest, res: Response): Promise<v
     }
   }
 
-  const guru = await Guru.findOne({ where: { user_id: user.id } });
-  if (!guru) { res.status(404).json({ success: false, message: 'Data guru tidak ditemukan' }); return; }
+  // Auto-create guru record jika belum ada (guru dibuat via Kelola Akun)
+  let guru = await Guru.findOne({ where: { user_id: user.id } });
+  if (!guru) { guru = await Guru.create({ user_id: user.id, school_levels: [] }); }
 
   let validLevels = school_levels.filter((l: string) => VALID_JENJANG.includes(l));
 
