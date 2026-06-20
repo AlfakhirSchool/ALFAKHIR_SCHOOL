@@ -7,19 +7,41 @@ exports.studentDashboard = exports.parentDashboard = exports.guruDashboard = exp
 const sequelize_1 = require("sequelize");
 const database_1 = __importDefault(require("../config/database"));
 const models_1 = require("../models");
-const adminDashboard = async (_req, res) => {
-    const [totalSiswa, totalGuru, totalKelas, absensiHariIni, pendingJurnal, tunggakanCount] = await Promise.all([
-        models_1.Siswa.count(),
-        models_1.Guru.count(),
-        models_1.Kelas.count(),
-        models_1.Absensi.count({ where: { tanggal: new Date().toISOString().split('T')[0] } }),
-        models_1.JurnalGuru.count({ where: { status: 'submitted' } }),
-        models_1.Pembayaran.count({ where: { status: { [sequelize_1.Op.in]: ['belum_bayar', 'sebagian'] } } }),
+const getStatsForLevel = async (level) => {
+    const sekolah = await models_1.Sekolah.findOne({ where: { level } });
+    if (!sekolah)
+        return { totalSiswa: 0, totalKelas: 0, absensiHariIni: 0 };
+    const kelasList = await models_1.Kelas.findAll({ where: { sekolah_id: sekolah.id }, attributes: ['id'] });
+    const kelasIds = kelasList.map((k) => k.id);
+    const totalKelas = kelasIds.length;
+    if (totalKelas === 0)
+        return { sekolahId: sekolah.id, namaSekolah: sekolah.nama, totalSiswa: 0, totalKelas: 0, absensiHariIni: 0 };
+    const [totalSiswa, absensiHariIni] = await Promise.all([
+        models_1.Siswa.count({ where: { kelas_id: { [sequelize_1.Op.in]: kelasIds } } }),
+        models_1.Absensi.count({
+            where: { tanggal: new Date().toISOString().split('T')[0] },
+            include: [{ model: models_1.Siswa, as: 'siswa', where: { kelas_id: { [sequelize_1.Op.in]: kelasIds } }, attributes: [] }],
+        }),
     ]);
+    return { sekolahId: sekolah.id, namaSekolah: sekolah.nama, totalSiswa, totalKelas, absensiHariIni };
+};
+const adminDashboard = async (_req, res) => {
+    const today = new Date().toISOString().split('T')[0];
+    const [sd, smp, sma, totalGuru, pendingJurnal] = await Promise.all([
+        getStatsForLevel('SD'),
+        getStatsForLevel('SMP'),
+        getStatsForLevel('SMA'),
+        models_1.Guru.count(),
+        models_1.JurnalGuru.count({ where: { status: 'submitted' } }),
+    ]);
+    const totalSiswa = sd.totalSiswa + smp.totalSiswa + sma.totalSiswa;
+    const totalKelas = sd.totalKelas + smp.totalKelas + sma.totalKelas;
+    const absensiHariIni = sd.absensiHariIni + smp.absensiHariIni + sma.absensiHariIni;
     res.json({
         success: true,
         data: {
-            kpi: { totalSiswa, totalGuru, totalKelas, absensiHariIni, pendingJurnal, tunggakanCount },
+            kpi: { totalSiswa, totalGuru, totalKelas, absensiHariIni, pendingJurnal },
+            sekolah: { sd, smp, sma },
         },
     });
 };
