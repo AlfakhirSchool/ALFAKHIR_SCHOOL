@@ -17,6 +17,7 @@ const masterMenu = [
   { href: '/pembayaran', icon: '💰', label: 'Pembayaran' },
   { href: '/jurnal-guru', icon: '📓', label: 'Jurnal Guru' },
   { href: '/laporan', icon: '📄', label: 'Laporan' },
+  { href: '/users', icon: '👥', label: 'Kelola Akun' },
   { href: '/audit-log', icon: '🔍', label: 'Audit Log' },
   { href: '/settings', icon: '⚙️', label: 'Pengaturan' },
 ];

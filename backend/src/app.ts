@@ -17,6 +17,7 @@ import pembayaranRoutes from './routes/pembayaran';
 import jurnalGuruRoutes from './routes/jurnalGuru';
 import dashboardRoutes from './routes/dashboard';
 import auditLogRoutes from './routes/auditLog';
+import usersRoutes from './routes/users';
 import raporRoutes from './routes/rapor';
 import notifikasiRoutes from './routes/notifikasi';
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -78,6 +79,7 @@ app.use(`${PREFIX}/pembayaran`, pembayaranRoutes);
 app.use(`${PREFIX}/jurnal-guru`, jurnalGuruRoutes);
 app.use(`${PREFIX}/dashboard`, dashboardRoutes);
 app.use(`${PREFIX}/audit-log`, auditLogRoutes);
+app.use(`${PREFIX}/users`, usersRoutes);
 app.use(`${PREFIX}/rapor`, raporRoutes);
 app.use(`${PREFIX}/notifikasi`, notifikasiRoutes);
 
