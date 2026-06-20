@@ -20,6 +20,7 @@ import auditLogRoutes from './routes/auditLog';
 import usersRoutes from './routes/users';
 import raporRoutes from './routes/rapor';
 import notifikasiRoutes from './routes/notifikasi';
+import deleteRequestsRoutes from './routes/deleteRequests';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { globalAuditLogger } from './middleware/auditLog';
 import logger from './config/logger';
@@ -82,6 +83,7 @@ app.use(`${PREFIX}/audit-log`, auditLogRoutes);
 app.use(`${PREFIX}/users`, usersRoutes);
 app.use(`${PREFIX}/rapor`, raporRoutes);
 app.use(`${PREFIX}/notifikasi`, notifikasiRoutes);
+app.use(`${PREFIX}/delete-requests`, deleteRequestsRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

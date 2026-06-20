@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 
@@ -63,7 +63,15 @@ const LevelRow = ({ label, color, d }: { label: string; color: string; d: any })
   );
 };
 
+function timeAgoShort(dateStr: string) {
+  const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m lalu`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}j lalu`;
+  return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+}
+
 export default function MasterDashboard() {
+  const qc = useQueryClient();
   const [feed, setFeed] = useState<any[]>([]);
   const [feedLoading, setFeedLoading] = useState(true);
 
@@ -71,6 +79,22 @@ export default function MasterDashboard() {
     queryKey: ['admin-dashboard-v2'],
     queryFn: () => api.get('/dashboard/admin').then(r => r.data.data),
     refetchInterval: 15000,
+  });
+
+  const { data: deleteReqs, refetch: refetchDR } = useQuery({
+    queryKey: ['delete-requests-pending'],
+    queryFn: () => api.get('/delete-requests?status=pending').then(r => r.data.data || []),
+    refetchInterval: 30000,
+  });
+
+  const approveDR = useMutation({
+    mutationFn: (id: string) => api.put(`/delete-requests/${id}/approve`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['delete-requests-pending'] }); qc.invalidateQueries({ queryKey: ['kelas-admin'] }); },
+  });
+
+  const rejectDR = useMutation({
+    mutationFn: (id: string) => api.put(`/delete-requests/${id}/reject`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['delete-requests-pending'] }),
   });
 
   const fetchFeed = async () => {
@@ -149,6 +173,45 @@ export default function MasterDashboard() {
                   <p className="text-sm text-yellow-600">{kpi.pendingJurnal} jurnal menunggu review</p>
                 </div>
                 <a href="/jurnal-guru" className="ml-auto px-3 py-1.5 bg-yellow-500 text-white rounded-lg text-sm font-medium">Review</a>
+              </div>
+            )}
+
+            {/* Permintaan Hapus Data */}
+            {(deleteReqs || []).length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-red-100">
+                <div className="px-6 py-4 border-b border-red-100 flex items-center gap-3 bg-red-50">
+                  <span className="text-2xl">🔒</span>
+                  <div className="flex-1">
+                    <p className="font-bold text-red-800">Permintaan Hapus Data</p>
+                    <p className="text-sm text-red-600">{(deleteReqs || []).length} permintaan menunggu verifikasi Feri</p>
+                  </div>
+                </div>
+                <ul className="divide-y divide-gray-50">
+                  {(deleteReqs || []).map((dr: any) => (
+                    <li key={dr.id} className="px-6 py-4 flex items-start gap-4">
+                      <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center text-red-500 text-lg flex-shrink-0">🗑️</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-[#1A2332] text-sm">{dr.resource_name}</p>
+                        <p className="text-xs text-gray-500">
+                          Diminta oleh <strong>{dr.requester_nama}</strong>
+                          {dr.requester_jenjang && <span className="ml-1 px-1.5 py-0.5 bg-gray-100 rounded text-gray-600">{dr.requester_jenjang}</span>}
+                          <span className="ml-2 text-gray-400">{timeAgoShort(dr.created_at)}</span>
+                        </p>
+                        {dr.reason && <p className="text-xs text-gray-400 mt-0.5 italic">"{dr.reason}"</p>}
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button onClick={() => approveDR.mutate(dr.id)} disabled={approveDR.isPending}
+                          className="px-3 py-1.5 bg-red-600 text-white text-xs rounded-lg font-medium hover:bg-red-700 disabled:opacity-50">
+                          ✓ Setujui Hapus
+                        </button>
+                        <button onClick={() => rejectDR.mutate(dr.id)} disabled={rejectDR.isPending}
+                          className="px-3 py-1.5 border border-gray-200 text-gray-600 text-xs rounded-lg hover:bg-gray-50 disabled:opacity-50">
+                          ✕ Tolak
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </>
