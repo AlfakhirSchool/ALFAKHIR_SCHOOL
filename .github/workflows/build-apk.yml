@@ -35,12 +35,24 @@ jobs:
         working-directory: siswa_app
         run: flutter create . --platforms android
 
-      - name: Fix Kotlin version
+      - name: Fix Android versions
         working-directory: siswa_app
         run: |
-          sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "1.9.22"/' android/settings.gradle || true
-          sed -i "s/id 'org.jetbrains.kotlin.android' version '[^']*'/id 'org.jetbrains.kotlin.android' version '1.9.22'/" android/settings.gradle || true
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.22"/' android/build.gradle || true
+          # AGP → 8.11.1
+          sed -i 's/id "com.android.application" version "[^"]*"/id "com.android.application" version "8.11.1"/' android/settings.gradle || true
+          sed -i "s/id 'com.android.application' version '[^']*'/id 'com.android.application' version '8.11.1'/" android/settings.gradle || true
+          # Kotlin → 2.2.20
+          sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "2.2.20"/' android/settings.gradle || true
+          sed -i "s/id 'org.jetbrains.kotlin.android' version '[^']*'/id 'org.jetbrains.kotlin.android' version '2.2.20'/" android/settings.gradle || true
+          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "2.2.20"/' android/build.gradle || true
+          # Gradle wrapper → 8.14.1
+          sed -i 's|distributionUrl=.*|distributionUrl=https\\://services.gradle.org/distributions/gradle-8.14.1-bin.zip|' android/gradle/wrapper/gradle-wrapper.properties || true
+          # NDK → 28.2.13676358
+          sed -i 's/ndkVersion = "[^"]*"/ndkVersion = "28.2.13676358"/' android/app/build.gradle.kts || true
+          sed -i 's/ndkVersion = flutter\.ndkVersion/ndkVersion = "28.2.13676358"/' android/app/build.gradle.kts || true
+          # compileSdk → 36
+          sed -i 's/compileSdk = flutter\.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts || true
+          sed -i 's/compileSdk = [0-9][0-9]*/compileSdk = 36/' android/app/build.gradle.kts || true
 
       - name: Create asset dirs
         working-directory: siswa_app
@@ -93,12 +105,24 @@ jobs:
         working-directory: orang_tua_app
         run: flutter create . --platforms android
 
-      - name: Fix Kotlin version
+      - name: Fix Android versions
         working-directory: orang_tua_app
         run: |
-          sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "1.9.22"/' android/settings.gradle || true
-          sed -i "s/id 'org.jetbrains.kotlin.android' version '[^']*'/id 'org.jetbrains.kotlin.android' version '1.9.22'/" android/settings.gradle || true
-          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.22"/' android/build.gradle || true
+          # AGP → 8.11.1
+          sed -i 's/id "com.android.application" version "[^"]*"/id "com.android.application" version "8.11.1"/' android/settings.gradle || true
+          sed -i "s/id 'com.android.application' version '[^']*'/id 'com.android.application' version '8.11.1'/" android/settings.gradle || true
+          # Kotlin → 2.2.20
+          sed -i 's/id "org.jetbrains.kotlin.android" version "[^"]*"/id "org.jetbrains.kotlin.android" version "2.2.20"/' android/settings.gradle || true
+          sed -i "s/id 'org.jetbrains.kotlin.android' version '[^']*'/id 'org.jetbrains.kotlin.android' version '2.2.20'/" android/settings.gradle || true
+          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "2.2.20"/' android/build.gradle || true
+          # Gradle wrapper → 8.14.1
+          sed -i 's|distributionUrl=.*|distributionUrl=https\\://services.gradle.org/distributions/gradle-8.14.1-bin.zip|' android/gradle/wrapper/gradle-wrapper.properties || true
+          # NDK → 28.2.13676358
+          sed -i 's/ndkVersion = "[^"]*"/ndkVersion = "28.2.13676358"/' android/app/build.gradle.kts || true
+          sed -i 's/ndkVersion = flutter\.ndkVersion/ndkVersion = "28.2.13676358"/' android/app/build.gradle.kts || true
+          # compileSdk → 36
+          sed -i 's/compileSdk = flutter\.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts || true
+          sed -i 's/compileSdk = [0-9][0-9]*/compileSdk = 36/' android/app/build.gradle.kts || true
 
       - name: Create asset dirs
         working-directory: orang_tua_app
