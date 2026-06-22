@@ -203,7 +203,7 @@ export const getLaporan = async (req: AuthRequest, res: Response): Promise<void>
 };
 
 export const remove = async (req: AuthRequest, res: Response): Promise<void> => {
-  const record = await Absensi.findByPk(req.params.id);
+  const record = await Absensi.findByPk(req.params.id as string);
   if (!record) throw createError('Data absensi tidak ditemukan', 404);
   await record.destroy();
   res.json({ success: true, message: 'Data absensi berhasil dihapus' });
