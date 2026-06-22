@@ -54,6 +54,8 @@ export default function GuruPage() {
   const [editTarget, setEditTarget] = useState<any>(null);
   const [form, setForm] = useState<GuruForm>(emptyForm);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [hapusId, setHapusId] = useState<string | null>(null);
+  const [hapusNama, setHapusNama] = useState<string>('');
 
   const showFeedback = (type: 'success' | 'error', msg: string) => {
     setFeedback({ type, msg });
@@ -91,6 +93,16 @@ export default function GuruPage() {
       qc.invalidateQueries({ queryKey: ['guru'] });
     },
     onError: (e: any) => showFeedback('error', e.response?.data?.message || 'Gagal memperbarui guru'),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => api.delete(`/guru/${id}`).then(r => r.data),
+    onSuccess: (d) => {
+      showFeedback('success', d.message || 'Guru berhasil dihapus');
+      setHapusId(null);
+      qc.invalidateQueries({ queryKey: ['guru'] });
+    },
+    onError: (e: any) => showFeedback('error', e.response?.data?.message || 'Gagal menghapus guru'),
   });
 
   const toggleLevel = (level: string) => {
@@ -225,6 +237,12 @@ export default function GuruPage() {
                       >
                         ✏️ Edit
                       </button>
+                      <button
+                        onClick={() => { setHapusId(g.id); setHapusNama(g.user?.nama || ''); }}
+                        className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors"
+                      >
+                        🗑️ Hapus
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -246,6 +264,32 @@ export default function GuruPage() {
           )}
         </div>
       </div>
+
+      {/* Konfirmasi Hapus */}
+      {hapusId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+            <div className="text-center mb-4">
+              <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-2xl">🗑️</span>
+              </div>
+              <h3 className="font-bold text-gray-800 text-lg">Hapus Guru?</h3>
+              <p className="text-sm text-gray-500 mt-1 font-semibold">{hapusNama}</p>
+              <p className="text-xs text-red-500 mt-2">Akun login guru ini juga akan dihapus permanen.</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setHapusId(null)}
+                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50">
+                Batal
+              </button>
+              <button onClick={() => deleteMut.mutate(hapusId)} disabled={deleteMut.isPending}
+                className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 disabled:opacity-50">
+                {deleteMut.isPending ? 'Menghapus...' : 'Ya, Hapus'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ===== MODAL: Tambah / Edit Guru ===== */}
       {modal && (

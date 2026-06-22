@@ -149,6 +149,26 @@ router.post('/pulang', authorize('admin'), async (req: AuthRequest, res: Respons
   });
 });
 
+// Lookup siswa by ID or NISN/NIS (untuk QR scan dan input kode)
+router.get('/siswa-by-code', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const { code } = req.query;
+  if (!code) { res.status(400).json({ success: false, message: 'code wajib diisi' }); return; }
+
+  const rows = await sequelize.query<any>(
+    `SELECT s.id, u.nama, s.nisn, s.nis, k.nama AS nama_kelas, sch.nama AS nama_sekolah, sch.level
+     FROM siswa s
+     JOIN users u ON s.user_id = u.id
+     JOIN kelas k ON s.kelas_id = k.id
+     JOIN sekolah sch ON k.sekolah_id = sch.id
+     WHERE s.id = :code OR s.nisn = :code OR s.nis = :code
+     LIMIT 1`,
+    { replacements: { code: String(code) }, type: QueryTypes.SELECT }
+  );
+
+  if (rows.length === 0) { res.status(404).json({ success: false, message: 'Siswa tidak ditemukan' }); return; }
+  res.json({ success: true, data: rows[0] });
+});
+
 // Cari siswa untuk autocomplete
 router.get('/cari-siswa', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
   const { q, sekolah_id } = req.query;

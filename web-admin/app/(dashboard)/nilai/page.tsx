@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 
 export default function NilaiAdminPage() {
+  const qc = useQueryClient();
   const [filter, setFilter] = useState({ kelas_id: '', mata_pelajaran_id: '', semester: '', tahun_ajaran: '' });
+  const [hapusId, setHapusId] = useState<string | null>(null);
+  const [hapusInfo, setHapusInfo] = useState<string>('');
 
   const { data: kelasList } = useQuery({ queryKey: ['kelas-all'], queryFn: () => api.get('/kelas').then(r => r.data.data || []) });
   const { data: mapelList } = useQuery({ queryKey: ['mapel-all'], queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []) });
@@ -21,6 +24,11 @@ export default function NilaiAdminPage() {
         tahun_ajaran: filter.tahun_ajaran || undefined,
       }
     }).then(r => r.data),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => api.delete(`/nilai/${id}`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['nilai-laporan'] }); setHapusId(null); },
   });
 
   const nilaiList = data?.data || [];
@@ -94,13 +102,14 @@ export default function NilaiAdminPage() {
                 <th className="text-center px-4 py-4 font-semibold text-gray-700">Nilai Akhir</th>
                 <th className="text-center px-4 py-4 font-semibold text-gray-700">Grade</th>
                 <th className="text-left px-4 py-4 font-semibold text-gray-700">Predikat</th>
+                <th className="px-4 py-4" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
-                <tr><td colSpan={10} className="text-center py-12 text-gray-400">Memuat...</td></tr>
+                <tr><td colSpan={11} className="text-center py-12 text-gray-400">Memuat...</td></tr>
               ) : nilaiList.length === 0 ? (
-                <tr><td colSpan={10} className="text-center py-12 text-gray-400">Tidak ada data nilai</td></tr>
+                <tr><td colSpan={11} className="text-center py-12 text-gray-400">Tidak ada data nilai</td></tr>
               ) : nilaiList.map((n: any) => (
                 <tr key={n.id} className="hover:bg-gray-50/50">
                   <td className="px-6 py-4 font-medium text-gray-800">{n.siswa?.user?.nama}</td>
@@ -115,12 +124,46 @@ export default function NilaiAdminPage() {
                     <span className={`px-2 py-1 rounded text-xs font-bold ${gradeColor[n.grade] || 'bg-gray-50 text-gray-600'}`}>{n.grade}</span>
                   </td>
                   <td className="px-4 py-4 text-gray-500 text-xs">{n.predikat}</td>
+                  <td className="px-4 py-4">
+                    <button
+                      onClick={() => { setHapusId(n.id); setHapusInfo(`${n.siswa?.user?.nama} — ${n.mataPelajaran?.nama}`); }}
+                      className="px-2 py-1 bg-red-50 text-red-600 hover:bg-red-100 rounded text-xs font-medium"
+                    >
+                      Hapus
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Konfirmasi Hapus */}
+      {hapusId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+            <div className="text-center mb-4">
+              <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-2xl">🗑️</span>
+              </div>
+              <h3 className="font-bold text-gray-800 text-lg">Hapus Data Nilai?</h3>
+              <p className="text-sm text-gray-500 mt-1">{hapusInfo}</p>
+              <p className="text-xs text-red-500 mt-2">Data yang dihapus tidak bisa dikembalikan.</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setHapusId(null)}
+                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50">
+                Batal
+              </button>
+              <button onClick={() => deleteMut.mutate(hapusId)} disabled={deleteMut.isPending}
+                className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 disabled:opacity-50">
+                {deleteMut.isPending ? 'Menghapus...' : 'Ya, Hapus'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

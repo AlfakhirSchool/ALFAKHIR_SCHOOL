@@ -202,6 +202,13 @@ export const getLaporan = async (req: AuthRequest, res: Response): Promise<void>
   res.json({ success: true, data: absensiList, summary });
 };
 
+export const remove = async (req: AuthRequest, res: Response): Promise<void> => {
+  const record = await Absensi.findByPk(req.params.id);
+  if (!record) throw createError('Data absensi tidak ditemukan', 404);
+  await record.destroy();
+  res.json({ success: true, message: 'Data absensi berhasil dihapus' });
+};
+
 export const getSiswaDetail = async (req: AuthRequest, res: Response): Promise<void> => {
   const { bulan, tahun } = req.query;
   const where: Record<string, unknown> = { siswa_id: req.params.siswa_id as string };

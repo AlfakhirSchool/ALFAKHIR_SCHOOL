@@ -12,6 +12,7 @@ router.post('/scan-qr', authorize('siswa', 'guru', 'admin'), absensiController.s
 router.post('/input-code', authorize('siswa', 'guru', 'admin'), absensiController.inputCode);
 router.post('/manual', authorize('guru', 'admin'), absensiController.manualInput);
 router.put('/:id', authorize('guru', 'admin'), absensiController.update);
+router.delete('/:id', authorize('admin'), absensiController.remove);
 router.get('/laporan', authorize('admin', 'guru'), absensiController.getLaporan);
 router.get('/:siswa_id/detail', authorize('admin', 'guru', 'siswa', 'ortu'), absensiController.getSiswaDetail);
 

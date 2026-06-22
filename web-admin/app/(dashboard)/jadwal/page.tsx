@@ -15,6 +15,8 @@ export default function JadwalPage() {
     kelas_id: '', guru_id: '', mata_pelajaran_id: '',
     hari: 'Senin', jam_mulai: '07:00', jam_selesai: '08:30', ruangan: ''
   });
+  const [hapusId, setHapusId] = useState<string | null>(null);
+  const [hapusInfo, setHapusInfo] = useState<string>('');
 
   const { data: kelasList } = useQuery({ queryKey: ['kelas-all'], queryFn: () => api.get('/kelas').then(r => r.data.data || []) });
   const { data: guruList } = useQuery({ queryKey: ['guru-all'], queryFn: () => api.get('/guru').then(r => r.data.data || []) });
@@ -28,6 +30,11 @@ export default function JadwalPage() {
   const addJadwal = useMutation({
     mutationFn: () => api.post('/jadwal-pelajaran', form),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['jadwal-admin'] }); setShowForm(false); },
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => api.delete(`/jadwal-pelajaran/${id}`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['jadwal-admin'] }); setHapusId(null); },
   });
 
   const byDay = DAYS.reduce((acc, day) => {
@@ -124,7 +131,12 @@ export default function JadwalPage() {
                           <td className="px-6 py-3 text-gray-500">{j.guru?.user?.nama}</td>
                           <td className="px-6 py-3 text-gray-400">Ruang {j.ruangan}</td>
                           <td className="px-6 py-3">
-                            <button className="text-[#3B7FD1] hover:underline text-xs">Edit</button>
+                            <div className="flex gap-2">
+                              <button className="text-[#3B7FD1] hover:underline text-xs">Edit</button>
+                              <button
+                                onClick={() => { setHapusId(j.id); setHapusInfo(`${j.mataPelajaran?.nama} — ${j.kelas?.nama} (${j.hari} ${j.jam_mulai})`); }}
+                                className="text-red-500 hover:underline text-xs">Hapus</button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -141,6 +153,32 @@ export default function JadwalPage() {
           </div>
         )}
       </div>
+
+      {/* Konfirmasi Hapus */}
+      {hapusId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+            <div className="text-center mb-4">
+              <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-2xl">🗑️</span>
+              </div>
+              <h3 className="font-bold text-gray-800 text-lg">Hapus Jadwal?</h3>
+              <p className="text-sm text-gray-500 mt-1">{hapusInfo}</p>
+              <p className="text-xs text-red-500 mt-2">Data yang dihapus tidak bisa dikembalikan.</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setHapusId(null)}
+                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50">
+                Batal
+              </button>
+              <button onClick={() => deleteMut.mutate(hapusId)} disabled={deleteMut.isPending}
+                className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 disabled:opacity-50">
+                {deleteMut.isPending ? 'Menghapus...' : 'Ya, Hapus'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

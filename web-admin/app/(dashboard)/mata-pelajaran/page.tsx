@@ -10,6 +10,8 @@ export default function MataPelajaranPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ nama: '', kode: '', kkm: '75' });
   const [editId, setEditId] = useState<string | null>(null);
+  const [hapusId, setHapusId] = useState<string | null>(null);
+  const [hapusNama, setHapusNama] = useState<string>('');
 
   const { data: mapelList, isLoading } = useQuery({
     queryKey: ['mata-pelajaran'],
@@ -26,6 +28,11 @@ export default function MataPelajaranPage() {
       setForm({ nama: '', kode: '', kkm: '75' });
       setEditId(null);
     },
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => api.delete(`/mata-pelajaran/${id}`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['mata-pelajaran'] }); setHapusId(null); },
   });
 
   const openEdit = (m: any) => {
@@ -101,7 +108,11 @@ export default function MataPelajaranPage() {
                     <span className="text-gray-400 text-xs ml-1">(min lulus)</span>
                   </td>
                   <td className="px-6 py-4">
-                    <button onClick={() => openEdit(m)} className="text-[#3B7FD1] hover:underline text-xs mr-2">Edit</button>
+                    <div className="flex gap-3">
+                      <button onClick={() => openEdit(m)} className="text-[#3B7FD1] hover:underline text-xs">Edit</button>
+                      <button onClick={() => { setHapusId(m.id); setHapusNama(m.nama); }}
+                        className="text-red-500 hover:underline text-xs">Hapus</button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -109,6 +120,31 @@ export default function MataPelajaranPage() {
           </table>
         </div>
       </div>
+
+      {hapusId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+            <div className="text-center mb-4">
+              <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-2xl">🗑️</span>
+              </div>
+              <h3 className="font-bold text-gray-800 text-lg">Hapus Mata Pelajaran?</h3>
+              <p className="text-sm text-gray-500 mt-1 font-semibold">{hapusNama}</p>
+              <p className="text-xs text-red-500 mt-2">Semua data nilai yang terkait juga akan terpengaruh.</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setHapusId(null)}
+                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50">
+                Batal
+              </button>
+              <button onClick={() => deleteMut.mutate(hapusId)} disabled={deleteMut.isPending}
+                className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 disabled:opacity-50">
+                {deleteMut.isPending ? 'Menghapus...' : 'Ya, Hapus'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

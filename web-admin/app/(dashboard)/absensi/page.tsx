@@ -1,15 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 
 export default function AbsensiAdminPage() {
-  const [filter, setFilter] = useState({
-    kelas_id: '', tanggal_awal: '', tanggal_akhir: '', status: ''
-  });
+  const qc = useQueryClient();
+  const [filter, setFilter] = useState({ kelas_id: '', tanggal_awal: '', tanggal_akhir: '', status: '' });
   const [page, setPage] = useState(1);
+  const [hapusId, setHapusId] = useState<string | null>(null);
+  const [hapusInfo, setHapusInfo] = useState<string>('');
 
   const { data: kelasList } = useQuery({
     queryKey: ['kelas-all'],
@@ -21,6 +22,11 @@ export default function AbsensiAdminPage() {
     queryFn: () => api.get('/absensi/laporan', {
       params: { ...filter, page, limit: 30, kelas_id: filter.kelas_id || undefined, status: filter.status || undefined }
     }).then(r => r.data),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => api.delete(`/absensi/${id}`),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['absensi-laporan'] }); setHapusId(null); },
   });
 
   const absensiList = data?.data || [];
@@ -84,13 +90,14 @@ export default function AbsensiAdminPage() {
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Jam Hadir</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Status</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Metode</th>
+                <th className="px-4 py-4" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
-                <tr><td colSpan={7} className="text-center py-12 text-gray-400">Memuat...</td></tr>
+                <tr><td colSpan={8} className="text-center py-12 text-gray-400">Memuat...</td></tr>
               ) : absensiList.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 text-gray-400">Tidak ada data absensi</td></tr>
+                <tr><td colSpan={8} className="text-center py-12 text-gray-400">Tidak ada data absensi</td></tr>
               ) : absensiList.map((a: any) => (
                 <tr key={a.id} className="hover:bg-gray-50/50">
                   <td className="px-6 py-4 font-medium text-gray-800">{a.siswa?.user?.nama}</td>
@@ -109,12 +116,46 @@ export default function AbsensiAdminPage() {
                   <td className="px-6 py-4 text-gray-400 text-xs">
                     {a.qr_code_scanned ? 'QR Scan' : a.input_code ? 'Kode Manual' : 'Manual'}
                   </td>
+                  <td className="px-4 py-4">
+                    <button
+                      onClick={() => { setHapusId(a.id); setHapusInfo(`${a.siswa?.user?.nama} — ${new Date(a.tanggal).toLocaleDateString('id-ID')}`); }}
+                      className="px-2 py-1 bg-red-50 text-red-600 hover:bg-red-100 rounded text-xs font-medium"
+                    >
+                      Hapus
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Konfirmasi Hapus */}
+      {hapusId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+            <div className="text-center mb-4">
+              <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-2xl">🗑️</span>
+              </div>
+              <h3 className="font-bold text-gray-800 text-lg">Hapus Data Absensi?</h3>
+              <p className="text-sm text-gray-500 mt-1">{hapusInfo}</p>
+              <p className="text-xs text-red-500 mt-2">Data yang dihapus tidak bisa dikembalikan.</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setHapusId(null)}
+                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50">
+                Batal
+              </button>
+              <button onClick={() => deleteMut.mutate(hapusId)} disabled={deleteMut.isPending}
+                className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 disabled:opacity-50">
+                {deleteMut.isPending ? 'Menghapus...' : 'Ya, Hapus'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
