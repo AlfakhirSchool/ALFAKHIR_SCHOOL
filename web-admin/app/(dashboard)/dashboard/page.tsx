@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
 import api from '@/lib/api';
 import Header from '@/components/layout/Header';
 
@@ -16,7 +17,7 @@ const SCHOOLS = [
     light: 'bg-green-50',
     border: 'border-green-400',
     text: 'text-green-700',
-    icon: '🏫',
+    logo: '/logo-sd.png',
     href: '/dashboard/sd',
   },
   {
@@ -24,12 +25,12 @@ const SCHOOLS = [
     label: 'SMP',
     fullName: 'Sekolah Menengah Pertama',
     desc: 'Kelola siswa, kelas, absensi, dan nilai jenjang SMP',
-    color: '#3B7FD1',
-    gradient: 'from-blue-500 to-blue-700',
-    light: 'bg-blue-50',
-    border: 'border-blue-400',
-    text: 'text-blue-700',
-    icon: '🏫',
+    color: '#1B8B87',
+    gradient: 'from-teal-500 to-teal-700',
+    light: 'bg-teal-50',
+    border: 'border-teal-400',
+    text: 'text-teal-700',
+    logo: '/logo-smp.png',
     href: '/dashboard/smp',
   },
   {
@@ -37,12 +38,12 @@ const SCHOOLS = [
     label: 'SMA',
     fullName: 'Sekolah Menengah Atas',
     desc: 'Kelola siswa, kelas, absensi, dan nilai jenjang SMA',
-    color: '#9333EA',
-    gradient: 'from-purple-500 to-purple-700',
-    light: 'bg-purple-50',
-    border: 'border-purple-400',
-    text: 'text-purple-700',
-    icon: '🏫',
+    color: '#3B7FD1',
+    gradient: 'from-blue-500 to-blue-700',
+    light: 'bg-blue-50',
+    border: 'border-blue-400',
+    text: 'text-blue-700',
+    logo: '/logo-sma.png',
     href: '/dashboard/sma',
   },
 ] as const;
@@ -81,8 +82,8 @@ export default function DashboardSelectPage() {
               >
                 {/* Banner warna */}
                 <div className={`bg-gradient-to-br ${s.gradient} p-8 flex flex-col items-center text-white`}>
-                  <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mb-3">
-                    <span className="text-4xl font-black">{s.label}</span>
+                  <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mb-3 shadow-md p-1.5">
+                    <Image src={s.logo} alt={`Logo ${s.label}`} width={72} height={72} className="object-contain w-full h-full" />
                   </div>
                   <h2 className="text-xl font-bold text-center">{s.fullName}</h2>
                 </div>
