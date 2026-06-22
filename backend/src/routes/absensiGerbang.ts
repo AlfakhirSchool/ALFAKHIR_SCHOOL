@@ -292,7 +292,7 @@ router.post('/scan', authenticate, async (req: AuthRequest, res: Response): Prom
      VALUES (:sid, :skolahId, :today, :now, :uid)
      ON CONFLICT (siswa_id, tanggal)
      DO UPDATE SET ${columnSet}`,
-    { replacements: { sid: siswa_id, skolahId: siswaRow.sekolah_id, today, now, uid: siswa_id }, type: QueryTypes.INSERT }
+    { replacements: { sid: siswa_id, skolahId: siswaRow.sekolah_id, today, now, uid: req.user!.id }, type: QueryTypes.INSERT }
   );
 
   // Kirim notif WA

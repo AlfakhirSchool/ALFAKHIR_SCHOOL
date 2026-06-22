@@ -97,7 +97,7 @@ export const scanQr = async (req: AuthRequest, res: Response): Promise<void> => 
       `INSERT INTO absensi_gerbang (siswa_id, sekolah_id, tanggal, ${col}, created_by)
        VALUES (:sid, :skId, :today, :now, :uid)
        ON CONFLICT (siswa_id, tanggal) DO UPDATE SET ${upd}`,
-      { replacements: { sid: siswa_id, skId: siswaRow.sekolah_id, today, now, uid: siswa_id }, type: QueryTypes.INSERT }
+      { replacements: { sid: siswa_id, skId: siswaRow.sekolah_id, today, now, uid: req.user!.id }, type: QueryTypes.INSERT }
     );
     const phones: string[] = siswaRow.ortu_phones || [];
     const msg = gateMode === 'masuk'
