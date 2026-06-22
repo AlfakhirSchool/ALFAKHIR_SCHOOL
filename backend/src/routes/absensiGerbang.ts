@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import { QueryTypes } from 'sequelize';
+import crypto from 'crypto';
 import sequelize from '../config/database';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
 import { sendWAMessage, buildMasukMessage, buildPulangMessage } from '../utils/waNotification';
@@ -190,6 +191,127 @@ router.get('/cari-siswa', authorize('admin'), async (req: AuthRequest, res: Resp
   );
 
   res.json({ success: true, data: rows });
+});
+
+// Generate token harian untuk QR gerbang
+const getGateToken = (mode: string, date: string) => {
+  const secret = process.env.GATE_SECRET || 'alfakhir_gate_2025';
+  const hash = crypto.createHash('sha256').update(`${date}:${mode}:${secret}`).digest('hex');
+  const code = String(parseInt(hash.slice(0, 8), 16) % 1000000).padStart(6, '0');
+  const qr_data = `GATE:${mode}:${date}:${code}`;
+  return { code, qr_data };
+};
+
+// Admin: ambil token QR harian untuk ditampilkan ke siswa
+router.get('/daily-token', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const today = new Date().toISOString().split('T')[0];
+  const masuk = getGateToken('masuk', today);
+  const pulang = getGateToken('pulang', today);
+  res.json({
+    success: true,
+    data: {
+      tanggal: today,
+      masuk: { qr_data: masuk.qr_data, code: masuk.code },
+      pulang: { qr_data: pulang.qr_data, code: pulang.code },
+    },
+  });
+});
+
+// Siswa: scan QR gerbang atau input kode gerbang
+router.post('/scan', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
+  const { siswa_id, qr_data, code, mode: modeParam } = req.body as {
+    siswa_id: string; qr_data?: string; code?: string; mode?: string;
+  };
+  if (!siswa_id) { res.status(400).json({ success: false, message: 'siswa_id wajib diisi' }); return; }
+
+  const today = new Date().toISOString().split('T')[0];
+  let mode: string;
+
+  if (qr_data) {
+    // Format: GATE:{mode}:{date}:{code}
+    const parts = qr_data.split(':');
+    if (parts[0] !== 'GATE' || parts.length < 4) {
+      res.status(400).json({ success: false, message: 'QR code tidak valid' });
+      return;
+    }
+    mode = parts[1];
+    const date = parts[2];
+    const tokenCode = parts[3];
+
+    if (date !== today) {
+      res.status(400).json({ success: false, message: 'QR code sudah kedaluwarsa' });
+      return;
+    }
+    const expected = getGateToken(mode, today);
+    if (tokenCode !== expected.code) {
+      res.status(400).json({ success: false, message: 'QR code tidak valid' });
+      return;
+    }
+  } else if (code && modeParam) {
+    mode = modeParam;
+    const expected = getGateToken(mode, today);
+    if (code !== expected.code) {
+      res.status(400).json({ success: false, message: 'Kode tidak valid' });
+      return;
+    }
+  } else {
+    res.status(400).json({ success: false, message: 'qr_data atau code+mode wajib diisi' });
+    return;
+  }
+
+  if (mode !== 'masuk' && mode !== 'pulang') {
+    res.status(400).json({ success: false, message: 'Mode tidak valid' });
+    return;
+  }
+
+  // Cari data siswa + sekolah + orang tua
+  const [siswaRow] = await sequelize.query<any>(
+    `SELECT s.id AS siswa_id, u.nama AS nama_siswa,
+            k.sekolah_id, sch.nama AS nama_sekolah,
+            array_agg(ot.no_telp) FILTER (WHERE ot.no_telp IS NOT NULL) AS ortu_phones
+     FROM siswa s
+     JOIN users u ON s.user_id = u.id
+     JOIN kelas k ON s.kelas_id = k.id
+     JOIN sekolah sch ON k.sekolah_id = sch.id
+     LEFT JOIN orang_tua ot ON ot.siswa_id = s.id
+     WHERE s.id = :sid
+     GROUP BY s.id, u.nama, k.sekolah_id, sch.nama`,
+    { replacements: { sid: siswa_id }, type: QueryTypes.SELECT }
+  );
+
+  if (!siswaRow) { res.status(404).json({ success: false, message: 'Siswa tidak ditemukan' }); return; }
+
+  const now = new Date();
+  const columnSet = mode === 'masuk'
+    ? 'waktu_masuk = :now, notif_masuk_sent = FALSE'
+    : 'waktu_pulang = :now, notif_pulang_sent = FALSE';
+  const insertCol = mode === 'masuk' ? 'waktu_masuk' : 'waktu_pulang';
+
+  await sequelize.query(
+    `INSERT INTO absensi_gerbang (siswa_id, sekolah_id, tanggal, ${insertCol}, created_by)
+     VALUES (:sid, :skolahId, :today, :now, :uid)
+     ON CONFLICT (siswa_id, tanggal)
+     DO UPDATE SET ${columnSet}`,
+    { replacements: { sid: siswa_id, skolahId: siswaRow.sekolah_id, today, now, uid: siswa_id }, type: QueryTypes.INSERT }
+  );
+
+  // Kirim notif WA
+  const phones: string[] = siswaRow.ortu_phones || [];
+  const message = mode === 'masuk'
+    ? buildMasukMessage(siswaRow.nama_siswa, siswaRow.nama_sekolah, now)
+    : buildPulangMessage(siswaRow.nama_siswa, siswaRow.nama_sekolah, now);
+
+  for (const phone of phones) {
+    if (phone) {
+      sendWAMessage(phone, message).catch((e) => logger.error({ event: 'wa_gate_scan_error', error: e.message }));
+    }
+  }
+
+  res.json({
+    success: true,
+    message: `${siswaRow.nama_siswa} berhasil absensi ${mode} sekolah!`,
+    data: { nama_siswa: siswaRow.nama_siswa, mode, waktu: now },
+  });
 });
 
 export default router;

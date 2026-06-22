@@ -17,6 +17,7 @@ class AbsensiScanScreen extends StatefulWidget {
 class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
   // 'menu' | 'scan' | 'code' | 'result'
   late String _mode;
+  bool _gerbangActive = false;
   final _codeController = TextEditingController();
   bool _loading = false;
   String? _resultMessage;
@@ -54,11 +55,19 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
       return;
     }
     try {
-      await dio.post('/absensi/scan-qr', data: {'qr_data': rawQrData, 'siswa_id': siswaId});
-      setState(() { _resultSuccess = true; _resultMessage = 'Absensi berhasil dicatat!'; _loading = false; });
+      if (rawQrData.startsWith('GATE:')) {
+        // QR absensi gerbang — dikirim ke endpoint gerbang
+        await dio.post('/absensi-gerbang/scan', data: {'qr_data': rawQrData, 'siswa_id': siswaId});
+        final parts = rawQrData.split(':');
+        final modeLabel = parts.length > 1 ? (parts[1] == 'masuk' ? 'masuk sekolah' : 'pulang sekolah') : 'gerbang';
+        setState(() { _resultSuccess = true; _resultMessage = 'Absensi $modeLabel berhasil dicatat!'; _loading = false; });
+      } else {
+        // QR absensi kelas biasa
+        await dio.post('/absensi/scan-qr', data: {'qr_data': rawQrData, 'siswa_id': siswaId});
+        setState(() { _resultSuccess = true; _resultMessage = 'Absensi berhasil dicatat!'; _loading = false; });
+      }
     } catch (e) {
-      final msg = _parseError(e);
-      setState(() { _resultSuccess = false; _resultMessage = msg; _loading = false; });
+      setState(() { _resultSuccess = false; _resultMessage = _parseError(e); _loading = false; });
     }
   }
 
@@ -78,8 +87,28 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
       await dio.post('/absensi/input-code', data: {'code': code, 'siswa_id': siswaId});
       setState(() { _resultSuccess = true; _resultMessage = 'Absensi berhasil dicatat!'; _loading = false; });
     } catch (e) {
-      final msg = _parseError(e);
-      setState(() { _resultSuccess = false; _resultMessage = msg; _loading = false; });
+      setState(() { _resultSuccess = false; _resultMessage = _parseError(e); _loading = false; });
+    }
+  }
+
+  Future<void> _submitGerbangCode(String gateMode) async {
+    final code = _codeController.text.trim();
+    if (code.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kode harus 6 digit')));
+      return;
+    }
+    setState(() { _loading = true; _mode = 'result'; });
+    final siswaId = _getSiswaId();
+    if (siswaId == null) {
+      setState(() { _resultSuccess = false; _resultMessage = 'Profil siswa tidak ditemukan. Silakan login ulang.'; _loading = false; });
+      return;
+    }
+    try {
+      await dio.post('/absensi-gerbang/scan', data: {'code': code, 'mode': gateMode, 'siswa_id': siswaId});
+      final modeLabel = gateMode == 'masuk' ? 'masuk sekolah' : 'pulang sekolah';
+      setState(() { _resultSuccess = true; _resultMessage = 'Absensi $modeLabel berhasil dicatat!'; _loading = false; });
+    } catch (e) {
+      setState(() { _resultSuccess = false; _resultMessage = _parseError(e); _loading = false; });
     }
   }
 
@@ -93,18 +122,26 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
     setState(() => _mode = 'code');
   }
 
+  void _goToGerbang() {
+    _gerbangActive = true;
+    _scannerCtrl.start();
+    setState(() => _mode = 'scan');
+  }
+
   void _handleBack() {
     if (_mode == 'scan') {
       if (widget.directScan) {
         Navigator.pop(context);
       } else {
         _scannerCtrl.stop();
+        _gerbangActive = false;
         setState(() => _mode = 'menu');
       }
     } else if (_mode == 'code') {
       if (widget.directScan) {
         _goToScan();
       } else {
+        _gerbangActive = false;
         setState(() => _mode = 'menu');
       }
     } else {
@@ -126,8 +163,8 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan Absensi'),
-        backgroundColor: colorSMP,
+        title: Text(_gerbangActive ? 'Absensi Gerbang' : 'Scan Absensi'),
+        backgroundColor: _gerbangActive ? Colors.teal : colorSMP,
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -147,6 +184,7 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
         return _ScanView(
           key: const ValueKey('scan'),
           controller: _scannerCtrl,
+          isGerbang: _gerbangActive,
           onDetect: (barcode) {
             final raw = barcode.barcodes.firstOrNull?.rawValue;
             if (raw != null && raw.isNotEmpty) {
@@ -161,7 +199,9 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
           key: const ValueKey('code'),
           controller: _codeController,
           loading: _loading,
+          isGerbang: _gerbangActive,
           onSubmit: _submitCode,
+          onGerbangSubmit: _submitGerbangCode,
           onScanQr: widget.directScan ? _goToScan : null,
         );
       case 'result':
@@ -172,6 +212,7 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
           loading: _loading,
           onRetry: () {
             _codeController.clear();
+            _gerbangActive = false;
             if (widget.directScan) {
               _goToScan();
             } else {
@@ -184,6 +225,7 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
           key: const ValueKey('menu'),
           onScan: _goToScan,
           onCode: _goToCode,
+          onGerbang: _goToGerbang,
         );
     }
   }
@@ -192,8 +234,9 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
 class _MenuView extends StatelessWidget {
   final VoidCallback onScan;
   final VoidCallback onCode;
+  final VoidCallback onGerbang;
 
-  const _MenuView({super.key, required this.onScan, required this.onCode});
+  const _MenuView({super.key, required this.onScan, required this.onCode, required this.onGerbang});
 
   @override
   Widget build(BuildContext context) {
@@ -206,20 +249,31 @@ class _MenuView extends StatelessWidget {
           const SizedBox(height: 24),
           const Text('Pilih Cara Absensi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorNavy)),
           const SizedBox(height: 8),
-          const Text('Scan QR code yang ditampilkan guru, atau masukkan kode 6 digit jika kamera tidak tersedia.',
-              textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, fontSize: 13)),
-          const SizedBox(height: 40),
+          const Text(
+            'Scan QR code yang ditampilkan guru/sekolah, atau masukkan kode 6 digit.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey, fontSize: 13),
+          ),
+          const SizedBox(height: 32),
+          _OptionCard(
+            icon: Icons.school,
+            title: 'Absensi Gerbang Sekolah',
+            subtitle: 'Scan QR masuk / pulang sekolah',
+            color: Colors.teal,
+            onTap: onGerbang,
+          ),
+          const SizedBox(height: 12),
           _OptionCard(
             icon: Icons.qr_code_2,
-            title: 'Scan QR Code',
+            title: 'Scan QR Absensi Kelas',
             subtitle: 'Arahkan kamera ke QR code guru',
             color: colorSMP,
             onTap: onScan,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _OptionCard(
             icon: Icons.keyboard,
-            title: 'Input Kode Manual',
+            title: 'Input Kode Absensi Kelas',
             subtitle: 'Ketik kode 6 digit dari guru',
             color: colorSMA,
             onTap: onCode,
@@ -263,7 +317,7 @@ class _OptionCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color)),
+                  Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: color)),
                   const SizedBox(height: 4),
                   Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
@@ -281,15 +335,16 @@ class _ScanView extends StatelessWidget {
   final MobileScannerController controller;
   final void Function(BarcodeCapture) onDetect;
   final VoidCallback? onManualCode;
+  final bool isGerbang;
 
-  const _ScanView({super.key, required this.controller, required this.onDetect, this.onManualCode});
+  const _ScanView({super.key, required this.controller, required this.onDetect, this.onManualCode, this.isGerbang = false});
 
   @override
   Widget build(BuildContext context) {
+    final frameColor = isGerbang ? Colors.teal : colorSMP;
     return Stack(
       children: [
         MobileScanner(controller: controller, onDetect: onDetect),
-        // Dimmed overlay with scan area cutout
         ColorFiltered(
           colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.5), BlendMode.srcOut),
           child: Stack(
@@ -304,17 +359,15 @@ class _ScanView extends StatelessWidget {
             ],
           ),
         ),
-        // Scan frame border
         Center(
           child: Container(
             width: 240, height: 240,
             decoration: BoxDecoration(
-              border: Border.all(color: colorSMP, width: 3),
+              border: Border.all(color: frameColor, width: 3),
               borderRadius: BorderRadius.circular(16),
             ),
           ),
         ),
-        // Corner accents
         Center(
           child: SizedBox(
             width: 240, height: 240,
@@ -329,21 +382,36 @@ class _ScanView extends StatelessWidget {
           ),
         ),
         Positioned(
-          bottom: 140,
+          bottom: 160,
           left: 0, right: 0,
-          child: const Text(
-            'Arahkan QR code ke dalam kotak',
+          child: Text(
+            isGerbang ? 'Scan QR masuk / pulang sekolah' : 'Arahkan QR code ke dalam kotak',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 14),
+            style: const TextStyle(color: Colors.white, fontSize: 14),
           ),
         ),
+        if (isGerbang)
+          Positioned(
+            bottom: 100,
+            left: 0, right: 0,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 40),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              decoration: BoxDecoration(color: Colors.teal.withOpacity(0.85), borderRadius: BorderRadius.circular(12)),
+              child: const Text(
+                '📱 Scan QR yang ditampilkan admin di gerbang sekolah',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
+          ),
         if (onManualCode != null)
           Positioned(
-            bottom: 72,
+            bottom: 48,
             left: 40, right: 40,
             child: TextButton.icon(
               icon: const Icon(Icons.keyboard, color: Colors.white, size: 18),
-              label: const Text('Input Kode Manual', style: TextStyle(color: Colors.white, fontSize: 14)),
+              label: Text(isGerbang ? 'Input Kode Gerbang' : 'Input Kode Manual', style: const TextStyle(color: Colors.white, fontSize: 14)),
               onPressed: onManualCode,
               style: TextButton.styleFrom(
                 backgroundColor: Colors.black54,
@@ -387,23 +455,43 @@ class _Corner extends StatelessWidget {
 class _CodeView extends StatelessWidget {
   final TextEditingController controller;
   final bool loading;
+  final bool isGerbang;
   final VoidCallback onSubmit;
+  final void Function(String mode) onGerbangSubmit;
   final VoidCallback? onScanQr;
 
-  const _CodeView({super.key, required this.controller, required this.loading, required this.onSubmit, this.onScanQr});
+  const _CodeView({
+    super.key,
+    required this.controller,
+    required this.loading,
+    required this.onSubmit,
+    required this.onGerbangSubmit,
+    this.isGerbang = false,
+    this.onScanQr,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final accentColor = isGerbang ? Colors.teal : colorSMA;
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.pin, size: 64, color: colorSMA),
+          Icon(isGerbang ? Icons.school : Icons.pin, size: 64, color: accentColor),
           const SizedBox(height: 24),
-          const Text('Masukkan Kode Absensi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorNavy)),
+          Text(
+            isGerbang ? 'Kode Absensi Gerbang' : 'Masukkan Kode Absensi',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorNavy),
+          ),
           const SizedBox(height: 8),
-          const Text('Ketik kode 6 digit yang diberikan guru', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+          Text(
+            isGerbang
+              ? 'Ketik kode 6 digit yang ditampilkan di layar gerbang,\nlalu pilih MASUK atau PULANG'
+              : 'Ketik kode 6 digit yang diberikan guru',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.grey, fontSize: 13),
+          ),
           const SizedBox(height: 32),
           TextField(
             controller: controller,
@@ -417,27 +505,61 @@ class _CodeView extends StatelessWidget {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: colorSMA, width: 2),
+                borderSide: BorderSide(color: accentColor, width: 2),
               ),
               counterText: '',
             ),
           ),
           const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: loading ? null : onSubmit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colorSMA,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: loading
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text('Kirim Absensi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          if (isGerbang) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: loading ? null : () => onGerbangSubmit('masuk'),
+                    icon: const Icon(Icons.login, size: 18),
+                    label: const Text('MASUK', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: loading ? null : () => onGerbangSubmit('pulang'),
+                    icon: const Icon(Icons.logout, size: 18),
+                    label: const Text('PULANG', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
+          ] else ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: loading ? null : onSubmit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorSMA,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: loading
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Kirim Absensi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
           if (onScanQr != null) ...[
             const SizedBox(height: 16),
             TextButton.icon(
