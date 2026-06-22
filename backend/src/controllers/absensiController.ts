@@ -1,11 +1,15 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 import QRCode from 'qrcode';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import { Absensi, QrCodeSession, JadwalPelajaran, Siswa, Kelas, MataPelajaran, Guru, User } from '../models';
+import sequelize from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 import { kelasIdFilter } from '../utils/levelFilter';
+import { sendWAMessage, buildMasukMessage, buildPulangMessage } from '../utils/waNotification';
+import logger from '../config/logger';
 
 const generateUniqueCode = (): string => {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -63,6 +67,46 @@ export const closeQrSession = async (req: AuthRequest, res: Response): Promise<v
 
 export const scanQr = async (req: AuthRequest, res: Response): Promise<void> => {
   const { qr_data, siswa_id } = req.body as { qr_data: string; siswa_id: string };
+
+  // Backward compat: QR gerbang dikirim ke endpoint ini oleh APK lama
+  if (qr_data && qr_data.startsWith('GATE:')) {
+    const parts = qr_data.split(':');
+    if (parts.length < 4) { res.status(400).json({ success: false, message: 'QR code gerbang tidak valid' }); return; }
+    const gateMode = parts[1];
+    const gateDate = parts[2];
+    const gateCode = parts[3];
+    const today = new Date().toISOString().split('T')[0];
+    if (gateDate !== today) { res.status(400).json({ success: false, message: 'QR code sudah kedaluwarsa' }); return; }
+    const secret = process.env.GATE_SECRET || 'alfakhir_gate_2025';
+    const hash = crypto.createHash('sha256').update(`${today}:${gateMode}:${secret}`).digest('hex');
+    const expectedCode = String(parseInt(hash.slice(0, 8), 16) % 1000000).padStart(6, '0');
+    if (gateCode !== expectedCode) { res.status(400).json({ success: false, message: 'QR code gerbang tidak valid' }); return; }
+    const [siswaRow] = await sequelize.query<any>(
+      `SELECT s.id AS siswa_id, u.nama AS nama_siswa, k.sekolah_id, sch.nama AS nama_sekolah,
+              array_agg(ot.no_telp) FILTER (WHERE ot.no_telp IS NOT NULL) AS ortu_phones
+       FROM siswa s JOIN users u ON s.user_id = u.id JOIN kelas k ON s.kelas_id = k.id
+       JOIN sekolah sch ON k.sekolah_id = sch.id LEFT JOIN orang_tua ot ON ot.siswa_id = s.id
+       WHERE s.id = :sid GROUP BY s.id, u.nama, k.sekolah_id, sch.nama`,
+      { replacements: { sid: siswa_id }, type: QueryTypes.SELECT }
+    );
+    if (!siswaRow) { res.status(404).json({ success: false, message: 'Siswa tidak ditemukan' }); return; }
+    const now = new Date();
+    const col = gateMode === 'masuk' ? 'waktu_masuk' : 'waktu_pulang';
+    const upd = gateMode === 'masuk' ? 'waktu_masuk = :now, notif_masuk_sent = FALSE' : 'waktu_pulang = :now, notif_pulang_sent = FALSE';
+    await sequelize.query(
+      `INSERT INTO absensi_gerbang (siswa_id, sekolah_id, tanggal, ${col}, created_by)
+       VALUES (:sid, :skId, :today, :now, :uid)
+       ON CONFLICT (siswa_id, tanggal) DO UPDATE SET ${upd}`,
+      { replacements: { sid: siswa_id, skId: siswaRow.sekolah_id, today, now, uid: siswa_id }, type: QueryTypes.INSERT }
+    );
+    const phones: string[] = siswaRow.ortu_phones || [];
+    const msg = gateMode === 'masuk'
+      ? buildMasukMessage(siswaRow.nama_siswa, siswaRow.nama_sekolah, now)
+      : buildPulangMessage(siswaRow.nama_siswa, siswaRow.nama_sekolah, now);
+    for (const p of phones) if (p) sendWAMessage(p, msg).catch(e => logger.error({ event: 'wa_gate_compat', error: e.message }));
+    res.status(201).json({ success: true, message: `${siswaRow.nama_siswa} berhasil absensi ${gateMode} sekolah!`, data: { nama_siswa: siswaRow.nama_siswa, mode: gateMode, waktu: now } });
+    return;
+  }
 
   let parsedQr: { session_id: string; code: string; jadwal_id: string; tanggal: string };
   try {
