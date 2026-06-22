@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { QueryTypes } from 'sequelize';
 import crypto from 'crypto';
 import sequelize from '../config/database';
+import redis from '../config/redis';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
 import { sendWAMessage, buildMasukMessage, buildPulangMessage } from '../utils/waNotification';
 import logger from '../config/logger';
@@ -427,6 +428,141 @@ router.post('/scan', authenticate, async (req: AuthRequest, res: Response): Prom
     message: `${siswaRow.nama_siswa} berhasil absensi ${mode} sekolah!${lokasiMsg}`,
     data: { nama_siswa: siswaRow.nama_siswa, mode, waktu: now, lokasi_valid: lokasiValid, lokasi_jarak_meter: lokasiJarak },
   });
+});
+
+// ── RFID Management (Admin) ───────────────────────────────────────────────────
+
+// List semua device RFID terminal
+router.get('/rfid-devices', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const rows = await sequelize.query<any>(
+    `SELECT rd.id, rd.nama, rd.device_key, rd.lokasi, rd.aktif, rd.created_at,
+            sch.nama AS nama_sekolah, sch.level
+     FROM rfid_devices rd
+     LEFT JOIN sekolah sch ON rd.sekolah_id = sch.id
+     ORDER BY rd.created_at DESC`,
+    { type: QueryTypes.SELECT }
+  );
+  res.json({ success: true, data: rows });
+});
+
+// Daftarkan device RFID baru
+router.post('/rfid-device', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const { nama, device_key, sekolah_id, lokasi } = req.body;
+  if (!nama || !device_key || !sekolah_id) {
+    res.status(400).json({ success: false, message: 'nama, device_key, sekolah_id wajib' });
+    return;
+  }
+
+  await sequelize.query(
+    `INSERT INTO rfid_devices (nama, device_key, sekolah_id, lokasi) VALUES (:nama, :key, :sid, :lok)`,
+    { replacements: { nama, key: device_key, sid: sekolah_id, lok: lokasi || null }, type: QueryTypes.INSERT }
+  );
+  res.json({ success: true, message: 'Device berhasil didaftarkan' });
+});
+
+// Aktifkan mode registrasi — ESP32 akan capture kartu berikutnya yang belum terdaftar
+router.post('/rfid-listen', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const key = `rfid_reg:${req.user!.id}`;
+  await redis.setex(key, 30, '1').catch(() => {});
+  res.json({ success: true, message: 'Mode scan aktif selama 30 detik' });
+});
+
+// Polling — cek apakah ada kartu yang terdeteksi
+router.get('/rfid-captured', authorize('admin'), async (_req: AuthRequest, res: Response): Promise<void> => {
+  const req2 = _req as AuthRequest;
+  const captureKey = `rfid_capture:${req2.user!.id}`;
+  const uid = await redis.get(captureKey).catch(() => null);
+  if (uid) {
+    await redis.del(captureKey).catch(() => {});
+    res.json({ success: true, rfid_uid: uid });
+  } else {
+    res.json({ success: false });
+  }
+});
+
+// Assign rfid_uid ke siswa (simpan ke DB + update cache)
+router.post('/rfid-assign', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const { siswa_id, rfid_uid } = req.body as { siswa_id: string; rfid_uid: string };
+  if (!siswa_id || !rfid_uid) {
+    res.status(400).json({ success: false, message: 'siswa_id dan rfid_uid wajib' });
+    return;
+  }
+
+  // Cek duplikat
+  const [existing] = await sequelize.query<any>(
+    `SELECT s.id, u.nama FROM siswa s JOIN users u ON s.user_id = u.id WHERE s.rfid_uid = :uid AND s.id != :sid`,
+    { replacements: { uid: rfid_uid, sid: siswa_id }, type: QueryTypes.SELECT }
+  );
+  if (existing) {
+    res.status(409).json({ success: false, message: `Kartu sudah digunakan oleh ${existing.nama}` });
+    return;
+  }
+
+  // Hapus rfid_uid lama dari Redis jika ada (invalidate cache lama)
+  const [oldSiswa] = await sequelize.query<any>(
+    `SELECT rfid_uid FROM siswa WHERE id = :sid`,
+    { replacements: { sid: siswa_id }, type: QueryTypes.SELECT }
+  );
+  if (oldSiswa?.rfid_uid) {
+    redis.del(`rfid:${oldSiswa.rfid_uid}`).catch(() => {});
+  }
+
+  await sequelize.query(
+    `UPDATE siswa SET rfid_uid = :uid WHERE id = :sid`,
+    { replacements: { uid: rfid_uid, sid: siswa_id }, type: QueryTypes.UPDATE }
+  );
+
+  // Log aktivitas
+  await sequelize.query(
+    `INSERT INTO activity_log (user_id, action, table_name, record_id, new_value, ip_address)
+     VALUES (:uid, 'rfid_assign', 'siswa', :sid::uuid, :val::jsonb, :ip)`,
+    { replacements: { uid: req.user!.id, sid: siswa_id, val: JSON.stringify({ rfid_uid }), ip: req.ip || '' }, type: QueryTypes.INSERT }
+  );
+
+  res.json({ success: true, message: 'Kartu RFID berhasil didaftarkan' });
+});
+
+// Hapus rfid_uid dari siswa
+router.delete('/rfid-assign/:siswa_id', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const { siswa_id } = req.params;
+
+  const [row] = await sequelize.query<any>(
+    `SELECT rfid_uid FROM siswa WHERE id = :sid`,
+    { replacements: { sid: siswa_id }, type: QueryTypes.SELECT }
+  );
+  if (row?.rfid_uid) {
+    redis.del(`rfid:${row.rfid_uid}`).catch(() => {});
+  }
+
+  await sequelize.query(
+    `UPDATE siswa SET rfid_uid = NULL WHERE id = :sid`,
+    { replacements: { sid: siswa_id }, type: QueryTypes.UPDATE }
+  );
+  res.json({ success: true, message: 'Kartu RFID berhasil dihapus' });
+});
+
+// List siswa + status rfid_uid (untuk halaman registrasi)
+router.get('/rfid-siswa', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const { sekolah_id, kelas_id, q } = req.query;
+  const conditions: string[] = ['1=1'];
+  const replacements: Record<string, string> = {};
+
+  if (sekolah_id) { conditions.push('k.sekolah_id = :skolah'); replacements.skolah = String(sekolah_id); }
+  if (kelas_id)   { conditions.push('s.kelas_id = :kelas');   replacements.kelas  = String(kelas_id);   }
+  if (q)          { conditions.push('u.nama ILIKE :q');        replacements.q      = `%${q}%`;           }
+
+  const rows = await sequelize.query<any>(
+    `SELECT s.id, u.nama, s.nis, s.rfid_uid, k.nama AS nama_kelas, sch.nama AS nama_sekolah
+     FROM siswa s
+     JOIN users u ON s.user_id = u.id
+     JOIN kelas k ON s.kelas_id = k.id
+     JOIN sekolah sch ON k.sekolah_id = sch.id
+     WHERE ${conditions.join(' AND ')}
+     ORDER BY u.nama
+     LIMIT 100`,
+    { replacements, type: QueryTypes.SELECT }
+  );
+  res.json({ success: true, data: rows });
 });
 
 export default router;

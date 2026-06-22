@@ -22,6 +22,7 @@ import raporRoutes from './routes/rapor';
 import notifikasiRoutes from './routes/notifikasi';
 import deleteRequestsRoutes from './routes/deleteRequests';
 import absensiGerbangRoutes from './routes/absensiGerbang';
+import rfidRoutes from './routes/rfid';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { globalAuditLogger } from './middleware/auditLog';
 import logger from './config/logger';
@@ -86,6 +87,7 @@ app.use(`${PREFIX}/rapor`, raporRoutes);
 app.use(`${PREFIX}/notifikasi`, notifikasiRoutes);
 app.use(`${PREFIX}/delete-requests`, deleteRequestsRoutes);
 app.use(`${PREFIX}/absensi-gerbang`, absensiGerbangRoutes);
+app.use(`${PREFIX}/rfid`, rfidRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
