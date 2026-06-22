@@ -5,26 +5,32 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 
+const JENJANG = ['SD', 'SMP', 'SMA'] as const;
+
 export default function SiswaPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [editSiswa, setEditSiswa] = useState<any>(null);
   const [editForm, setEditForm] = useState({ nama: '', email: '', nisn: '', nis: '', kelas_id: '' });
+  const [showAdd, setShowAdd] = useState(false);
+  const [addForm, setAddForm] = useState({ nama: '', email: '', password: '', nisn: '', nis: '', kelas_id: '', jenjang: '' });
 
   const { data, isLoading } = useQuery({
     queryKey: ['siswa', search, page],
     queryFn: () => api.get('/siswa', { params: { search, page, limit: 20 } }).then(r => r.data),
   });
 
-  const { data: kelasList } = useQuery({
-    queryKey: ['kelas-list'],
+  const { data: kelasList = [] } = useQuery({
+    queryKey: ['kelas-all'],
     queryFn: () => api.get('/kelas').then(r => r.data.data || []),
-    enabled: !!editSiswa,
   });
 
   const siswaList = data?.data || [];
   const pagination = data?.pagination || {};
+
+  const kelasByJenjang = (jenjang: string) =>
+    (kelasList as any[]).filter((k: any) => k.sekolah?.level === jenjang || k.sekolah?.level?.toUpperCase() === jenjang);
 
   const openEdit = (s: any) => {
     setEditSiswa(s);
@@ -34,6 +40,15 @@ export default function SiswaPage() {
   const updateSiswa = useMutation({
     mutationFn: () => api.put(`/siswa/${editSiswa.id}`, editForm),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['siswa'] }); setEditSiswa(null); },
+  });
+
+  const addSiswa = useMutation({
+    mutationFn: () => api.post('/siswa', { ...addForm, role: 'siswa' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['siswa'] });
+      setShowAdd(false);
+      setAddForm({ nama: '', email: '', password: '', nisn: '', nis: '', kelas_id: '', jenjang: '' });
+    },
   });
 
   const toggleAktif = useMutation({
@@ -53,7 +68,10 @@ export default function SiswaPage() {
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
           />
-          <button className="px-4 py-2.5 bg-[#3B7FD1] text-white rounded-lg hover:bg-[#2d6ab5] transition-colors font-medium">
+          <button
+            onClick={() => setShowAdd(true)}
+            className="px-4 py-2.5 bg-[#3B7FD1] text-white rounded-lg hover:bg-[#2d6ab5] transition-colors font-medium"
+          >
             + Tambah Siswa
           </button>
           <button className="px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
@@ -134,7 +152,97 @@ export default function SiswaPage() {
         </div>
       </div>
 
-      {/* Edit Modal */}
+      {/* Modal Tambah Siswa */}
+      {showAdd && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+              <h2 className="font-semibold text-[#1A2332]">Tambah Siswa Baru</h2>
+              <button onClick={() => setShowAdd(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Nama Lengkap <span className="text-red-500">*</span></label>
+                <input value={addForm.nama} onChange={e => setAddForm({ ...addForm, nama: e.target.value })}
+                  placeholder="Nama lengkap siswa"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Email <span className="text-red-500">*</span></label>
+                <input type="email" value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })}
+                  placeholder="email@siswa.sch.id"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Password <span className="text-red-500">*</span></label>
+                <input type="password" value={addForm.password} onChange={e => setAddForm({ ...addForm, password: e.target.value })}
+                  placeholder="Minimal 6 karakter"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">NISN</label>
+                  <input value={addForm.nisn} onChange={e => setAddForm({ ...addForm, nisn: e.target.value })}
+                    placeholder="0012345678"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">NIS</label>
+                  <input value={addForm.nis} onChange={e => setAddForm({ ...addForm, nis: e.target.value })}
+                    placeholder="2024001"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Jenjang <span className="text-red-500">*</span></label>
+                <select
+                  value={addForm.jenjang}
+                  onChange={e => setAddForm({ ...addForm, jenjang: e.target.value, kelas_id: '' })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
+                >
+                  <option value="">-- Pilih Jenjang --</option>
+                  {JENJANG.map(j => <option key={j} value={j}>{j}</option>)}
+                </select>
+              </div>
+              {addForm.jenjang && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Kelas <span className="text-red-500">*</span></label>
+                  <select
+                    value={addForm.kelas_id}
+                    onChange={e => setAddForm({ ...addForm, kelas_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
+                  >
+                    <option value="">-- Pilih Kelas {addForm.jenjang} --</option>
+                    {kelasByJenjang(addForm.jenjang).map((k: any) => (
+                      <option key={k.id} value={k.id}>{k.nama}</option>
+                    ))}
+                  </select>
+                  {kelasByJenjang(addForm.jenjang).length === 0 && (
+                    <p className="text-xs text-orange-500 mt-1">Belum ada kelas untuk jenjang {addForm.jenjang}</p>
+                  )}
+                </div>
+              )}
+              {addSiswa.isError && (
+                <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                  {(addSiswa.error as any)?.response?.data?.message || 'Gagal menambah siswa'}
+                </p>
+              )}
+            </div>
+            <div className="flex gap-3 px-6 pb-6">
+              <button
+                onClick={() => addSiswa.mutate()}
+                disabled={addSiswa.isPending || !addForm.nama || !addForm.email || !addForm.password || !addForm.kelas_id}
+                className="flex-1 py-2.5 bg-[#3B7FD1] text-white rounded-lg text-sm font-medium hover:bg-[#2d6ab5] disabled:opacity-50"
+              >
+                {addSiswa.isPending ? 'Menyimpan...' : 'Tambah Siswa'}
+              </button>
+              <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Batal</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edit Siswa */}
       {editSiswa && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
@@ -170,7 +278,9 @@ export default function SiswaPage() {
                 <select value={editForm.kelas_id} onChange={e => setEditForm({ ...editForm, kelas_id: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
                   <option value="">-- Pilih Kelas --</option>
-                  {(kelasList || []).map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                  {(kelasList as any[]).map((k: any) => (
+                    <option key={k.id} value={k.id}>{k.sekolah?.level ? `[${k.sekolah.level}] ` : ''}{k.nama}</option>
+                  ))}
                 </select>
               </div>
             </div>

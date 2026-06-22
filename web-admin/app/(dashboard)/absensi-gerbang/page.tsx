@@ -13,6 +13,7 @@ export default function AbsensiGerbangPage() {
   const [search, setSearch] = useState('');
   const [dropdown, setDropdown] = useState<any[]>([]);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [mode, setMode] = useState<'masuk' | 'pulang'>('masuk');
   const searchRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -97,6 +98,37 @@ export default function AbsensiGerbangPage() {
         {/* Pencarian siswa */}
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h3 className="font-bold text-[#1A2332] mb-4">Catat Kehadiran Siswa</h3>
+
+          {/* Toggle Mode */}
+          <div className="flex gap-3 mb-4">
+            <button
+              onClick={() => setMode('masuk')}
+              className={`flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors border-2 ${
+                mode === 'masuk'
+                  ? 'bg-green-500 text-white border-green-500 shadow-md'
+                  : 'bg-white text-green-600 border-green-200 hover:bg-green-50'
+              }`}
+            >
+              <span className="text-lg">▶</span> Scan Masuk Sekolah
+            </button>
+            <button
+              onClick={() => setMode('pulang')}
+              className={`flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors border-2 ${
+                mode === 'pulang'
+                  ? 'bg-blue-500 text-white border-blue-500 shadow-md'
+                  : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50'
+              }`}
+            >
+              <span className="text-lg">◀</span> Scan Pulang Sekolah
+            </button>
+          </div>
+
+          <div className={`text-center text-xs font-semibold py-1.5 rounded-lg mb-3 ${
+            mode === 'masuk' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'
+          }`}>
+            Mode aktif: {mode === 'masuk' ? '▶ CATAT MASUK' : '◀ CATAT PULANG'} — ketik nama siswa di bawah
+          </div>
+
           <div className="relative">
             <input
               ref={searchRef}
@@ -113,7 +145,7 @@ export default function AbsensiGerbangPage() {
                   return (
                     <div key={s.id} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0">
                       <div className="flex items-center justify-between gap-3">
-                        <div onClick={() => handleSelect(s)} className="flex-1 cursor-pointer">
+                        <div className="flex-1 min-w-0">
                           <p className="font-semibold text-[#1A2332] text-sm">{s.nama}</p>
                           <p className="text-xs text-gray-400">{s.nama_kelas} · {s.nama_sekolah} · NIS: {s.nis}</p>
                           {rec && (
@@ -123,22 +155,22 @@ export default function AbsensiGerbangPage() {
                             </p>
                           )}
                         </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <button
-                            onClick={() => masukMut.mutate(s.id)}
-                            disabled={masukMut.isPending}
-                            className="px-3 py-1.5 bg-green-500 text-white text-xs rounded-lg font-bold hover:bg-green-600 disabled:opacity-50"
-                          >
-                            ▶ Masuk
-                          </button>
-                          <button
-                            onClick={() => pulangMut.mutate(s.id)}
-                            disabled={pulangMut.isPending}
-                            className="px-3 py-1.5 bg-blue-500 text-white text-xs rounded-lg font-bold hover:bg-blue-600 disabled:opacity-50"
-                          >
-                            ◀ Pulang
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => {
+                            setSearch('');
+                            setDropdown([]);
+                            if (mode === 'masuk') masukMut.mutate(s.id);
+                            else pulangMut.mutate(s.id);
+                          }}
+                          disabled={masukMut.isPending || pulangMut.isPending}
+                          className={`px-4 py-2 text-white text-xs rounded-lg font-bold flex-shrink-0 disabled:opacity-50 ${
+                            mode === 'masuk'
+                              ? 'bg-green-500 hover:bg-green-600'
+                              : 'bg-blue-500 hover:bg-blue-600'
+                          }`}
+                        >
+                          {mode === 'masuk' ? '▶ Catat Masuk' : '◀ Catat Pulang'}
+                        </button>
                       </div>
                     </div>
                   );

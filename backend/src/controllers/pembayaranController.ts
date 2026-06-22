@@ -143,6 +143,31 @@ export const getLaporan = async (req: AuthRequest, res: Response): Promise<void>
   });
 };
 
+export const update = async (req: AuthRequest, res: Response): Promise<void> => {
+  const pembayaran = await Pembayaran.findByPk(req.params.id as string);
+  if (!pembayaran) throw createError('Tagihan tidak ditemukan', 404);
+
+  const { jenis_biaya, nominal_biaya, tanggal_jatuh_tempo, status } = req.body;
+  await pembayaran.update({
+    ...(jenis_biaya !== undefined && { jenis_biaya }),
+    ...(nominal_biaya !== undefined && { nominal_biaya }),
+    ...(tanggal_jatuh_tempo !== undefined && { tanggal_jatuh_tempo: tanggal_jatuh_tempo ? new Date(tanggal_jatuh_tempo) : null }),
+    ...(status !== undefined && { status }),
+  });
+
+  res.json({ success: true, message: 'Tagihan berhasil diperbarui', data: pembayaran });
+};
+
+export const remove = async (req: AuthRequest, res: Response): Promise<void> => {
+  const pembayaran = await Pembayaran.findByPk(req.params.id as string);
+  if (!pembayaran) throw createError('Tagihan tidak ditemukan', 404);
+
+  await PembayaranDetail.destroy({ where: { pembayaran_id: pembayaran.id } });
+  await pembayaran.destroy();
+
+  res.json({ success: true, message: 'Tagihan berhasil dihapus' });
+};
+
 export const webhookBca = async (req: AuthRequest, res: Response): Promise<void> => {
   // Handler untuk webhook notifikasi pembayaran dari BCA
   const payload = req.body;

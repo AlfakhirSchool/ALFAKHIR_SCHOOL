@@ -12,7 +12,9 @@ router.use(authenticate);
 
 router.get('/', authorize('admin', 'ortu', 'siswa'), pembayaranController.getAll);
 router.post('/', authorize('admin'), pembayaranController.create);
-router.post('/:id/bayar', authorize('admin'), pembayaranController.bayar);
 router.get('/laporan', authorize('admin'), pembayaranController.getLaporan);
+router.put('/:id', authorize('admin'), pembayaranController.update);
+router.delete('/:id', authorize('admin'), pembayaranController.remove);
+router.post('/:id/bayar', authorize('admin'), pembayaranController.bayar);
 
 export default router;
