@@ -193,6 +193,90 @@ router.get('/cari-siswa', authorize('admin'), async (req: AuthRequest, res: Resp
   res.json({ success: true, data: rows });
 });
 
+// Rekap kehadiran seluruh siswa per kelas per hari (diturunkan dari absensi gerbang)
+router.get('/rekap-kelas', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const { kelas_id, tanggal } = req.query;
+  if (!kelas_id) { res.status(400).json({ success: false, message: 'kelas_id wajib diisi' }); return; }
+  const tgl = (tanggal as string) || new Date().toISOString().split('T')[0];
+
+  const rows = await sequelize.query<any>(
+    `SELECT
+       s.id              AS siswa_id,
+       u.nama            AS nama_siswa,
+       s.nis, s.nisn,
+       ag.id             AS absensi_id,
+       ag.waktu_masuk,
+       COALESCE(ag.keterangan_status,
+         CASE WHEN ag.waktu_masuk IS NOT NULL THEN 'hadir' ELSE 'alfa' END
+       )                 AS status,
+       ag.keterangan,
+       ag.keterangan_at,
+       ub.nama           AS keterangan_oleh
+     FROM siswa s
+     JOIN users u ON s.user_id = u.id
+     LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id AND ag.tanggal = :tgl
+     LEFT JOIN users ub ON ub.id = ag.keterangan_by
+     WHERE s.kelas_id = :kelas_id
+     ORDER BY u.nama`,
+    { replacements: { kelas_id: String(kelas_id), tgl }, type: QueryTypes.SELECT }
+  );
+
+  const summary = { hadir: 0, sakit: 0, izin: 0, alfa: 0 };
+  rows.forEach((r: any) => { if (summary[r.status as keyof typeof summary] !== undefined) summary[r.status as keyof typeof summary]++; });
+
+  res.json({ success: true, data: rows, summary, tanggal: tgl });
+});
+
+// Admin jenjang: set keterangan / status override untuk siswa tertentu
+router.put('/keterangan', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const { siswa_id, tanggal, status, keterangan } = req.body as {
+    siswa_id: string; tanggal: string; status: 'sakit' | 'izin' | 'alfa' | null; keterangan?: string;
+  };
+  if (!siswa_id || !tanggal) { res.status(400).json({ success: false, message: 'siswa_id dan tanggal wajib diisi' }); return; }
+
+  const [siswaRow] = await sequelize.query<any>(
+    `SELECT s.id, k.sekolah_id FROM siswa s JOIN kelas k ON s.kelas_id = k.id WHERE s.id = :sid`,
+    { replacements: { sid: siswa_id }, type: QueryTypes.SELECT }
+  );
+  if (!siswaRow) { res.status(404).json({ success: false, message: 'Siswa tidak ditemukan' }); return; }
+
+  // Upsert: buat record jika belum ada (siswa tidak scan tapi perlu keterangan)
+  await sequelize.query(
+    `INSERT INTO absensi_gerbang (siswa_id, sekolah_id, tanggal, keterangan_status, keterangan, keterangan_by, keterangan_at, created_by)
+     VALUES (:sid, :skId, :tgl, :status, :ket, :uid, NOW(), :uid)
+     ON CONFLICT (siswa_id, tanggal)
+     DO UPDATE SET keterangan_status = :status, keterangan = :ket, keterangan_by = :uid, keterangan_at = NOW()`,
+    { replacements: { sid: siswa_id, skId: siswaRow.sekolah_id, tgl: tanggal, status: status || null, ket: keterangan || null, uid: req.user!.id }, type: QueryTypes.INSERT }
+  );
+
+  // Log ke activity_log agar terlihat master admin
+  await sequelize.query(
+    `INSERT INTO activity_log (user_id, action, table_name, record_id, new_value, ip_address)
+     VALUES (:uid, 'set_keterangan', 'absensi_gerbang', :sid::uuid, :val::jsonb, :ip)`,
+    { replacements: {
+        uid: req.user!.id,
+        sid: siswa_id,
+        val: JSON.stringify({ siswa_id, tanggal, status, keterangan }),
+        ip: req.ip || '',
+      }, type: QueryTypes.INSERT }
+  );
+
+  res.json({ success: true, message: 'Keterangan berhasil disimpan' });
+});
+
+// Hapus keterangan (reset ke auto dari scan)
+router.delete('/keterangan', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const { siswa_id, tanggal } = req.query;
+  if (!siswa_id || !tanggal) { res.status(400).json({ success: false, message: 'siswa_id dan tanggal wajib diisi' }); return; }
+
+  await sequelize.query(
+    `UPDATE absensi_gerbang SET keterangan_status = NULL, keterangan = NULL, keterangan_by = NULL, keterangan_at = NULL
+     WHERE siswa_id = :sid AND tanggal = :tgl`,
+    { replacements: { sid: String(siswa_id), tgl: String(tanggal) }, type: QueryTypes.UPDATE }
+  );
+  res.json({ success: true, message: 'Keterangan dihapus' });
+});
+
 // Generate token harian untuk QR gerbang
 const getGateToken = (mode: string, date: string) => {
   const secret = process.env.GATE_SECRET || 'alfakhir_gate_2025';
