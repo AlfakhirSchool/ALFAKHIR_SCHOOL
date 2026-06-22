@@ -253,6 +253,111 @@ export const remove = async (req: AuthRequest, res: Response): Promise<void> => 
   res.json({ success: true, message: 'Data absensi berhasil dihapus' });
 };
 
+// Guru: ambil daftar siswa di jadwal hari ini, auto-fill status dari gate
+export const persiapanGuru = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { jadwal_pelajaran_id, tanggal } = req.query as { jadwal_pelajaran_id: string; tanggal?: string };
+  if (!jadwal_pelajaran_id) throw createError('jadwal_pelajaran_id wajib diisi', 400);
+  const tgl = tanggal || new Date().toISOString().split('T')[0];
+
+  const jadwal = await JadwalPelajaran.findByPk(jadwal_pelajaran_id, {
+    include: [
+      { model: Kelas, as: 'kelas' },
+      { model: MataPelajaran, as: 'mata_pelajaran' },
+      { model: Guru, as: 'guru', include: [{ model: User, as: 'user' }] },
+    ],
+  });
+  if (!jadwal) throw createError('Jadwal tidak ditemukan', 404);
+
+  // Ambil semua siswa di kelas + status gate + absensi yg sudah direkam guru
+  const rows = await sequelize.query<any>(
+    `SELECT
+       s.id AS siswa_id, u.nama AS nama_siswa, s.nis,
+       COALESCE(ag.keterangan_status,
+         CASE WHEN ag.waktu_masuk IS NOT NULL THEN 'hadir' ELSE 'alfa' END
+       )          AS status_gate,
+       ag.keterangan AS ket_gate,
+       ab.id      AS absensi_id,
+       ab.status  AS status_guru,
+       ab.catatan
+     FROM siswa s
+     JOIN users u ON s.user_id = u.id
+     LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id AND ag.tanggal = :tgl
+     LEFT JOIN absensi ab ON ab.siswa_id = s.id AND ab.jadwal_pelajaran_id = :jid AND ab.tanggal = :tgl
+     WHERE s.kelas_id = :kelas_id
+     ORDER BY u.nama`,
+    { replacements: { kelas_id: (jadwal as any).kelas_id, jid: jadwal_pelajaran_id, tgl }, type: QueryTypes.SELECT }
+  );
+
+  res.json({ success: true, data: rows, jadwal, tanggal: tgl });
+};
+
+// Guru: simpan absensi batch per jadwal per hari
+export const bulkGuru = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { jadwal_pelajaran_id, tanggal, absensi: listAbsensi } = req.body as {
+    jadwal_pelajaran_id: string;
+    tanggal: string;
+    absensi: Array<{ siswa_id: string; status: string; catatan?: string }>;
+  };
+  if (!jadwal_pelajaran_id || !tanggal || !listAbsensi?.length) throw createError('Data tidak lengkap', 400);
+
+  for (const item of listAbsensi) {
+    await Absensi.upsert({
+      siswa_id: item.siswa_id,
+      jadwal_pelajaran_id,
+      tanggal: new Date(tanggal),
+      status: item.status as any,
+      catatan: item.catatan || null,
+      waktu_hadir: item.status === 'hadir' ? new Date() : undefined,
+      created_by: req.user!.id,
+    } as any);
+  }
+
+  // Log ke activity_log
+  await sequelize.query(
+    `INSERT INTO activity_log (user_id, action, table_name, new_value) VALUES (:uid, 'bulk_absensi_guru', 'absensi', :val::jsonb)`,
+    { replacements: { uid: req.user!.id, val: JSON.stringify({ jadwal_pelajaran_id, tanggal, jumlah: listAbsensi.length }) }, type: QueryTypes.INSERT }
+  );
+
+  res.json({ success: true, message: `${listAbsensi.length} absensi berhasil disimpan` });
+};
+
+// Wali kelas: rekap kelas yang diampu untuk tanggal tertentu
+export const rekapWaliKelas = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { tanggal } = req.query;
+  const tgl = (tanggal as string) || new Date().toISOString().split('T')[0];
+
+  // Cari guru dari user yang login
+  const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
+  if (!guru) throw createError('Data guru tidak ditemukan', 404);
+
+  // Cari kelas di mana guru ini adalah wali kelas
+  const kelas = await Kelas.findOne({ where: { wali_kelas_id: guru.id } });
+  if (!kelas) throw createError('Anda tidak terdaftar sebagai wali kelas', 404);
+
+  const rows = await sequelize.query<any>(
+    `SELECT
+       s.id AS siswa_id, u.nama AS nama_siswa, s.nis,
+       COALESCE(ag.keterangan_status,
+         CASE WHEN ag.waktu_masuk IS NOT NULL THEN 'hadir' ELSE 'alfa' END
+       )              AS status,
+       ag.waktu_masuk,
+       ag.keterangan,
+       ag.lokasi_valid,
+       ag.lokasi_jarak_meter
+     FROM siswa s
+     JOIN users u ON s.user_id = u.id
+     LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id AND ag.tanggal = :tgl
+     WHERE s.kelas_id = :kelas_id
+     ORDER BY u.nama`,
+    { replacements: { kelas_id: kelas.id, tgl }, type: QueryTypes.SELECT }
+  );
+
+  const summary = { hadir: 0, sakit: 0, izin: 0, alfa: 0 };
+  rows.forEach((r: any) => { if (r.status in summary) summary[r.status as keyof typeof summary]++; });
+
+  res.json({ success: true, kelas, data: rows, summary, tanggal: tgl });
+};
+
 export const getSiswaDetail = async (req: AuthRequest, res: Response): Promise<void> => {
   const { bulan, tahun } = req.query;
   const where: Record<string, unknown> = { siswa_id: req.params.siswa_id as string };

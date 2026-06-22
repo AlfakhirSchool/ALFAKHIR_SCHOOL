@@ -267,6 +267,7 @@ export default function AbsensiGerbangPage() {
                     <th className="text-left px-6 py-3 font-semibold text-gray-600">Kelas</th>
                     <th className="text-left px-6 py-3 font-semibold text-gray-600">Sekolah</th>
                     <th className="text-center px-4 py-3 font-semibold text-gray-600">Masuk</th>
+                    <th className="text-center px-4 py-3 font-semibold text-gray-600">Lokasi</th>
                     <th className="text-center px-4 py-3 font-semibold text-gray-600">Pulang</th>
                     <th className="text-center px-4 py-3 font-semibold text-gray-600">Notif WA</th>
                     <th className="px-4 py-3" />
@@ -282,6 +283,11 @@ export default function AbsensiGerbangPage() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         {r.waktu_masuk ? <span className="text-green-600 font-bold">{fmt(r.waktu_masuk)}</span> : <span className="text-gray-300">-</span>}
+                      </td>
+                      <td className="px-4 py-3 text-center text-xs">
+                        {r.lokasi_valid === true && <span className="text-green-600 font-medium" title={`${r.lokasi_jarak_meter}m dari sekolah`}>📍 Di Sekolah</span>}
+                        {r.lokasi_valid === false && <span className="text-red-500 font-medium" title={`${r.lokasi_jarak_meter}m dari sekolah`}>⚠️ Luar ({r.lokasi_jarak_meter}m)</span>}
+                        {r.lokasi_valid == null && <span className="text-gray-300">-</span>}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {r.waktu_pulang ? <span className="text-blue-600 font-bold">{fmt(r.waktu_pulang)}</span> : <span className="text-gray-300">-</span>}

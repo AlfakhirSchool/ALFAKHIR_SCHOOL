@@ -14,6 +14,11 @@ router.post('/manual', authorize('guru', 'admin'), absensiController.manualInput
 router.put('/:id', authorize('guru', 'admin'), absensiController.update);
 router.delete('/:id', authorize('admin'), absensiController.remove);
 router.get('/laporan', authorize('admin', 'guru'), absensiController.getLaporan);
+// Guru: persiapan absensi per jadwal (auto-fill dari gate), bulk submit
+router.get('/persiapan-guru', authorize('guru', 'admin'), absensiController.persiapanGuru);
+router.post('/bulk-guru', authorize('guru', 'admin'), absensiController.bulkGuru);
+// Wali kelas: rekap kelas yang diampu
+router.get('/wali-kelas', authorize('guru', 'admin'), absensiController.rekapWaliKelas);
 router.get('/:siswa_id/detail', authorize('admin', 'guru', 'siswa', 'ortu'), absensiController.getSiswaDetail);
 
 export default router;

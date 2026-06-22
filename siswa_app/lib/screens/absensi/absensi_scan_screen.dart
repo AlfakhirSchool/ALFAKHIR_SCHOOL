@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../core/api.dart';
 import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
@@ -46,6 +47,21 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
     return context.read<AuthProvider>().profile?.id;
   }
 
+  Future<Position?> _getLocation() async {
+    try {
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        await Geolocator.requestPermission();
+      }
+      if (await Geolocator.isLocationServiceEnabled()) {
+        return await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 8)),
+        );
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<void> _submitQrData(String rawQrData) async {
     if (_loading) return;
     setState(() { _loading = true; _mode = 'result'; });
@@ -56,11 +72,16 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
     }
     try {
       if (rawQrData.startsWith('GATE:')) {
-        // QR absensi gerbang — dikirim ke endpoint gerbang
-        await dio.post('/absensi-gerbang/scan', data: {'qr_data': rawQrData, 'siswa_id': siswaId});
+        // Ambil lokasi GPS untuk verifikasi
+        final pos = await _getLocation();
+        final data = <String, dynamic>{'qr_data': rawQrData, 'siswa_id': siswaId};
+        if (pos != null) { data['lat'] = pos.latitude; data['lng'] = pos.longitude; }
+
+        final resp = await dio.post('/absensi-gerbang/scan', data: data);
         final parts = rawQrData.split(':');
         final modeLabel = parts.length > 1 ? (parts[1] == 'masuk' ? 'masuk sekolah' : 'pulang sekolah') : 'gerbang';
-        setState(() { _resultSuccess = true; _resultMessage = 'Absensi $modeLabel berhasil dicatat!'; _loading = false; });
+        final respMsg = resp.data['message'] ?? 'Absensi $modeLabel berhasil!';
+        setState(() { _resultSuccess = true; _resultMessage = respMsg; _loading = false; });
       } else {
         // QR absensi kelas biasa
         await dio.post('/absensi/scan-qr', data: {'qr_data': rawQrData, 'siswa_id': siswaId});
@@ -104,9 +125,12 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
       return;
     }
     try {
-      await dio.post('/absensi-gerbang/scan', data: {'code': code, 'mode': gateMode, 'siswa_id': siswaId});
-      final modeLabel = gateMode == 'masuk' ? 'masuk sekolah' : 'pulang sekolah';
-      setState(() { _resultSuccess = true; _resultMessage = 'Absensi $modeLabel berhasil dicatat!'; _loading = false; });
+      final pos = await _getLocation();
+      final data = <String, dynamic>{'code': code, 'mode': gateMode, 'siswa_id': siswaId};
+      if (pos != null) { data['lat'] = pos.latitude; data['lng'] = pos.longitude; }
+      final resp = await dio.post('/absensi-gerbang/scan', data: data);
+      final respMsg = resp.data['message'] ?? 'Absensi berhasil!';
+      setState(() { _resultSuccess = true; _resultMessage = respMsg; _loading = false; });
     } catch (e) {
       setState(() { _resultSuccess = false; _resultMessage = _parseError(e); _loading = false; });
     }

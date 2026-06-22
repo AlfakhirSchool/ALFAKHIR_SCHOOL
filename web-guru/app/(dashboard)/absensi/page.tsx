@@ -5,256 +5,249 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 
-export default function AbsensiPage() {
-  const qc = useQueryClient();
-  const [step, setStep] = useState<'select' | 'session' | 'recap'>('select');
-  const [form, setForm] = useState({ kelas_id: '', jadwal_pelajaran_id: '' });
-  const [activeSession, setActiveSession] = useState<any>(null);
-  const [manualInput, setManualInput] = useState({ siswa_id: '', status: 'hadir', catatan: '' });
-  const [showManual, setShowManual] = useState(false);
+const STATUS_STYLE: Record<string, string> = {
+  hadir: 'bg-green-100 text-green-700 border-green-300',
+  sakit: 'bg-blue-100 text-blue-700 border-blue-300',
+  izin:  'bg-yellow-100 text-yellow-700 border-yellow-300',
+  alfa:  'bg-red-100 text-red-700 border-red-300',
+};
+const STATUS_ICON: Record<string, string> = {
+  hadir: '✅', sakit: '🤒', izin: '📝', alfa: '❌',
+};
 
-  const { data: kelasList } = useQuery({
+type AbsensiRow = { siswa_id: string; nama_siswa: string; nis: string; status_gate: string; ket_gate: string; absensi_id: string | null; status_guru: string | null; catatan: string | null };
+
+export default function AbsensiGuruPage() {
+  const today = new Date().toISOString().split('T')[0];
+  const [step, setStep] = useState<'select' | 'input' | 'done'>('select');
+  const [jadwalId, setJadwalId] = useState('');
+  const [tanggal, setTanggal] = useState(today);
+  const [kelasId, setKelasId] = useState('');
+  const [rows, setRows] = useState<AbsensiRow[]>([]);
+  const [jadwalInfo, setJadwalInfo] = useState<any>(null);
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const { data: kelasList = [] } = useQuery({
     queryKey: ['my-kelas'],
     queryFn: () => api.get('/kelas').then(r => r.data.data || []),
   });
 
-  const { data: jadwalList } = useQuery({
-    queryKey: ['jadwal-kelas', form.kelas_id],
-    queryFn: () => api.get('/jadwal-pelajaran', { params: { kelas_id: form.kelas_id } }).then(r => r.data.data || []),
-    enabled: !!form.kelas_id,
+  const { data: jadwalList = [] } = useQuery({
+    queryKey: ['jadwal-kelas', kelasId],
+    queryFn: () => api.get('/jadwal-pelajaran', { params: { kelas_id: kelasId } }).then(r => r.data.data || []),
+    enabled: !!kelasId,
   });
 
-  const { data: absensiData, refetch: refetchAbsensi } = useQuery({
-    queryKey: ['absensi-session', activeSession?.id],
-    queryFn: () => api.get('/absensi/laporan', {
-      params: { jadwal_pelajaran_id: form.jadwal_pelajaran_id, tanggal: new Date().toISOString().split('T')[0] }
-    }).then(r => r.data.data || []),
-    enabled: !!activeSession,
-    refetchInterval: 5000,
-  });
-
-  const createSession = useMutation({
-    mutationFn: () => api.post('/absensi/qr-session/create', {
-      jadwal_pelajaran_id: form.jadwal_pelajaran_id,
-      tanggal: new Date().toISOString().split('T')[0],
-    }),
+  const loadPersiapan = useMutation({
+    mutationFn: () => api.get('/absensi/persiapan-guru', { params: { jadwal_pelajaran_id: jadwalId, tanggal } }),
     onSuccess: (res) => {
-      setActiveSession(res.data.data);
-      setStep('session');
+      const d = res.data;
+      setJadwalInfo(d.jadwal);
+      // Inisialisasi: pakai status_guru jika sudah direkam, else pakai status_gate
+      setRows(d.data.map((r: AbsensiRow) => ({
+        ...r,
+        status_guru: r.status_guru || r.status_gate,
+      })));
+      setStep('input');
     },
+    onError: (e: any) => showToast(e.response?.data?.message || 'Gagal memuat data', 'error'),
   });
 
-  const closeSession = useMutation({
-    mutationFn: () => api.post(`/absensi/qr-session/${activeSession.id}/close`),
-    onSuccess: () => {
-      setStep('recap');
-    },
-  });
-
-  const addManual = useMutation({
-    mutationFn: () => api.post('/absensi/manual', {
-      ...manualInput,
-      jadwal_pelajaran_id: form.jadwal_pelajaran_id,
-      tanggal: new Date().toISOString().split('T')[0],
+  const submitMut = useMutation({
+    mutationFn: () => api.post('/absensi/bulk-guru', {
+      jadwal_pelajaran_id: jadwalId,
+      tanggal,
+      absensi: rows.map(r => ({ siswa_id: r.siswa_id, status: r.status_guru || 'alfa', catatan: r.catatan || '' })),
     }),
     onSuccess: () => {
-      setManualInput({ siswa_id: '', status: 'hadir', catatan: '' });
-      setShowManual(false);
-      refetchAbsensi();
+      showToast('Absensi berhasil disimpan');
+      setStep('done');
     },
+    onError: (e: any) => showToast(e.response?.data?.message || 'Gagal menyimpan', 'error'),
   });
 
-  const hadir = absensiData?.filter((a: any) => a.status === 'hadir').length || 0;
-  const alfa = absensiData?.filter((a: any) => a.status === 'alfa').length || 0;
-  const sakit = absensiData?.filter((a: any) => a.status === 'sakit').length || 0;
-  const izin = absensiData?.filter((a: any) => a.status === 'izin').length || 0;
+  const updateRow = (siswaId: string, field: 'status_guru' | 'catatan', value: string) => {
+    setRows(prev => prev.map(r => r.siswa_id === siswaId ? { ...r, [field]: value } : r));
+  };
+
+  const summary = rows.reduce((acc, r) => {
+    const s = r.status_guru || 'alfa';
+    acc[s] = (acc[s] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   return (
     <div>
-      <Header title="Absensi" />
-      <div className="p-6 max-w-4xl">
+      <Header title="Absensi per Pelajaran" />
+      <div className="p-6 space-y-5">
 
+        {toast && (
+          <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-white font-medium text-sm ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
+            {toast.msg}
+          </div>
+        )}
+
+        {/* Step 1: Pilih jadwal */}
         {step === 'select' && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="font-semibold text-[#1A2332] mb-6">Mulai Sesi Absensi</h2>
+          <div className="bg-white rounded-xl shadow-sm p-6 max-w-lg">
+            <h2 className="font-bold text-[#1A2332] mb-5">Pilih Kelas & Pelajaran</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pilih Kelas</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Kelas</label>
                 <select
-                  value={form.kelas_id}
-                  onChange={(e) => setForm({ ...form, kelas_id: e.target.value, jadwal_pelajaran_id: '' })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8B87]"
+                  value={kelasId}
+                  onChange={(e) => { setKelasId(e.target.value); setJadwalId(''); }}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
                 >
-                  <option value="">-- Pilih Kelas --</option>
-                  {(kelasList || []).map((k: any) => (
-                    <option key={k.id} value={k.id}>{k.nama}</option>
-                  ))}
+                  <option value="">— Pilih Kelas —</option>
+                  {kelasList.map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
                 </select>
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pilih Jadwal Pelajaran</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Jadwal Pelajaran</label>
                 <select
-                  value={form.jadwal_pelajaran_id}
-                  onChange={(e) => setForm({ ...form, jadwal_pelajaran_id: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8B87]"
-                  disabled={!form.kelas_id}
+                  value={jadwalId}
+                  onChange={(e) => setJadwalId(e.target.value)}
+                  disabled={!kelasId}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 disabled:opacity-50"
                 >
-                  <option value="">-- Pilih Jadwal --</option>
-                  {(jadwalList || []).map((j: any) => (
+                  <option value="">— Pilih Jadwal —</option>
+                  {jadwalList.map((j: any) => (
                     <option key={j.id} value={j.id}>
-                      {j.mataPelajaran?.nama} · {j.hari} {j.jam_mulai}–{j.jam_selesai}
+                      {j.mata_pelajaran?.nama || j.mataPelajaran?.nama} · {j.hari} {j.jam_mulai}–{j.jam_selesai}
                     </option>
                   ))}
                 </select>
               </div>
-
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Tanggal</label>
+                <input
+                  type="date"
+                  value={tanggal}
+                  onChange={(e) => setTanggal(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
               <button
-                onClick={() => createSession.mutate()}
-                disabled={!form.jadwal_pelajaran_id || createSession.isPending}
-                className="w-full py-3 bg-[#1B8B87] text-white rounded-lg font-semibold hover:bg-[#156f6c] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                onClick={() => loadPersiapan.mutate()}
+                disabled={!jadwalId || loadPersiapan.isPending}
+                className="w-full py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-bold text-sm disabled:opacity-50"
               >
-                {createSession.isPending ? 'Membuat sesi...' : 'Generate QR & Mulai Absensi'}
+                {loadPersiapan.isPending ? 'Memuat...' : 'Buka Daftar Absensi →'}
               </button>
             </div>
           </div>
         )}
 
-        {step === 'session' && activeSession && (
-          <div className="space-y-6">
-            {/* QR & Code display */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-                <h3 className="font-semibold text-[#1A2332] mb-4">QR Code Absensi</h3>
-                {activeSession.qr_image ? (
-                  <img
-                    src={activeSession.qr_image}
-                    alt="QR Absensi"
-                    className="w-48 h-48 mx-auto border-4 border-[#1B8B87] rounded-xl"
-                  />
-                ) : (
-                  <div className="w-48 h-48 mx-auto bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
-                    QR tidak tersedia
-                  </div>
-                )}
-                <p className="text-xs text-gray-400 mt-3">Siswa scan QR ini dengan aplikasi</p>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-                <h3 className="font-semibold text-[#1A2332] mb-4">Kode Manual (6 Digit)</h3>
-                <div className="text-6xl font-bold tracking-widest text-[#1B8B87] py-8 bg-[#1B8B87]/5 rounded-xl">
-                  {activeSession.unique_code}
+        {/* Step 2: Input absensi */}
+        {step === 'input' && (
+          <div className="space-y-4">
+            {/* Info jadwal */}
+            <div className="bg-teal-500 text-white rounded-2xl p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-lg">{jadwalInfo?.mata_pelajaran?.nama}</p>
+                  <p className="text-sm opacity-80">{jadwalInfo?.kelas?.nama} · {jadwalInfo?.hari} {jadwalInfo?.jam_mulai}–{jadwalInfo?.jam_selesai}</p>
+                  <p className="text-sm opacity-80 mt-0.5">{new Date(tanggal + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</p>
                 </div>
-                <p className="text-xs text-gray-400 mt-3">Siswa ketik kode ini jika tidak bisa scan QR</p>
+                <button onClick={() => setStep('select')} className="text-white/70 hover:text-white text-sm underline">← Ganti</button>
               </div>
             </div>
 
-            {/* Real-time attendance list */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-[#1A2332]">Rekap Kehadiran (Auto-refresh)</h3>
-                <div className="flex gap-3 text-sm">
-                  <span className="text-green-600 font-medium">Hadir: {hadir}</span>
-                  <span className="text-red-600 font-medium">Alfa: {alfa}</span>
-                  <span className="text-blue-600 font-medium">Sakit: {sakit}</span>
-                  <span className="text-yellow-600 font-medium">Izin: {izin}</span>
+            {/* Summary */}
+            <div className="grid grid-cols-4 gap-3">
+              {['hadir', 'sakit', 'izin', 'alfa'].map(s => (
+                <div key={s} className={`rounded-xl p-3 text-center border ${STATUS_STYLE[s]}`}>
+                  <p className="text-xl font-bold">{summary[s] || 0}</p>
+                  <p className="text-xs mt-0.5">{STATUS_ICON[s]} {s.charAt(0).toUpperCase() + s.slice(1)}</p>
                 </div>
-              </div>
+              ))}
+            </div>
 
-              <div className="max-h-64 overflow-y-auto divide-y divide-gray-50">
-                {(absensiData || []).map((a: any) => (
-                  <div key={a.id} className="flex items-center justify-between py-3">
-                    <span className="text-sm font-medium text-gray-800">{a.siswa?.user?.nama}</span>
-                    <span className={`text-xs px-2 py-1 rounded font-medium ${
-                      a.status === 'hadir' ? 'bg-green-50 text-green-700' :
-                      a.status === 'sakit' ? 'bg-blue-50 text-blue-700' :
-                      a.status === 'izin' ? 'bg-yellow-50 text-yellow-700' :
-                      'bg-red-50 text-red-700'
-                    }`}>
-                      {a.status}
-                    </span>
+            {/* Daftar siswa */}
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div className="px-5 py-3 border-b border-gray-100 text-sm text-gray-500 flex gap-2">
+                <span className="text-xs bg-teal-50 text-teal-700 px-2 py-1 rounded">📍 = dari gate scan</span>
+                <span className="text-xs bg-gray-50 text-gray-500 px-2 py-1 rounded">Guru bisa ubah status per siswa</span>
+              </div>
+              <div className="divide-y divide-gray-50">
+                {rows.map((r) => (
+                  <div key={r.siswa_id} className="px-5 py-4">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-[#1A2332] text-sm">{r.nama_siswa}</p>
+                        <p className="text-xs text-gray-400">NIS: {r.nis}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Gate: <span className={`font-medium ${r.status_gate === 'hadir' ? 'text-green-600' : 'text-red-500'}`}>{r.status_gate}</span>
+                          {r.ket_gate && <span className="ml-1 text-gray-300">({r.ket_gate})</span>}
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 items-end">
+                        {/* Toggle status */}
+                        <div className="flex gap-1.5">
+                          {['hadir', 'izin', 'sakit', 'alfa'].map(s => (
+                            <button
+                              key={s}
+                              onClick={() => updateRow(r.siswa_id, 'status_guru', s)}
+                              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                                r.status_guru === s ? STATUS_STYLE[s] : 'border-gray-200 bg-white text-gray-400 hover:bg-gray-50'
+                              }`}
+                            >
+                              {STATUS_ICON[s]} {s.charAt(0).toUpperCase() + s.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                        {/* Catatan — tampil hanya jika bukan hadir */}
+                        {r.status_guru !== 'hadir' && (
+                          <input
+                            type="text"
+                            value={r.catatan || ''}
+                            onChange={(e) => updateRow(r.siswa_id, 'catatan', e.target.value)}
+                            placeholder="Catatan keterangan (opsional)"
+                            className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-400 w-full max-w-xs"
+                          />
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
-                {(absensiData || []).length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-8">Menunggu siswa absen...</p>
-                )}
               </div>
-            </div>
-
-            {/* Manual input */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <button
-                onClick={() => setShowManual(!showManual)}
-                className="text-sm text-[#1B8B87] hover:underline font-medium"
-              >
-                {showManual ? '▼' : '▶'} Input Manual Absensi
-              </button>
-              {showManual && (
-                <div className="mt-4 grid grid-cols-3 gap-3">
-                  <input
-                    placeholder="ID Siswa"
-                    value={manualInput.siswa_id}
-                    onChange={(e) => setManualInput({ ...manualInput, siswa_id: e.target.value })}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]"
-                  />
-                  <select
-                    value={manualInput.status}
-                    onChange={(e) => setManualInput({ ...manualInput, status: e.target.value })}
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none"
-                  >
-                    <option value="hadir">Hadir</option>
-                    <option value="sakit">Sakit</option>
-                    <option value="izin">Izin</option>
-                    <option value="alfa">Alfa</option>
-                  </select>
-                  <button
-                    onClick={() => addManual.mutate()}
-                    disabled={!manualInput.siswa_id || addManual.isPending}
-                    className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-medium disabled:opacity-50"
-                  >
-                    Simpan
-                  </button>
-                </div>
-              )}
             </div>
 
             <button
-              onClick={() => closeSession.mutate()}
-              disabled={closeSession.isPending}
-              className="w-full py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 disabled:opacity-50 transition-colors"
+              onClick={() => submitMut.mutate()}
+              disabled={submitMut.isPending}
+              className="w-full py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-bold text-base disabled:opacity-50"
             >
-              {closeSession.isPending ? 'Menutup...' : 'Tutup Sesi Absensi'}
+              {submitMut.isPending ? 'Menyimpan...' : `💾 Simpan Absensi ${rows.length} Siswa`}
             </button>
           </div>
         )}
 
-        {step === 'recap' && (
-          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-            <div className="text-5xl mb-4">✅</div>
-            <h2 className="text-xl font-bold text-[#1A2332] mb-2">Sesi Absensi Selesai</h2>
-            <div className="grid grid-cols-4 gap-4 my-6">
-              <div className="bg-green-50 rounded-lg p-4">
-                <p className="text-2xl font-bold text-green-600">{hadir}</p>
-                <p className="text-xs text-gray-500 mt-1">Hadir</p>
-              </div>
-              <div className="bg-blue-50 rounded-lg p-4">
-                <p className="text-2xl font-bold text-blue-600">{sakit}</p>
-                <p className="text-xs text-gray-500 mt-1">Sakit</p>
-              </div>
-              <div className="bg-yellow-50 rounded-lg p-4">
-                <p className="text-2xl font-bold text-yellow-600">{izin}</p>
-                <p className="text-xs text-gray-500 mt-1">Izin</p>
-              </div>
-              <div className="bg-red-50 rounded-lg p-4">
-                <p className="text-2xl font-bold text-red-600">{alfa}</p>
-                <p className="text-xs text-gray-500 mt-1">Alfa</p>
-              </div>
+        {/* Step 3: Done */}
+        {step === 'done' && (
+          <div className="bg-white rounded-xl shadow-sm p-10 text-center">
+            <p className="text-5xl mb-4">✅</p>
+            <h2 className="text-xl font-bold text-[#1A2332] mb-2">Absensi Tersimpan</h2>
+            <p className="text-gray-500 text-sm mb-6">{jadwalInfo?.mata_pelajaran?.nama} · {rows.length} siswa</p>
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              {['hadir', 'sakit', 'izin', 'alfa'].map(s => (
+                <div key={s} className={`rounded-xl p-4 border ${STATUS_STYLE[s]}`}>
+                  <p className="text-2xl font-bold">{summary[s] || 0}</p>
+                  <p className="text-xs mt-1">{STATUS_ICON[s]} {s.charAt(0).toUpperCase() + s.slice(1)}</p>
+                </div>
+              ))}
             </div>
             <button
-              onClick={() => { setStep('select'); setActiveSession(null); setForm({ kelas_id: '', jadwal_pelajaran_id: '' }); }}
-              className="px-6 py-3 bg-[#1B8B87] text-white rounded-lg font-semibold hover:bg-[#156f6c]"
+              onClick={() => { setStep('select'); setJadwalId(''); setRows([]); setJadwalInfo(null); }}
+              className="px-8 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-bold"
             >
-              Absensi Baru
+              Absensi Pelajaran Lain
             </button>
           </div>
         )}

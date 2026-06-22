@@ -9,6 +9,16 @@ import logger from '../config/logger';
 const router = Router();
 router.use(authenticate);
 
+// Haversine — jarak dua titik GPS dalam meter
+const haversineMeters = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371000;
+  const toRad = (v: number) => v * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 // Daftar absensi gerbang hari ini
 router.get('/hari-ini', async (req: AuthRequest, res: Response): Promise<void> => {
   const { sekolah_id } = req.query;
@@ -303,8 +313,8 @@ router.get('/daily-token', authorize('admin'), async (req: AuthRequest, res: Res
 
 // Siswa: scan QR gerbang atau input kode gerbang
 router.post('/scan', authenticate, async (req: AuthRequest, res: Response): Promise<void> => {
-  const { siswa_id, qr_data, code, mode: modeParam } = req.body as {
-    siswa_id: string; qr_data?: string; code?: string; mode?: string;
+  const { siswa_id, qr_data, code, mode: modeParam, lat, lng } = req.body as {
+    siswa_id: string; qr_data?: string; code?: string; mode?: string; lat?: number; lng?: number;
   };
   if (!siswa_id) { res.status(400).json({ success: false, message: 'siswa_id wajib diisi' }); return; }
 
@@ -366,17 +376,34 @@ router.post('/scan', authenticate, async (req: AuthRequest, res: Response): Prom
   if (!siswaRow) { res.status(404).json({ success: false, message: 'Siswa tidak ditemukan' }); return; }
 
   const now = new Date();
+
+  // Validasi lokasi GPS jika dikirim siswa
+  let lokasiValid: boolean | null = null;
+  let lokasiJarak: number | null = null;
+  if (lat != null && lng != null) {
+    const [sekolahRow] = await sequelize.query<any>(
+      `SELECT lat, lng, radius_meter FROM sekolah WHERE id = :sid`,
+      { replacements: { sid: siswaRow.sekolah_id }, type: QueryTypes.SELECT }
+    );
+    if (sekolahRow?.lat && sekolahRow?.lng) {
+      lokasiJarak = Math.round(haversineMeters(lat, lng, parseFloat(sekolahRow.lat), parseFloat(sekolahRow.lng)));
+      lokasiValid = lokasiJarak <= (sekolahRow.radius_meter || 200);
+    }
+  }
+
   const columnSet = mode === 'masuk'
-    ? 'waktu_masuk = :now, notif_masuk_sent = FALSE'
+    ? 'waktu_masuk = :now, notif_masuk_sent = FALSE, lokasi_lat = :lat, lokasi_lng = :lng, lokasi_valid = :lok, lokasi_jarak_meter = :jarak'
     : 'waktu_pulang = :now, notif_pulang_sent = FALSE';
   const insertCol = mode === 'masuk' ? 'waktu_masuk' : 'waktu_pulang';
+  const extraCols = mode === 'masuk' ? ', lokasi_lat, lokasi_lng, lokasi_valid, lokasi_jarak_meter' : '';
+  const extraVals = mode === 'masuk' ? ', :lat, :lng, :lok, :jarak' : '';
 
   await sequelize.query(
-    `INSERT INTO absensi_gerbang (siswa_id, sekolah_id, tanggal, ${insertCol}, created_by)
-     VALUES (:sid, :skolahId, :today, :now, :uid)
+    `INSERT INTO absensi_gerbang (siswa_id, sekolah_id, tanggal, ${insertCol}${extraCols}, created_by)
+     VALUES (:sid, :skolahId, :today, :now${extraVals}, :uid)
      ON CONFLICT (siswa_id, tanggal)
      DO UPDATE SET ${columnSet}`,
-    { replacements: { sid: siswa_id, skolahId: siswaRow.sekolah_id, today, now, uid: req.user!.id }, type: QueryTypes.INSERT }
+    { replacements: { sid: siswa_id, skolahId: siswaRow.sekolah_id, today, now, uid: req.user!.id, lat: lat ?? null, lng: lng ?? null, lok: lokasiValid, jarak: lokasiJarak }, type: QueryTypes.INSERT }
   );
 
   // Kirim notif WA
@@ -391,10 +418,14 @@ router.post('/scan', authenticate, async (req: AuthRequest, res: Response): Prom
     }
   }
 
+  const lokasiMsg = lokasiValid === false
+    ? ' ⚠️ Terdeteksi di luar sekolah.'
+    : lokasiValid === true ? ' 📍 Lokasi terverifikasi.' : '';
+
   res.json({
     success: true,
-    message: `${siswaRow.nama_siswa} berhasil absensi ${mode} sekolah!`,
-    data: { nama_siswa: siswaRow.nama_siswa, mode, waktu: now },
+    message: `${siswaRow.nama_siswa} berhasil absensi ${mode} sekolah!${lokasiMsg}`,
+    data: { nama_siswa: siswaRow.nama_siswa, mode, waktu: now, lokasi_valid: lokasiValid, lokasi_jarak_meter: lokasiJarak },
   });
 });
 
