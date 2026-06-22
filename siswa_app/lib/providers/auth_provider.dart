@@ -89,6 +89,20 @@ class AuthProvider extends ChangeNotifier {
       final data = res.data['data'];
       if (data['siswa'] != null) {
         _profile = SiswaProfile.fromJson(data['siswa']);
+        // Sync profile_pic from latest server data
+        final latestPic = _profile!.user.profilePic;
+        if (_user != null && latestPic != null) {
+          _user = User(
+            id: _user!.id,
+            email: _user!.email,
+            nama: _user!.nama,
+            role: _user!.role,
+            isActive: _user!.isActive,
+            profilePic: latestPic,
+          );
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('current_user', jsonEncode(_user!.toJson()));
+        }
         notifyListeners();
       }
     } catch (_) {}

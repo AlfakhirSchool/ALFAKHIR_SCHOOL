@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -7,7 +6,9 @@ import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
 
 class AbsensiScanScreen extends StatefulWidget {
-  const AbsensiScanScreen({super.key});
+  final bool directScan;
+
+  const AbsensiScanScreen({super.key, this.directScan = false});
 
   @override
   State<AbsensiScanScreen> createState() => _AbsensiScanScreenState();
@@ -15,12 +16,23 @@ class AbsensiScanScreen extends StatefulWidget {
 
 class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
   // 'menu' | 'scan' | 'code' | 'result'
-  String _mode = 'menu';
+  late String _mode;
   final _codeController = TextEditingController();
   bool _loading = false;
   String? _resultMessage;
   bool _resultSuccess = false;
   final MobileScannerController _scannerCtrl = MobileScannerController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.directScan) {
+      _mode = 'scan';
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scannerCtrl.start());
+    } else {
+      _mode = 'menu';
+    }
+  }
 
   @override
   void dispose() {
@@ -71,6 +83,35 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
     }
   }
 
+  void _goToScan() {
+    _scannerCtrl.start();
+    setState(() => _mode = 'scan');
+  }
+
+  void _goToCode() {
+    _scannerCtrl.stop();
+    setState(() => _mode = 'code');
+  }
+
+  void _handleBack() {
+    if (_mode == 'scan') {
+      if (widget.directScan) {
+        Navigator.pop(context);
+      } else {
+        _scannerCtrl.stop();
+        setState(() => _mode = 'menu');
+      }
+    } else if (_mode == 'code') {
+      if (widget.directScan) {
+        _goToScan();
+      } else {
+        setState(() => _mode = 'menu');
+      }
+    } else {
+      Navigator.pop(context);
+    }
+  }
+
   String _parseError(dynamic e) {
     try {
       final data = e.response?.data;
@@ -90,13 +131,7 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (_mode == 'scan' || _mode == 'code') {
-              setState(() => _mode = 'menu');
-            } else {
-              Navigator.pop(context);
-            }
-          },
+          onPressed: _handleBack,
         ),
       ),
       body: AnimatedSwitcher(
@@ -119,22 +154,36 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
               _submitQrData(raw);
             }
           },
+          onManualCode: _goToCode,
         );
       case 'code':
-        return _CodeView(key: const ValueKey('code'), controller: _codeController, loading: _loading, onSubmit: _submitCode);
+        return _CodeView(
+          key: const ValueKey('code'),
+          controller: _codeController,
+          loading: _loading,
+          onSubmit: _submitCode,
+          onScanQr: widget.directScan ? _goToScan : null,
+        );
       case 'result':
         return _ResultView(
           key: const ValueKey('result'),
           success: _resultSuccess,
           message: _resultMessage ?? '',
           loading: _loading,
-          onRetry: () => setState(() { _mode = 'menu'; _codeController.clear(); }),
+          onRetry: () {
+            _codeController.clear();
+            if (widget.directScan) {
+              _goToScan();
+            } else {
+              setState(() => _mode = 'menu');
+            }
+          },
         );
       default:
         return _MenuView(
           key: const ValueKey('menu'),
-          onScan: () { _scannerCtrl.start(); setState(() => _mode = 'scan'); },
-          onCode: () => setState(() => _mode = 'code'),
+          onScan: _goToScan,
+          onCode: _goToCode,
         );
     }
   }
@@ -231,15 +280,16 @@ class _OptionCard extends StatelessWidget {
 class _ScanView extends StatelessWidget {
   final MobileScannerController controller;
   final void Function(BarcodeCapture) onDetect;
+  final VoidCallback? onManualCode;
 
-  const _ScanView({super.key, required this.controller, required this.onDetect});
+  const _ScanView({super.key, required this.controller, required this.onDetect, this.onManualCode});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         MobileScanner(controller: controller, onDetect: onDetect),
-        // Overlay
+        // Dimmed overlay with scan area cutout
         ColorFiltered(
           colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.5), BlendMode.srcOut),
           child: Stack(
@@ -254,6 +304,7 @@ class _ScanView extends StatelessWidget {
             ],
           ),
         ),
+        // Scan frame border
         Center(
           child: Container(
             width: 240, height: 240,
@@ -263,10 +314,72 @@ class _ScanView extends StatelessWidget {
             ),
           ),
         ),
-        Positioned(bottom: 60, left: 0, right: 0,
-          child: const Text('Arahkan QR code ke dalam kotak', textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 14))),
+        // Corner accents
+        Center(
+          child: SizedBox(
+            width: 240, height: 240,
+            child: Stack(
+              children: [
+                _Corner(top: true, left: true),
+                _Corner(top: true, left: false),
+                _Corner(top: false, left: true),
+                _Corner(top: false, left: false),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 140,
+          left: 0, right: 0,
+          child: const Text(
+            'Arahkan QR code ke dalam kotak',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontSize: 14),
+          ),
+        ),
+        if (onManualCode != null)
+          Positioned(
+            bottom: 72,
+            left: 40, right: 40,
+            child: TextButton.icon(
+              icon: const Icon(Icons.keyboard, color: Colors.white, size: 18),
+              label: const Text('Input Kode Manual', style: TextStyle(color: Colors.white, fontSize: 14)),
+              onPressed: onManualCode,
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.black54,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
       ],
+    );
+  }
+}
+
+class _Corner extends StatelessWidget {
+  final bool top, left;
+  // ignore: prefer_const_constructors_in_immutables
+  _Corner({required this.top, required this.left});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: top ? 0 : null,
+      bottom: top ? null : 0,
+      left: left ? 0 : null,
+      right: left ? null : 0,
+      child: Container(
+        width: 24, height: 24,
+        decoration: BoxDecoration(
+          border: Border(
+            top: top ? const BorderSide(color: Colors.white, width: 3) : BorderSide.none,
+            bottom: top ? BorderSide.none : const BorderSide(color: Colors.white, width: 3),
+            left: left ? const BorderSide(color: Colors.white, width: 3) : BorderSide.none,
+            right: left ? BorderSide.none : const BorderSide(color: Colors.white, width: 3),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -275,8 +388,9 @@ class _CodeView extends StatelessWidget {
   final TextEditingController controller;
   final bool loading;
   final VoidCallback onSubmit;
+  final VoidCallback? onScanQr;
 
-  const _CodeView({super.key, required this.controller, required this.loading, required this.onSubmit});
+  const _CodeView({super.key, required this.controller, required this.loading, required this.onSubmit, this.onScanQr});
 
   @override
   Widget build(BuildContext context) {
@@ -324,6 +438,15 @@ class _CodeView extends StatelessWidget {
                   : const Text('Kirim Absensi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ),
+          if (onScanQr != null) ...[
+            const SizedBox(height: 16),
+            TextButton.icon(
+              icon: const Icon(Icons.qr_code_scanner, size: 18),
+              label: const Text('Scan QR Code'),
+              onPressed: onScanQr,
+              style: TextButton.styleFrom(foregroundColor: colorSMP),
+            ),
+          ],
         ],
       ),
     );

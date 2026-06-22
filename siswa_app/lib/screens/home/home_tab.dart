@@ -94,12 +94,18 @@ class HomeTab extends StatelessWidget {
                           GestureDetector(
                             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
                             child: Builder(builder: (context) {
-                              final picUrl = user?.profilePic;
-                              final fullUrl = picUrl != null ? '${baseUrl.replaceAll('/api', '')}$picUrl' : null;
+                              final picUrl = profile?.user.profilePic ?? user?.profilePic;
+                              String? fullUrl;
+                              if (picUrl != null && picUrl.isNotEmpty) {
+                                fullUrl = picUrl.startsWith('http')
+                                    ? picUrl
+                                    : '${baseUrl.replaceAll('/api', '')}$picUrl';
+                              }
                               return CircleAvatar(
                                 radius: 24,
                                 backgroundColor: Colors.white.withOpacity(0.3),
                                 backgroundImage: fullUrl != null ? NetworkImage(fullUrl) : null,
+                                onBackgroundImageError: fullUrl != null ? (_, __) {} : null,
                                 child: fullUrl == null
                                     ? Text(
                                         (user?.nama ?? 'S').substring(0, 1).toUpperCase(),
