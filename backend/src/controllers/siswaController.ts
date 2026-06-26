@@ -6,6 +6,11 @@ import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 import { kelasIdFilter } from '../utils/levelFilter';
 
+export const getSekolahList = async (_req: AuthRequest, res: Response): Promise<void> => {
+  const list = await Sekolah.findAll({ attributes: ['id', 'nama', 'jenjang'], order: [['nama', 'ASC']] });
+  res.json({ success: true, data: list });
+};
+
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
   const { kelas_id, tahun_ajaran, search, page = '1', limit = '20' } = req.query;
   const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
@@ -69,7 +74,7 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   const password_hash = await bcrypt.hash(password || nisn, 12);
 
   const user = await User.create({ email, password_hash, nama, role: 'siswa' });
-  const siswa = await Siswa.create({ user_id: user.id, kelas_id, nisn, nis, no_induk, tempat_lahir, tanggal_lahir, alamat });
+  const siswa = await Siswa.create({ user_id: user.id, kelas_id, nisn, nis, no_induk: no_induk || nis, tempat_lahir, tanggal_lahir, alamat });
 
   res.status(201).json({ success: true, message: 'Siswa berhasil dibuat', data: { user, siswa } });
 };

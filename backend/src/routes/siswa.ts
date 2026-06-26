@@ -7,6 +7,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', authorize('admin', 'guru'), siswaController.getAll);
+router.get('/sekolah-list', authorize('admin', 'guru'), siswaController.getSekolahList);
 router.post('/', authorize('admin'), siswaController.create);
 router.get('/:id', authorize('admin', 'guru', 'siswa', 'ortu'), siswaController.getById);
 router.put('/:id', authorize('admin'), siswaController.update);
