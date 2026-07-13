@@ -216,7 +216,7 @@ export default function GuruPage() {
                       </div>
                       <div>
                         <p className="font-semibold text-[#1A2332] text-sm">{g.user?.nama}</p>
-                        <p className="text-xs text-gray-400">{g.user?.email}</p>
+                        <p className="text-xs text-gray-400">{(g.user?.email || '').replace(DOMAIN, '')}</p>
                       </div>
                     </div>
                   </td>
