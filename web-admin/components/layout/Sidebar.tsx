@@ -4,38 +4,45 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore, SchoolLevel } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
+import {
+  LayoutDashboard, Users, GraduationCap, School, BookOpen, Calendar,
+  DoorOpen, CreditCard, ClipboardCheck, FileText, Wallet, BookMarked,
+  BarChart3, UserCog, Search, Settings, LogOut,
+} from 'lucide-react';
 
-const masterMenu = [
-  { href: '/dashboard', icon: '📊', label: 'Dashboard' },
-  { href: '/siswa', icon: '👨‍🎓', label: 'Siswa' },
-  { href: '/guru', icon: '👨‍🏫', label: 'Guru' },
-  { href: '/kelas', icon: '🏫', label: 'Kelas' },
-  { href: '/mata-pelajaran', icon: '📚', label: 'Mata Pelajaran' },
-  { href: '/jadwal', icon: '📅', label: 'Jadwal' },
-  { href: '/absensi-gerbang', icon: '🏫', label: 'Absensi Gerbang' },
-  { href: '/rfid-registrasi', icon: '💳', label: 'Registrasi RFID' },
-  { href: '/absensi', icon: '✅', label: 'Absensi Kelas' },
-  { href: '/nilai', icon: '📝', label: 'Nilai' },
-  { href: '/pembayaran', icon: '💰', label: 'Pembayaran' },
-  { href: '/jurnal-guru', icon: '📓', label: 'Jurnal Guru' },
-  { href: '/laporan', icon: '📄', label: 'Laporan' },
-  { href: '/users', icon: '👥', label: 'Kelola Akun' },
-  { href: '/audit-log', icon: '🔍', label: 'Audit Log' },
-  { href: '/settings', icon: '⚙️', label: 'Pengaturan' },
+type MenuItem = { href: string; icon: React.ReactNode; label: string };
+
+const masterMenu: MenuItem[] = [
+  { href: '/dashboard',       icon: <LayoutDashboard size={18} />,  label: 'Dashboard' },
+  { href: '/siswa',           icon: <GraduationCap size={18} />,    label: 'Siswa' },
+  { href: '/guru',            icon: <Users size={18} />,            label: 'Guru' },
+  { href: '/kelas',           icon: <School size={18} />,           label: 'Kelas' },
+  { href: '/mata-pelajaran',  icon: <BookOpen size={18} />,         label: 'Mata Pelajaran' },
+  { href: '/jadwal',          icon: <Calendar size={18} />,         label: 'Jadwal' },
+  { href: '/absensi-gerbang', icon: <DoorOpen size={18} />,         label: 'Absensi Gerbang' },
+  { href: '/rfid-registrasi', icon: <CreditCard size={18} />,       label: 'Registrasi RFID' },
+  { href: '/absensi',         icon: <ClipboardCheck size={18} />,   label: 'Absensi Kelas' },
+  { href: '/nilai',           icon: <FileText size={18} />,         label: 'Nilai' },
+  { href: '/pembayaran',      icon: <Wallet size={18} />,           label: 'Pembayaran' },
+  { href: '/jurnal-guru',     icon: <BookMarked size={18} />,       label: 'Jurnal Guru' },
+  { href: '/laporan',         icon: <BarChart3 size={18} />,        label: 'Laporan' },
+  { href: '/users',           icon: <UserCog size={18} />,          label: 'Kelola Akun' },
+  { href: '/audit-log',       icon: <Search size={18} />,           label: 'Audit Log' },
+  { href: '/settings',        icon: <Settings size={18} />,         label: 'Pengaturan' },
 ];
 
-const levelMenu = (level: string) => [
-  { href: `/dashboard/${level.toLowerCase()}`, icon: '📊', label: `Dashboard ${level}` },
-  { href: '/siswa', icon: '👨‍🎓', label: 'Siswa' },
-  { href: '/guru', icon: '👨‍🏫', label: 'Guru' },
-  { href: '/kelas', icon: '🏫', label: 'Kelas' },
-  { href: '/jadwal', icon: '📅', label: 'Jadwal' },
-  { href: '/absensi-gerbang', icon: '🏫', label: 'Absensi Gerbang' },
-  { href: '/rfid-registrasi', icon: '💳', label: 'Registrasi RFID' },
-  { href: '/absensi', icon: '✅', label: 'Absensi Kelas' },
-  { href: '/nilai', icon: '📝', label: 'Nilai' },
-  { href: '/laporan', icon: '📄', label: 'Laporan' },
-  { href: '/users', icon: '👥', label: 'Kelola Akun' },
+const levelMenu = (level: string): MenuItem[] => [
+  { href: `/dashboard/${level.toLowerCase()}`, icon: <LayoutDashboard size={18} />, label: `Dashboard ${level}` },
+  { href: '/siswa',           icon: <GraduationCap size={18} />,    label: 'Siswa' },
+  { href: '/guru',            icon: <Users size={18} />,            label: 'Guru' },
+  { href: '/kelas',           icon: <School size={18} />,           label: 'Kelas' },
+  { href: '/jadwal',          icon: <Calendar size={18} />,         label: 'Jadwal' },
+  { href: '/absensi-gerbang', icon: <DoorOpen size={18} />,         label: 'Absensi Gerbang' },
+  { href: '/rfid-registrasi', icon: <CreditCard size={18} />,       label: 'Registrasi RFID' },
+  { href: '/absensi',         icon: <ClipboardCheck size={18} />,   label: 'Absensi Kelas' },
+  { href: '/nilai',           icon: <FileText size={18} />,         label: 'Nilai' },
+  { href: '/laporan',         icon: <BarChart3 size={18} />,        label: 'Laporan' },
+  { href: '/users',           icon: <UserCog size={18} />,          label: 'Kelola Akun' },
 ];
 
 const LEVEL_COLOR: Record<string, string> = {
@@ -95,21 +102,21 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 overflow-y-auto">
-        <ul className="space-y-1">
+      <nav className="flex-1 p-3 overflow-y-auto">
+        <ul className="space-y-0.5">
           {menuItems.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                    active ? 'text-white font-medium' : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 ${
+                    active ? 'text-white font-medium shadow-sm' : 'text-gray-400 hover:bg-white/8 hover:text-white'
                   }`}
                   style={active ? { backgroundColor: accentColor } : {}}
                 >
-                  <span>{item.icon}</span>
-                  {item.label}
+                  <span className="flex-shrink-0">{item.icon}</span>
+                  <span className="truncate">{item.label}</span>
                 </Link>
               </li>
             );
@@ -117,17 +124,23 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      {/* Logout */}
-      <div className="p-4 border-t border-white/10">
-        <div className="px-3 py-2 mb-2">
-          <p className="text-xs text-gray-400 truncate">{user?.nama}</p>
-          <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+      {/* User + Logout */}
+      <div className="p-3 border-t border-white/10">
+        <div className="flex items-center gap-2 px-3 py-2 mb-1">
+          <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold flex-shrink-0">
+            {user?.nama?.charAt(0)?.toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-white truncate">{user?.nama}</p>
+            <p className="text-xs text-gray-500 truncate">{user?.email?.replace('@alfakhirschool.sch.id', '')}</p>
+          </div>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-red-500/20 hover:text-red-300 transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:bg-red-500/15 hover:text-red-300 transition-all duration-150"
         >
-          <span>🚪</span> Keluar
+          <LogOut size={18} />
+          <span>Keluar</span>
         </button>
       </div>
     </aside>
