@@ -116,6 +116,8 @@ services:
       FRONTEND_ADMIN_URL: ${FRONTEND_ADMIN_URL}
       FRONTEND_GURU_URL: ${FRONTEND_GURU_URL}
       N8N_WEBHOOK_URL: http://n8n:5678/webhook
+      N8N_WEBHOOK_SISWA: https://n8n.smpialfakhir.sch.id/webhook/siswa-baru
+      N8N_WEBHOOK_GURU: https://n8n.smpialfakhir.sch.id/webhook/guru-baru
       WAHA_URL: http://waha:3000
       WAHA_API_KEY: ${WAHA_API_KEY:-alfakhir-waha-2025}
       FONNTE_TOKEN: ${FONNTE_TOKEN:-}
@@ -190,6 +192,9 @@ services:
     restart: unless-stopped
     environment:
       WHATSAPP_API_KEY: ${WAHA_API_KEY:-alfakhir-waha-2025}
+      WHATSAPP_DEFAULT_ENGINE: WEBJS
+      WAHA_DASHBOARD_USER: ${WAHA_DASHBOARD_USER:-admin}
+      WAHA_DASHBOARD_PASSWORD: ${WAHA_DASHBOARD_PASS:-alfakhir2025}
     volumes:
       - waha_data:/app/.sessions
     ports:
