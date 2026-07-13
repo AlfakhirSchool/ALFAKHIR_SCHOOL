@@ -265,7 +265,7 @@ export default function UsersPage() {
                 <tr key={u.id} className="hover:bg-gray-50/60 transition-colors">
                   <td className="px-5 py-3.5">
                     <p className="font-semibold text-[#1A2332] text-sm">{u.nama}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{u.email}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{u.email.replace(DOMAIN, '')}</p>
                   </td>
                   <td className="px-5 py-3.5">
                     <Badge text={ROLE_LABEL[u.role] || u.role} color={ROLE_COLOR[u.role] || '#888'} />
@@ -459,21 +459,13 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Username <span className="text-red-400">*</span></label>
-                <div className="flex rounded-xl border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#F97316]">
-                  <input
-                    type="text"
-                    value={createForm.email}
-                    onChange={e => setCreateForm(f => ({ ...f, email: e.target.value.trim().replace(/[@\s]/g, '') }))}
-                    className="flex-1 px-4 py-2.5 focus:outline-none text-sm"
-                    placeholder="nama.guru"
-                  />
-                  <span className="bg-gray-50 border-l border-gray-200 px-3 flex items-center text-xs text-gray-400 whitespace-nowrap select-none">
-                    {DOMAIN}
-                  </span>
-                </div>
-                {createForm.email && (
-                  <p className="text-xs text-gray-400 mt-1">Email: <span className="text-[#F97316] font-medium">{createForm.email}{DOMAIN}</span></p>
-                )}
+                <input
+                  type="text"
+                  value={createForm.email}
+                  onChange={e => setCreateForm(f => ({ ...f, email: e.target.value.trim().replace(/[@\s]/g, '') }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                  placeholder="nama.guru"
+                />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password <span className="text-red-400">*</span></label>
