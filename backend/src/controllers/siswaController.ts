@@ -74,7 +74,7 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
     return;
   }
 
-  const password_hash = await bcrypt.hash(autoPassword, 12);
+  const password_hash = await bcrypt.hash(autoPassword, 10);
 
   const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa' });
   const siswa = await Siswa.create({ user_id: user.id, kelas_id, nisn, nis, no_induk: no_induk || nis, tempat_lahir, tanggal_lahir, alamat });

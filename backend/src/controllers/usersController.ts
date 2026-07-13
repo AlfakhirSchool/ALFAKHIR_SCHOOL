@@ -152,7 +152,7 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
   const exists = await User.findOne({ where: { email } });
   if (exists) { res.status(400).json({ success: false, message: 'Email sudah terdaftar' }); return; }
 
-  const password_hash = await bcrypt.hash(password, 12);
+  const password_hash = await bcrypt.hash(password, 10);
   const user = await User.create({
     email, password_hash, nama, role,
     school_level: role === 'admin' ? (school_level || null) : null,
@@ -184,7 +184,7 @@ export const resetPassword = async (req: AuthRequest, res: Response): Promise<vo
   const scopeErr = await assertInScope(req.user?.school_level ?? null, req.params.id as string, user);
   if (scopeErr) { res.status(403).json({ success: false, message: scopeErr }); return; }
 
-  const password_hash = await bcrypt.hash(password, 12);
+  const password_hash = await bcrypt.hash(password, 10);
   await user.update({ password_hash });
 
   res.json({ success: true, message: `Password ${user.nama} berhasil direset` });

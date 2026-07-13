@@ -237,7 +237,7 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
     return;
   }
 
-  const hashed = await bcrypt.hash(new_password, 12);
+  const hashed = await bcrypt.hash(new_password, 10);
   await user.update({ password_hash: hashed });
 
   res.json({ success: true, message: 'Password berhasil diubah' });

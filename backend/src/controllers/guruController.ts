@@ -68,7 +68,7 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   }
 
   const autoPassword = password || '12345678';
-  const password_hash = await bcrypt.hash(autoPassword, 12);
+  const password_hash = await bcrypt.hash(autoPassword, 10);
   const user = await User.create({ email, password_hash, nama, role: 'guru' });
   const guru = await Guru.create({
     user_id: user.id,
