@@ -70,7 +70,10 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   const password_hash = await bcrypt.hash(password || '12345678', 12);
   const user = await User.create({ email, password_hash, nama, role: 'guru' });
   const guru = await Guru.create({
-    user_id: user.id, nip, spesialisasi, no_telp,
+    user_id: user.id,
+    nip: nip || null,
+    spesialisasi: spesialisasi || null,
+    no_telp: no_telp || null,
     school_levels: Array.isArray(school_levels) ? school_levels : [],
   });
 
@@ -84,7 +87,9 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
   const { nama, email, nip, spesialisasi, no_telp, is_active, school_levels } = req.body;
   await (guru as any).user.update({ nama, email, is_active });
   await guru.update({
-    nip, spesialisasi, no_telp,
+    nip: nip || null,
+    spesialisasi: spesialisasi || null,
+    no_telp: no_telp || null,
     school_levels: Array.isArray(school_levels) ? school_levels : guru.school_levels,
   });
 
