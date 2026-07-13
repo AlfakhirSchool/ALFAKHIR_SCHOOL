@@ -79,6 +79,27 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa' });
   const siswa = await Siswa.create({ user_id: user.id, kelas_id, nisn, nis, no_induk: no_induk || nis, tempat_lahir, tanggal_lahir, alamat });
 
+  // Kirim ke n8n async — tidak block response
+  const webhookUrl = process.env.N8N_WEBHOOK_SISWA;
+  if (webhookUrl) {
+    const kelasData = await Kelas.findByPk(kelas_id, { include: [{ model: Sekolah, as: 'sekolah' }] });
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nama,
+        nis,
+        nisn: nisn || '',
+        login: nis,
+        password_default: autoPassword,
+        kelas: (kelasData as any)?.nama || '',
+        jenjang: (kelasData as any)?.sekolah?.jenjang || '',
+        sekolah: (kelasData as any)?.sekolah?.nama || '',
+        tanggal_dibuat: new Date().toISOString(),
+      }),
+    }).catch(() => {});
+  }
+
   res.status(201).json({ success: true, message: 'Siswa berhasil dibuat', data: { user, siswa } });
 };
 

@@ -67,7 +67,8 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
     return;
   }
 
-  const password_hash = await bcrypt.hash(password || '12345678', 12);
+  const autoPassword = password || '12345678';
+  const password_hash = await bcrypt.hash(autoPassword, 12);
   const user = await User.create({ email, password_hash, nama, role: 'guru' });
   const guru = await Guru.create({
     user_id: user.id,
@@ -76,6 +77,25 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
     no_telp: no_telp || null,
     school_levels: Array.isArray(school_levels) ? school_levels : [],
   });
+
+  // Kirim ke n8n async
+  const webhookUrl = process.env.N8N_WEBHOOK_GURU;
+  if (webhookUrl) {
+    fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nama,
+        email,
+        login: email,
+        password_default: autoPassword,
+        nip: nip || '',
+        spesialisasi: spesialisasi || '',
+        jenjang: Array.isArray(school_levels) ? school_levels.join(', ') : '',
+        tanggal_dibuat: new Date().toISOString(),
+      }),
+    }).catch(() => {});
+  }
 
   res.status(201).json({ success: true, message: 'Guru berhasil dibuat', data: { user, guru } });
 };
