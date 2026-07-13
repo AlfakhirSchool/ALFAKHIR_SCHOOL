@@ -12,7 +12,7 @@ export default function SiswaPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [editSiswa, setEditSiswa] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ nama: '', email: '', nisn: '', nis: '', kelas_id: '' });
+  const [editForm, setEditForm] = useState({ nama: '', nisn: '', nis: '', kelas_id: '' });
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState({ nama: '', nisn: '', nis: '', kelas_id: '', jenjang: '' });
 
@@ -34,7 +34,7 @@ export default function SiswaPage() {
 
   const openEdit = (s: any) => {
     setEditSiswa(s);
-    setEditForm({ nama: s.user?.nama || '', email: s.user?.email || '', nisn: s.nisn || '', nis: s.nis || '', kelas_id: s.kelas_id || '' });
+    setEditForm({ nama: s.user?.nama || '', nisn: s.nisn || '', nis: s.nis || '', kelas_id: s.kelas_id || '' });
   };
 
   const updateSiswa = useMutation({
@@ -86,7 +86,7 @@ export default function SiswaPage() {
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Nama</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">NISN</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Kelas</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-700">Email</th>
+                <th className="text-left px-6 py-4 font-semibold text-gray-700">NIS (Login)</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Status</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Aksi</th>
               </tr>
@@ -112,7 +112,7 @@ export default function SiswaPage() {
                       {siswa.kelas?.nama}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-600">{siswa.user?.email}</td>
+                  <td className="px-6 py-4 text-gray-600">{siswa.nis}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
                       siswa.user?.is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
@@ -245,11 +245,6 @@ export default function SiswaPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Nama Lengkap</label>
                 <input value={editForm.nama} onChange={e => setEditForm({ ...editForm, nama: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
-                <input value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
               </div>
               <div className="grid grid-cols-2 gap-3">
