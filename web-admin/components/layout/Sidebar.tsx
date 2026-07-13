@@ -36,7 +36,6 @@ const levelMenu = (level: string) => [
   { href: '/nilai', icon: '📝', label: 'Nilai' },
   { href: '/laporan', icon: '📄', label: 'Laporan' },
   { href: '/users', icon: '👥', label: 'Kelola Akun' },
-  { href: '/settings', icon: '⚙️', label: 'Pengaturan' },
 ];
 
 const LEVEL_COLOR: Record<string, string> = {
