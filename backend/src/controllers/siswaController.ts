@@ -59,21 +59,24 @@ export const getById = async (req: AuthRequest, res: Response): Promise<void> =>
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
   const { email, password, nama, nisn, nis, no_induk, kelas_id, tempat_lahir, tanggal_lahir, alamat } = req.body;
 
-  const existing = await User.findOne({ where: { email } });
+  const autoEmail = email || `${nis}@siswa.alfakhir.sch.id`;
+  const autoPassword = password || nis.slice(-4);
+
+  const existing = await User.findOne({ where: { email: autoEmail } });
   if (existing) {
-    res.status(400).json({ success: false, message: 'Email sudah terdaftar' });
+    res.status(400).json({ success: false, message: 'NIS sudah terdaftar' });
     return;
   }
 
-  const existingNisn = await Siswa.findOne({ where: { nisn } });
+  const existingNisn = nisn ? await Siswa.findOne({ where: { nisn } }) : null;
   if (existingNisn) {
     res.status(400).json({ success: false, message: 'NISN sudah terdaftar' });
     return;
   }
 
-  const password_hash = await bcrypt.hash(password || nisn, 12);
+  const password_hash = await bcrypt.hash(autoPassword, 12);
 
-  const user = await User.create({ email, password_hash, nama, role: 'siswa' });
+  const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa' });
   const siswa = await Siswa.create({ user_id: user.id, kelas_id, nisn, nis, no_induk: no_induk || nis, tempat_lahir, tanggal_lahir, alamat });
 
   res.status(201).json({ success: true, message: 'Siswa berhasil dibuat', data: { user, siswa } });

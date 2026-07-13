@@ -14,7 +14,7 @@ export default function SiswaPage() {
   const [editSiswa, setEditSiswa] = useState<any>(null);
   const [editForm, setEditForm] = useState({ nama: '', email: '', nisn: '', nis: '', kelas_id: '' });
   const [showAdd, setShowAdd] = useState(false);
-  const [addForm, setAddForm] = useState({ nama: '', email: '', password: '', nisn: '', nis: '', kelas_id: '', jenjang: '' });
+  const [addForm, setAddForm] = useState({ nama: '', nisn: '', nis: '', kelas_id: '', jenjang: '' });
 
   const { data, isLoading } = useQuery({
     queryKey: ['siswa', search, page],
@@ -47,7 +47,7 @@ export default function SiswaPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['siswa'] });
       setShowAdd(false);
-      setAddForm({ nama: '', email: '', password: '', nisn: '', nis: '', kelas_id: '', jenjang: '' });
+      setAddForm({ nama: '', nisn: '', nis: '', kelas_id: '', jenjang: '' });
     },
   });
 
@@ -167,17 +167,8 @@ export default function SiswaPage() {
                   placeholder="Nama lengkap siswa"
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Email <span className="text-red-500">*</span></label>
-                <input type="email" value={addForm.email} onChange={e => setAddForm({ ...addForm, email: e.target.value })}
-                  placeholder="email@siswa.sch.id"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Password <span className="text-red-500">*</span></label>
-                <input type="password" value={addForm.password} onChange={e => setAddForm({ ...addForm, password: e.target.value })}
-                  placeholder="Minimal 6 karakter"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+              <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-xs text-blue-700">
+                Login: NIS sebagai username · Password: 4 angka terakhir NIS
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -231,7 +222,7 @@ export default function SiswaPage() {
             <div className="flex gap-3 px-6 pb-6">
               <button
                 onClick={() => addSiswa.mutate()}
-                disabled={addSiswa.isPending || !addForm.nama || !addForm.email || !addForm.password || !addForm.kelas_id}
+                disabled={addSiswa.isPending || !addForm.nama || !addForm.nis || !addForm.kelas_id}
                 className="flex-1 py-2.5 bg-[#3B7FD1] text-white rounded-lg text-sm font-medium hover:bg-[#2d6ab5] disabled:opacity-50"
               >
                 {addSiswa.isPending ? 'Menyimpan...' : 'Tambah Siswa'}
