@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import QRCode from 'qrcode';
+import * as XLSX from 'xlsx';
 import { Op, QueryTypes } from 'sequelize';
 import { Absensi, QrCodeSession, JadwalPelajaran, Siswa, Kelas, MataPelajaran, Guru, User } from '../models';
 import sequelize from '../config/database';
@@ -356,6 +357,80 @@ export const rekapWaliKelas = async (req: AuthRequest, res: Response): Promise<v
   rows.forEach((r: any) => { if (r.status in summary) summary[r.status as keyof typeof summary]++; });
 
   res.json({ success: true, kelas, data: rows, summary, tanggal: tgl });
+};
+
+export const downloadRekap = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { kelas_id, bulan, tahun } = req.query;
+  const b = parseInt(bulan as string) || new Date().getMonth() + 1;
+  const y = parseInt(tahun as string) || new Date().getFullYear();
+
+  const kelas = await Kelas.findByPk(kelas_id as string);
+  if (!kelas) throw createError('Kelas tidak ditemukan', 404);
+
+  const startDate = new Date(y, b - 1, 1);
+  const endDate = new Date(y, b, 0);
+  const daysInMonth = endDate.getDate();
+
+  const rows = await sequelize.query<any>(
+    `SELECT s.id AS siswa_id, u.nama AS nama_siswa, s.nis,
+            EXTRACT(DAY FROM ag.tanggal::date)::int AS tgl,
+            COALESCE(ag.keterangan_status,
+              CASE WHEN ag.waktu_masuk IS NOT NULL THEN 'hadir' ELSE 'alfa' END
+            ) AS status
+     FROM siswa s
+     JOIN users u ON s.user_id = u.id
+     LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id
+       AND ag.tanggal BETWEEN :start AND :end
+     WHERE s.kelas_id = :kelas_id
+     ORDER BY u.nama, tgl`,
+    { replacements: { kelas_id, start: startDate.toISOString().split('T')[0], end: endDate.toISOString().split('T')[0] }, type: QueryTypes.SELECT }
+  );
+
+  // Grup per siswa
+  const siswaMap: Record<string, any> = {};
+  for (const r of rows) {
+    if (!siswaMap[r.siswa_id]) {
+      siswaMap[r.siswa_id] = { nama: r.nama_siswa, nis: r.nis, days: {} };
+    }
+    if (r.tgl) siswaMap[r.siswa_id].days[r.tgl] = r.status;
+  }
+
+  const namaBulan = new Date(y, b - 1, 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+
+  // Build header row
+  const header = ['No', 'Nama Siswa', 'NIS'];
+  for (let d = 1; d <= daysInMonth; d++) header.push(String(d));
+  header.push('H', 'S', 'I', 'A', '% Hadir');
+
+  const dataRows = [header];
+  let no = 1;
+  for (const s of Object.values(siswaMap)) {
+    const row: any[] = [no++, s.nama, s.nis];
+    let H = 0, S = 0, I = 0, A = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const st = s.days[d];
+      if (!st) { row.push('-'); }
+      else if (st === 'hadir') { row.push('H'); H++; }
+      else if (st === 'sakit') { row.push('S'); S++; }
+      else if (st === 'izin') { row.push('I'); I++; }
+      else { row.push('A'); A++; }
+    }
+    const total = H + S + I + A;
+    row.push(H, S, I, A, total ? `${Math.round((H / total) * 100)}%` : '-');
+    dataRows.push(row);
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(dataRows);
+  ws['!cols'] = [{ wch: 4 }, { wch: 25 }, { wch: 12 }, ...Array(daysInMonth).fill({ wch: 4 }), { wch: 4 }, { wch: 4 }, { wch: 4 }, { wch: 4 }, { wch: 8 }];
+  XLSX.utils.book_append_sheet(wb, ws, `Rekap ${namaBulan}`);
+
+  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  const filename = `Rekap_Absensi_${kelas.nama.replace(/\s+/g, '_')}_${namaBulan.replace(/\s+/g, '_')}.xlsx`;
+
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.send(buf);
 };
 
 export const getSiswaDetail = async (req: AuthRequest, res: Response): Promise<void> => {

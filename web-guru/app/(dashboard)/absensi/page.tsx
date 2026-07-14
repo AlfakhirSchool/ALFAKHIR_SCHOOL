@@ -90,6 +90,25 @@ export default function AbsensiGuruPage() {
     setRows(prev => prev.map(r => r.siswa_id === siswaId ? { ...r, [field]: value } : r));
   };
 
+  const downloadRekap = async (kId: string, tgl: string) => {
+    const d = new Date(tgl);
+    const bulan = d.getMonth() + 1;
+    const tahun = d.getFullYear();
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const res = await fetch(`${base}/absensi/rekap-download?kelas_id=${kId}&bulan=${bulan}&tahun=${tahun}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) { showToast('Gagal download rekap', 'error'); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = res.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] || 'rekap.xlsx';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const summary = rows.reduce((acc, r) => {
     const s = r.status_guru || 'alfa';
     acc[s] = (acc[s] || 0) + 1;
@@ -155,6 +174,14 @@ export default function AbsensiGuruPage() {
               >
                 {loadPersiapan.isPending ? 'Memuat...' : 'Buka Daftar Absensi →'}
               </button>
+              {kelasId && (
+                <button
+                  onClick={() => downloadRekap(kelasId, tanggal)}
+                  className="w-full py-2.5 border border-teal-500 text-teal-600 hover:bg-teal-50 rounded-xl font-semibold text-sm"
+                >
+                  📥 Download Rekap Bulan Ini (Excel)
+                </button>
+              )}
             </div>
           </div>
         )}
