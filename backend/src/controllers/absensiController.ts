@@ -396,33 +396,69 @@ export const downloadRekap = async (req: AuthRequest, res: Response): Promise<vo
   }
 
   const namaBulan = new Date(y, b - 1, 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+  const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  // Build header row
-  const header = ['No', 'Nama Siswa', 'NIS'];
-  for (let d = 1; d <= daysInMonth; d++) header.push(String(d));
-  header.push('H', 'S', 'I', 'A', '% Hadir');
+  // Row 1: Title
+  const titleRow = [`STUDENT ATTENDANCE LIST - ${kelas.nama} - ${namaBulan}`];
 
-  const dataRows = [header];
+  // Row 2: Header numbers — No | Student Name | M/F | 1..31 | H | S | I | A
+  const headerRow: any[] = ['No', 'STUDENT NAME', 'M/F'];
+  for (let d = 1; d <= daysInMonth; d++) headerRow.push(d);
+  headerRow.push('H', 'S', 'I', 'A');
+
+  // Row 3: Day-of-week names
+  const dayRow: any[] = ['', 'DAY →', ''];
+  for (let d = 1; d <= daysInMonth; d++) {
+    dayRow.push(DAY_NAMES[new Date(y, b - 1, d).getDay()]);
+  }
+  dayRow.push('', 'SUMMARY', '', '');
+
+  const dataRows = [titleRow, headerRow, dayRow];
+  const siswaValues = Object.values(siswaMap);
+  const totalPerDay: Record<number, number> = {};
   let no = 1;
-  for (const s of Object.values(siswaMap)) {
-    const row: any[] = [no++, s.nama, s.nis];
+
+  for (const s of siswaValues) {
+    const row: any[] = [no++, s.nama, '-'];
     let H = 0, S = 0, I = 0, A = 0;
     for (let d = 1; d <= daysInMonth; d++) {
       const st = s.days[d];
-      if (!st) { row.push('-'); }
-      else if (st === 'hadir') { row.push('H'); H++; }
+      const dayOfWeek = new Date(y, b - 1, d).getDay();
+      if (dayOfWeek === 0) { row.push('—'); } // Sunday
+      else if (!st) { row.push(''); }
+      else if (st === 'hadir') { row.push('H'); H++; totalPerDay[d] = (totalPerDay[d] || 0) + 1; }
       else if (st === 'sakit') { row.push('S'); S++; }
       else if (st === 'izin') { row.push('I'); I++; }
       else { row.push('A'); A++; }
     }
-    const total = H + S + I + A;
-    row.push(H, S, I, A, total ? `${Math.round((H / total) * 100)}%` : '-');
+    row.push(H, S, I, A);
     dataRows.push(row);
   }
 
+  // Total Present row
+  const totalRow: any[] = ['', 'TOTAL PRESENT', ''];
+  let totH = 0, totS = 0, totI = 0, totA = 0;
+  for (const s of siswaValues) {
+    for (const st of Object.values(s.days)) {
+      if (st === 'hadir') totH++;
+      else if (st === 'sakit') totS++;
+      else if (st === 'izin') totI++;
+      else totA++;
+    }
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dayOfWeek = new Date(y, b - 1, d).getDay();
+    totalRow.push(dayOfWeek === 0 ? '—' : (totalPerDay[d] || '-'));
+  }
+  totalRow.push(totH, totS, totI, totA);
+  dataRows.push(totalRow);
+
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(dataRows);
-  ws['!cols'] = [{ wch: 4 }, { wch: 25 }, { wch: 12 }, ...Array(daysInMonth).fill({ wch: 4 }), { wch: 4 }, { wch: 4 }, { wch: 4 }, { wch: 4 }, { wch: 8 }];
+  ws['!cols'] = [{ wch: 4 }, { wch: 28 }, { wch: 5 }, ...Array(daysInMonth).fill({ wch: 5 }), { wch: 5 }, { wch: 5 }, { wch: 5 }, { wch: 5 }];
+  // Merge title row across all columns
+  const totalCols = 3 + daysInMonth + 4;
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } }];
   XLSX.utils.book_append_sheet(wb, ws, `Rekap ${namaBulan}`);
 
   const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
