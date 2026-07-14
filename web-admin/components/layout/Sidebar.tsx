@@ -43,6 +43,7 @@ const levelMenu = (level: string): MenuItem[] => [
   { href: '/nilai',           icon: <FileText size={18} />,         label: 'Nilai' },
   { href: '/laporan',         icon: <BarChart3 size={18} />,        label: 'Laporan' },
   { href: '/users',           icon: <UserCog size={18} />,          label: 'Kelola Akun' },
+  // Settings sengaja tidak ada di level menu — hanya master admin
 ];
 
 const LEVEL_COLOR: Record<string, string> = {

@@ -96,7 +96,7 @@ export const listUsers = async (req: AuthRequest, res: Response): Promise<void> 
 
   const { count, rows } = await User.findAndCountAll({
     where,
-    attributes: { exclude: ['password_hash'] },
+    attributes: { exclude: ['password_hash'] }, // password_default tetap disertakan
     include: [{ model: Guru, as: 'guru_detail', attributes: ['id', 'school_levels'], required: false }],
     order: [['created_at', 'DESC']],
     limit: Number(limit),
@@ -157,7 +157,8 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
     email, password_hash, nama, role,
     school_level: role === 'admin' ? (school_level || null) : null,
     is_active: true,
-  });
+    password_default: password,
+  } as any);
 
   // Otomatis buat record guru agar fitur set-jenjang langsung bisa dipakai
   if (role === 'guru') {
@@ -201,7 +202,7 @@ export const resetPassword = async (req: AuthRequest, res: Response): Promise<vo
   if (scopeErr) { res.status(403).json({ success: false, message: scopeErr }); return; }
 
   const password_hash = await bcrypt.hash(password, 10);
-  await user.update({ password_hash });
+  await (user as any).update({ password_hash, password_default: password });
 
   res.json({ success: true, message: `Password ${user.nama} berhasil direset` });
 };

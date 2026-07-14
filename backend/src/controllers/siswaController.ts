@@ -76,7 +76,7 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   }
   const password_hash = await bcrypt.hash(autoPassword, 10);
 
-  const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa' });
+  const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa', password_default: autoPassword } as any);
   const siswa = await Siswa.create({ user_id: user.id, kelas_id, nisn: finalNisn, nis, no_induk: no_induk || nis, tempat_lahir, tanggal_lahir, alamat });
 
   // Kirim ke n8n async — tidak block response
