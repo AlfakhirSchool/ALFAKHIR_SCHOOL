@@ -14,6 +14,12 @@ const LEVEL_COLOR: Record<string, string> = {
 const LEVELS = ['SD', 'SMP', 'SMA'] as const;
 const DOMAIN = '@alfakhirschool.sch.id';
 
+const MAPEL_JENJANG: Record<string, string[]> = {
+  SD: ['Bahasa Indonesia', 'Matematika', 'IPA', 'IPS', 'PAI', 'Bahasa Inggris', 'PJOK', 'SBdP', 'PKN', 'Bahasa Arab', 'Informatika'],
+  SMP: ['Bahasa Indonesia', 'Matematika', 'IPA', 'IPS', 'PAI', 'Bahasa Inggris', 'PJOK', 'Seni Budaya', 'PKN', 'Bahasa Arab', 'Bahasa Sunda', 'Informatika', 'Fiqih', 'Bahasa Jepang', 'Bahasa Korea', 'Enterpreneur'],
+  SMA: ['Bahasa Indonesia', 'Matematika', 'Fisika', 'Kimia', 'Biologi', 'Ekonomi', 'Geografi', 'Sejarah', 'PAI', 'Bahasa Inggris', 'PJOK', 'Seni Budaya', 'PKN', 'Bahasa Arab', 'Informatika', 'Fiqih', 'Bahasa Jepang', 'Bahasa Korea', 'Enterpreneur'],
+};
+
 function LevelBadges({ levels }: { levels: string[] | null }) {
   if (!levels || levels.length === 0) {
     return <span className="text-xs text-gray-400 italic">Belum ditentukan</span>;
@@ -358,10 +364,38 @@ export default function GuruPage() {
 
               {/* Spesialisasi */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Spesialisasi / Mata Pelajaran</label>
-                <input value={form.spesialisasi} onChange={e => setForm(f => ({ ...f, spesialisasi: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
-                  placeholder="Contoh: Matematika, IPA, Bahasa Indonesia" />
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Spesialisasi / Mata Pelajaran</label>
+                {(() => {
+                  const selectedLevels = form.school_levels.length > 0 ? form.school_levels : LEVELS as unknown as string[];
+                  const checkedList = form.spesialisasi ? form.spesialisasi.split(',').map(s => s.trim()).filter(Boolean) : [];
+                  const toggleMapel = (m: string) => {
+                    const next = checkedList.includes(m) ? checkedList.filter(x => x !== m) : [...checkedList, m];
+                    setForm(f => ({ ...f, spesialisasi: next.join(', ') }));
+                  };
+                  return (
+                    <div className="border border-gray-200 rounded-xl overflow-hidden">
+                      {selectedLevels.map((level, li) => {
+                        const mapels = MAPEL_JENJANG[level] || [];
+                        return (
+                          <div key={level} className={li > 0 ? 'border-t border-gray-100' : ''}>
+                            <div className="px-3 py-1.5 text-xs font-bold text-white" style={{ backgroundColor: LEVEL_COLOR[level] || '#888' }}>
+                              {level}
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-1 px-3 py-2">
+                              {mapels.map(m => (
+                                <label key={m} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 hover:text-gray-900">
+                                  <input type="checkbox" checked={checkedList.includes(m)} onChange={() => toggleMapel(m)}
+                                    className="rounded border-gray-300 text-[#3B7FD1] focus:ring-[#3B7FD1]" />
+                                  {m}
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Jenjang Mengajar */}
