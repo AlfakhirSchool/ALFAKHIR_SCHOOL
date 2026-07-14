@@ -62,25 +62,15 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-[#1B8B87] focus-within:border-transparent">
-              <input
-                type="text"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value.trim())}
-                className="flex-1 px-4 py-3 focus:outline-none text-[#1A2332]"
-                placeholder="nama.guru"
-                autoComplete="username"
-              />
-              <span className="bg-gray-50 border-l border-gray-200 px-3 py-3 text-sm text-gray-400 flex items-center whitespace-nowrap select-none">
-                {DOMAIN}
-              </span>
-            </div>
-            {username && !username.includes('@') && (
-              <p className="text-xs text-gray-400 mt-1">
-                Login sebagai: <span className="font-medium text-[#1B8B87]">{username}{DOMAIN}</span>
-              </p>
-            )}
+            <input
+              type="text"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value.trim())}
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8B87] focus:border-transparent text-[#1A2332]"
+              placeholder="Username"
+              autoComplete="username"
+            />
           </div>
 
           <div>
