@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../core/api.dart';
+import '../core/notification_service.dart';
 import '../models/nilai.dart';
 import '../models/absensi.dart';
 import '../models/jadwal.dart';
@@ -100,6 +101,14 @@ class DataProvider extends ChangeNotifier {
       _jadwalList = (res.data['data'] as List? ?? [])
           .map((e) => JadwalPelajaran.fromJson(e))
           .toList();
+      // Schedule notifikasi 5 menit sebelum setiap pelajaran
+      NotificationService.scheduleJadwal(_jadwalList.map((j) => {
+        'hari': j.hari,
+        'jam_mulai': j.jamMulai,
+        'jam_selesai': j.jamSelesai,
+        'mapel': j.mataPelajaranNama,
+        'kelas': '',
+      }).toList());
     } catch (_) {}
     _jadwalLoading = false;
     notifyListeners();
