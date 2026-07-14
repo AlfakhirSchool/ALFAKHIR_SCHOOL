@@ -366,11 +366,14 @@ export default function GuruPage() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Spesialisasi / Mata Pelajaran</label>
                 {(() => {
-                  const selectedLevels = form.school_levels.length > 0 ? form.school_levels : LEVELS as unknown as string[];
-                  const checkedList = form.spesialisasi ? form.spesialisasi.split(',').map(s => s.trim()).filter(Boolean) : [];
-                  const toggleMapel = (m: string) => {
-                    const next = checkedList.includes(m) ? checkedList.filter(x => x !== m) : [...checkedList, m];
-                    setForm(f => ({ ...f, spesialisasi: next.join(', ') }));
+                  const selectedLevels = LEVELS as unknown as string[];
+                  const checkedSet = new Set(form.spesialisasi ? form.spesialisasi.split(',').map(s => s.trim()).filter(Boolean) : []);
+                  const key = (level: string, m: string) => `${level}:${m}`;
+                  const toggleMapel = (level: string, m: string) => {
+                    const k = key(level, m);
+                    const next = new Set(checkedSet);
+                    next.has(k) ? next.delete(k) : next.add(k);
+                    setForm(f => ({ ...f, spesialisasi: Array.from(next).join(', ') }));
                   };
                   return (
                     <div className="border border-gray-200 rounded-xl overflow-hidden">
@@ -384,7 +387,7 @@ export default function GuruPage() {
                             <div className="grid grid-cols-2 gap-x-3 gap-y-1 px-3 py-2">
                               {mapels.map(m => (
                                 <label key={m} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 hover:text-gray-900">
-                                  <input type="checkbox" checked={checkedList.includes(m)} onChange={() => toggleMapel(m)}
+                                  <input type="checkbox" checked={checkedSet.has(key(level, m))} onChange={() => toggleMapel(level, m)}
                                     className="rounded border-gray-300 text-[#3B7FD1] focus:ring-[#3B7FD1]" />
                                   {m}
                                 </label>
