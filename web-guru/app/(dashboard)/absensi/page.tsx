@@ -26,6 +26,7 @@ export default function AbsensiGuruPage() {
   const [rows, setRows] = useState<AbsensiRow[]>([]);
   const [jadwalInfo, setJadwalInfo] = useState<any>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [qrModal, setQrModal] = useState<{ image: string; sessionId: string; code: string } | null>(null);
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });
@@ -56,6 +57,20 @@ export default function AbsensiGuruPage() {
       setStep('input');
     },
     onError: (e: any) => showToast(e.response?.data?.message || 'Gagal memuat data', 'error'),
+  });
+
+  const qrMut = useMutation({
+    mutationFn: () => api.post('/absensi/qr-session/create', { jadwal_pelajaran_id: jadwalId, tanggal }),
+    onSuccess: (res) => {
+      const d = res.data.data;
+      setQrModal({ image: d.qr_image, sessionId: d.id, code: d.unique_code });
+    },
+    onError: (e: any) => showToast(e.response?.data?.message || 'Gagal buat QR', 'error'),
+  });
+
+  const closeQrMut = useMutation({
+    mutationFn: (sessionId: string) => api.post(`/absensi/qr-session/${sessionId}/close`),
+    onSuccess: () => { setQrModal(null); showToast('QR session ditutup'); },
   });
 
   const submitMut = useMutation({
@@ -155,7 +170,16 @@ export default function AbsensiGuruPage() {
                   <p className="text-sm opacity-80">{jadwalInfo?.kelas?.nama} · {jadwalInfo?.hari} {jadwalInfo?.jam_mulai}–{jadwalInfo?.jam_selesai}</p>
                   <p className="text-sm opacity-80 mt-0.5">{new Date(tanggal + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}</p>
                 </div>
-                <button onClick={() => setStep('select')} className="text-white/70 hover:text-white text-sm underline">← Ganti</button>
+                <div className="flex flex-col gap-2 items-end">
+                  <button onClick={() => setStep('select')} className="text-white/70 hover:text-white text-sm underline">← Ganti</button>
+                  <button
+                    onClick={() => qrMut.mutate()}
+                    disabled={qrMut.isPending}
+                    className="bg-white text-teal-700 font-bold text-sm px-4 py-2 rounded-xl hover:bg-teal-50 disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {qrMut.isPending ? '...' : '📱 Tampilkan QR'}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -252,6 +276,42 @@ export default function AbsensiGuruPage() {
           </div>
         )}
       </div>
+
+      {/* Modal QR */}
+      {qrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm text-center overflow-hidden">
+            <div className="bg-teal-500 p-5 text-white">
+              <p className="font-bold text-lg">📱 QR Absensi Siswa</p>
+              <p className="text-sm opacity-80 mt-1">{jadwalInfo?.mata_pelajaran?.nama} · {jadwalInfo?.kelas?.nama}</p>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-500 mb-4">Minta siswa scan QR ini untuk absen hadir</p>
+              <img src={qrModal.image} alt="QR Code" className="w-56 h-56 mx-auto border-4 border-teal-100 rounded-xl" />
+              <div className="mt-4 bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-400">Kode manual:</p>
+                <p className="text-3xl font-black tracking-widest text-teal-600 mt-1">{qrModal.code}</p>
+              </div>
+              <p className="text-xs text-amber-600 mt-3">⚠️ Tutup QR setelah semua siswa scan</p>
+              <div className="flex gap-3 mt-5">
+                <button
+                  onClick={() => closeQrMut.mutate(qrModal.sessionId)}
+                  disabled={closeQrMut.isPending}
+                  className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-sm disabled:opacity-50"
+                >
+                  {closeQrMut.isPending ? 'Menutup...' : '🔒 Tutup QR'}
+                </button>
+                <button
+                  onClick={() => setQrModal(null)}
+                  className="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-sm hover:bg-gray-50"
+                >
+                  Minimize
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
