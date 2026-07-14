@@ -162,6 +162,22 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
   // Otomatis buat record guru agar fitur set-jenjang langsung bisa dipakai
   if (role === 'guru') {
     await Guru.create({ user_id: user.id, school_levels: [] });
+
+    const webhookUrl = process.env.N8N_WEBHOOK_GURU;
+    if (webhookUrl) {
+      fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nama,
+          login: email.split('@')[0],
+          password_default: password,
+          pelajaran: '',
+          jenjang: school_level || '',
+          tanggal_dibuat: new Date().toISOString(),
+        }),
+      }).catch(() => {});
+    }
   }
 
   res.status(201).json({
