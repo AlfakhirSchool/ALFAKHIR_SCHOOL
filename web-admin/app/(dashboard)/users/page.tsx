@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
 const DOMAIN = '@alfakhirschool.sch.id';
+const stripDomain = (email: string) => email.replace(/@[^@]+$/, '');
 
 const ROLE_COLOR: Record<string, string> = {
   admin: '#F97316', guru: '#2563EB', siswa: '#16A34A', ortu: '#9333EA',
@@ -271,7 +272,7 @@ export default function UsersPage() {
                 <tr key={u.id} className="hover:bg-gray-50/60 transition-colors">
                   <td className="px-5 py-3.5">
                     <p className="font-semibold text-[#1A2332] text-sm">{u.nama}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{u.email.replace(DOMAIN, '')}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{stripDomain(u.email)}</p>
                   </td>
                   <td className="px-5 py-3.5">
                     <Badge text={ROLE_LABEL[u.role] || u.role} color={ROLE_COLOR[u.role] || '#888'} />
