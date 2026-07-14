@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
-import { listUsers, getUserDetail, createUser, resetPassword, toggleActive, setGuruJenjang } from '../controllers/usersController';
+import { listUsers, getUserDetail, createUser, resetPassword, toggleActive, setGuruJenjang, deleteUser } from '../controllers/usersController';
 
 const router = Router();
 
@@ -13,5 +13,6 @@ router.post('/', createUser);
 router.put('/:id/reset-password', resetPassword);
 router.put('/:id/toggle-active', toggleActive);
 router.put('/:id/set-jenjang', setGuruJenjang);
+router.delete('/:id', deleteUser);
 
 export default router;

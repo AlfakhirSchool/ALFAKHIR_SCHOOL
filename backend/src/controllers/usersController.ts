@@ -249,3 +249,20 @@ export const toggleActive = async (req: AuthRequest, res: Response): Promise<voi
   await user.update({ is_active: !user.is_active });
   res.json({ success: true, message: `Akun ${user.nama} ${user.is_active ? 'diaktifkan' : 'dinonaktifkan'}`, data: { is_active: user.is_active } });
 };
+
+export const deleteUser = async (req: AuthRequest, res: Response): Promise<void> => {
+  const user = await User.findByPk(req.params.id as string);
+  if (!user) { res.status(404).json({ success: false, message: 'User tidak ditemukan' }); return; }
+
+  if (user.id === req.user!.id) {
+    res.status(400).json({ success: false, message: 'Tidak bisa menghapus akun sendiri' });
+    return;
+  }
+
+  const scopeErr = await assertInScope(req.user?.school_level ?? null, req.params.id as string, user);
+  if (scopeErr) { res.status(403).json({ success: false, message: scopeErr }); return; }
+
+  const nama = user.nama;
+  await user.destroy();
+  res.json({ success: true, message: `Akun ${nama} berhasil dihapus` });
+};

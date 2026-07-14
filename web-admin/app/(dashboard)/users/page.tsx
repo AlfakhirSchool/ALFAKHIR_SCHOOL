@@ -139,6 +139,12 @@ export default function UsersPage() {
     onError: (e: any) => showFeedback('error', e.response?.data?.message || 'Gagal membuat akun'),
   });
 
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => api.delete(`/users/${id}`).then(r => r.data),
+    onSuccess: (d) => { showFeedback('success', d.message); qc.invalidateQueries({ queryKey: ['users'] }); qc.invalidateQueries({ queryKey: ['users-stats'] }); },
+    onError: (e: any) => showFeedback('error', e.response?.data?.message || 'Gagal menghapus akun'),
+  });
+
   const jenjangMut = useMutation({
     mutationFn: ({ id, school_levels }: { id: string; school_levels: string[] }) =>
       api.put(`/users/${id}/set-jenjang`, { school_levels }).then(r => r.data),
@@ -303,6 +309,13 @@ export default function UsersPage() {
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${u.is_active ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-700 hover:bg-green-100'}`}
                       >
                         {u.is_active ? '⛔ Nonaktifkan' : '✅ Aktifkan'}
+                      </button>
+                      <button
+                        onClick={() => { if (confirm(`Hapus akun ${u.nama}? Data tidak dapat dikembalikan.`)) deleteMut.mutate(u.id); }}
+                        disabled={deleteMut.isPending}
+                        className="px-3 py-1.5 bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-700 rounded-lg text-xs font-semibold transition-colors"
+                      >
+                        🗑️ Hapus
                       </button>
                     </div>
                   </td>
