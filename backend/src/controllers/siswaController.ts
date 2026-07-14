@@ -68,16 +68,16 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
     return;
   }
 
-  const existingNisn = nisn ? await Siswa.findOne({ where: { nisn } }) : null;
+  const finalNisn = nisn || nis;
+  const existingNisn = await Siswa.findOne({ where: { nisn: finalNisn } });
   if (existingNisn) {
-    res.status(400).json({ success: false, message: 'NISN sudah terdaftar' });
+    res.status(400).json({ success: false, message: nisn ? 'NISN sudah terdaftar' : 'NIS sudah terdaftar sebagai siswa' });
     return;
   }
-
   const password_hash = await bcrypt.hash(autoPassword, 10);
 
   const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa' });
-  const siswa = await Siswa.create({ user_id: user.id, kelas_id, nisn, nis, no_induk: no_induk || nis, tempat_lahir, tanggal_lahir, alamat });
+  const siswa = await Siswa.create({ user_id: user.id, kelas_id, nisn: finalNisn, nis, no_induk: no_induk || nis, tempat_lahir, tanggal_lahir, alamat });
 
   // Kirim ke n8n async — tidak block response
   const webhookUrl = process.env.N8N_WEBHOOK_SISWA;
