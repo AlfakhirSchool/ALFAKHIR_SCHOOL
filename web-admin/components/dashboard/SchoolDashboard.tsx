@@ -49,19 +49,6 @@ export default function SchoolDashboard({ level }: { level: Level }) {
       <Header title={`Dashboard ${level}`} />
       <div className="p-6 space-y-6">
 
-        {/* Banner jenjang */}
-        <div className={`rounded-2xl p-6 text-white`} style={{ background: `linear-gradient(135deg, ${cfg.color}, ${cfg.color}cc)` }}>
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-              <span className="text-3xl font-black text-white">{level}</span>
-            </div>
-            <div>
-              <h1 className="text-2xl font-black">{cfg.fullName}</h1>
-              <p className="text-white/80 text-sm">{d.namaSekolah || `Al Fakhir ${level}`} · Tahun Ajaran 2025/2026</p>
-            </div>
-          </div>
-        </div>
-
         {isLoading ? (
           <div className="text-center py-20 text-gray-400">Memuat data...</div>
         ) : (
