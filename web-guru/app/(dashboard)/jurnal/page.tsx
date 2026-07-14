@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
-import SignaturePad from '@/components/SignaturePad';
 import api from '@/lib/api';
 
 const STATUS_STYLES: Record<string, string> = {
@@ -15,9 +14,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 const emptyForm = {
   kelas_id: '', mata_pelajaran_id: '', tanggal: new Date().toISOString().split('T')[0],
-  topik_pelajaran: '', metode_pembelajaran: '', deskripsi_pembelajaran: '',
-  hasil_pembelajaran: '', hambatan_pembelajaran: '', rencana_tindak_lanjut: '',
-  media_pembelajaran: '', sumber_belajar: '', ttd_guru: '',
+  topik_pelajaran: '', deskripsi_pembelajaran: '', hasil_pembelajaran: '', rencana_tindak_lanjut: '',
 };
 
 export default function JurnalPage() {
@@ -63,14 +60,9 @@ export default function JurnalPage() {
       kelas_id: j.kelas_id, mata_pelajaran_id: j.mata_pelajaran_id,
       tanggal: j.tanggal?.split('T')[0] || '',
       topik_pelajaran: j.topik_pelajaran || '',
-      metode_pembelajaran: j.metode_pembelajaran || '',
       deskripsi_pembelajaran: j.deskripsi_pembelajaran || '',
       hasil_pembelajaran: j.hasil_pembelajaran || '',
-      hambatan_pembelajaran: j.hambatan_pembelajaran || '',
       rencana_tindak_lanjut: j.rencana_tindak_lanjut || '',
-      media_pembelajaran: j.media_pembelajaran || '',
-      sumber_belajar: j.sumber_belajar || '',
-      ttd_guru: j.ttd_guru || '',
     });
     setEditId(j.id);
     setView('form');
@@ -185,38 +177,24 @@ export default function JurnalPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Topik Pelajaran *</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Topik *</label>
                 <input value={form.topik_pelajaran} onChange={(e) => f('topik_pelajaran', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]"
-                  placeholder="Contoh: Sistem Persamaan Linear" />
+                  placeholder="Topik pelajaran hari ini..." />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Metode Pembelajaran</label>
-                <input value={form.metode_pembelajaran} onChange={(e) => f('metode_pembelajaran', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]"
-                  placeholder="Contoh: Ceramah, Diskusi, Tanya Jawab" />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Deskripsi Pembelajaran</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Tugas</label>
                 <textarea value={form.deskripsi_pembelajaran} onChange={(e) => f('deskripsi_pembelajaran', e.target.value)}
                   rows={3} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] resize-none"
-                  placeholder="Uraikan kegiatan pembelajaran..." />
+                  placeholder="Tugas yang diberikan kepada siswa..." />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Hasil Pembelajaran</label>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Catatan Guru</label>
                 <textarea value={form.hasil_pembelajaran} onChange={(e) => f('hasil_pembelajaran', e.target.value)}
-                  rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] resize-none"
-                  placeholder="Hasil yang dicapai..." />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Hambatan Pembelajaran</label>
-                <textarea value={form.hambatan_pembelajaran} onChange={(e) => f('hambatan_pembelajaran', e.target.value)}
-                  rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] resize-none"
-                  placeholder="Hambatan yang ditemui..." />
+                  rows={3} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] resize-none"
+                  placeholder="Catatan atau kondisi kelas hari ini..." />
               </div>
 
               <div>
@@ -224,28 +202,6 @@ export default function JurnalPage() {
                 <textarea value={form.rencana_tindak_lanjut} onChange={(e) => f('rencana_tindak_lanjut', e.target.value)}
                   rows={2} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] resize-none"
                   placeholder="Rencana pertemuan berikutnya..." />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Media Pembelajaran</label>
-                  <input value={form.media_pembelajaran} onChange={(e) => f('media_pembelajaran', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]"
-                    placeholder="Proyektor, papan tulis..." />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Sumber Belajar</label>
-                  <input value={form.sumber_belajar} onChange={(e) => f('sumber_belajar', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]"
-                    placeholder="Buku paket, modul..." />
-                </div>
-              </div>
-
-              <div>
-                <SignaturePad
-                  label="Tanda Tangan Guru"
-                  onSave={(dataUrl) => f('ttd_guru', dataUrl)}
-                />
               </div>
 
               <div className="flex gap-3 pt-2">
