@@ -50,7 +50,7 @@ const SCHOOLS = [
   },
 ] as const;
 
-const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } } };
+const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } } };
 const stagger = { show: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } } };
 
 export default function DashboardSelectPage() {
