@@ -4,10 +4,8 @@ import '../core/theme.dart';
 import '../providers/auth_provider.dart';
 import '../providers/data_provider.dart';
 import 'home/home_tab.dart';
-import 'nilai/nilai_tab.dart';
 import 'absensi/absensi_tab.dart';
 import 'jadwal/jadwal_tab.dart';
-import 'rapor/rapor_tab.dart';
 import 'notifikasi/notifikasi_tab.dart';
 import 'absensi/absensi_scan_screen.dart';
 
@@ -23,10 +21,8 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _tabs = const [
     HomeTab(),
-    NilaiTab(),
     AbsensiTab(),
     JadwalTab(),
-    RaporTab(),
     NotifikasiTab(),
   ];
 
@@ -41,7 +37,6 @@ class _MainScreenState extends State<MainScreen> {
     final data = context.read<DataProvider>();
     if (auth.profile != null) {
       data.loadDashboard();
-      data.loadNilai(auth.profile!.id);
       data.loadAbsensi(auth.profile!.id);
       data.loadNotifikasi();
       if (auth.profile!.kelasId != null) {
@@ -89,7 +84,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final unread = context.watch<DataProvider>().unreadNotifikasi;
-    final notifSelected = _currentIndex == 5;
+    final notifSelected = _currentIndex == 3;
     final notifColor = notifSelected ? colorSMA : const Color(0xFF94A3B8);
 
     return Scaffold(
@@ -113,14 +108,12 @@ class _MainScreenState extends State<MainScreen> {
           child: Row(
             children: [
               _navItem(0, Icons.home_outlined, Icons.home, 'Beranda'),
-              _navItem(1, Icons.bar_chart_outlined, Icons.bar_chart, 'Nilai'),
-              _navItem(2, Icons.check_circle_outline, Icons.check_circle, 'Absensi'),
+              _navItem(1, Icons.check_circle_outline, Icons.check_circle, 'Absensi'),
               const Expanded(child: SizedBox()), // gap for center FAB
-              _navItem(3, Icons.calendar_today_outlined, Icons.calendar_today, 'Jadwal'),
-              _navItem(4, Icons.description_outlined, Icons.description, 'Rapor'),
+              _navItem(2, Icons.calendar_today_outlined, Icons.calendar_today, 'Jadwal'),
               Expanded(
                 child: InkWell(
-                  onTap: () => setState(() => _currentIndex = 5),
+                  onTap: () => setState(() => _currentIndex = 3),
                   customBorder: const CircleBorder(),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),

@@ -28,13 +28,28 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.read<AuthProvider>();
     final ok = await auth.login(_nisCtrl.text.trim(), _passwordCtrl.text);
     if (!ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(auth.error ?? 'Login gagal'),
-          backgroundColor: colorError,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (auth.error == 'DEVICE_LOCKED') {
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Perangkat Terkunci'),
+            content: const Text(
+              'Akun ini sudah terdaftar di perangkat lain.\n\nHubungi admin sekolah untuk mereset perangkat anda.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK')),
+            ],
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(auth.error ?? 'Login gagal'),
+            backgroundColor: colorError,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

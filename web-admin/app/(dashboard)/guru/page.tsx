@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -56,6 +57,7 @@ export default function GuruPage() {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [hapusId, setHapusId] = useState<string | null>(null);
   const [hapusNama, setHapusNama] = useState<string>('');
+  const [showPw, setShowPw] = useState(false);
 
   const showFeedback = (type: 'success' | 'error', msg: string) => {
     setFeedback({ type, msg });
@@ -327,9 +329,14 @@ export default function GuruPage() {
               {modal === 'create' && (
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password <span className="text-red-400">*</span></label>
-                  <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
-                    placeholder="Min. 6 karakter (default: 12345678)" />
+                  <div className="relative">
+                    <input type={showPw ? 'text' : 'password'} value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                      className="w-full px-4 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
+                      placeholder="Min. 6 karakter (default: 12345678)" />
+                    <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -360,9 +367,9 @@ export default function GuruPage() {
               {/* Jenjang Mengajar */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Jenjang Mengajar <span className="text-red-400">*</span></label>
-                <p className="text-xs text-gray-400 mb-3">Pilih satu atau lebih jenjang yang diajar. Guru yang mengajar di semua jenjang disebut Guru Gabungan.</p>
+                {!user?.school_level && <p className="text-xs text-gray-400 mb-3">Pilih satu atau lebih jenjang yang diajar. Guru yang mengajar di semua jenjang disebut Guru Gabungan.</p>}
                 <div className="grid grid-cols-3 gap-2">
-                  {LEVELS.map(level => {
+                  {(user?.school_level ? [user.school_level] : LEVELS).map(level => {
                     const selected = form.school_levels.includes(level);
                     return (
                       <button

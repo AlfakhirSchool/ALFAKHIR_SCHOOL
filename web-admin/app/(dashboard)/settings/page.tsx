@@ -139,6 +139,7 @@ export default function SettingsPage() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [pwForm, setPwForm] = useState({ current_password: '', new_password: '', confirm: '' });
+  const [showPwFields, setShowPwFields] = useState<Record<string, boolean>>({});
   const [msg, setMsg] = useState('');
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
@@ -223,10 +224,15 @@ export default function SettingsPage() {
                   ].map(({ label, key }) => (
                     <div key={key}>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
-                      <input type="password" value={(pwForm as any)[key]}
-                        onChange={e => setPwForm({ ...pwForm, [key]: e.target.value })}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-                        placeholder="••••••••" />
+                      <div className="relative">
+                        <input type={showPwFields[key] ? 'text' : 'password'} value={(pwForm as any)[key]}
+                          onChange={e => setPwForm({ ...pwForm, [key]: e.target.value })}
+                          className="w-full px-4 py-3 pr-10 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                          placeholder="••••••••" />
+                        <button type="button" onClick={() => setShowPwFields(v => ({ ...v, [key]: !v[key] }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                          {showPwFields[key] ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
                     </div>
                   ))}
                   <button type="submit" disabled={changePassword.isPending}

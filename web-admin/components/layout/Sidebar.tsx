@@ -22,6 +22,7 @@ const masterMenu: MenuItem[] = [
   { href: '/absensi-gerbang', icon: <DoorOpen size={18} />,         label: 'Absensi Gerbang' },
   { href: '/rfid-registrasi', icon: <CreditCard size={18} />,       label: 'Registrasi RFID' },
   { href: '/absensi',         icon: <ClipboardCheck size={18} />,   label: 'Absensi Kelas' },
+  { href: '/rekap-absensi',  icon: <BarChart3 size={18} />,        label: 'Rekap Absensi' },
   { href: '/nilai',           icon: <FileText size={18} />,         label: 'Nilai' },
   { href: '/pembayaran',      icon: <Wallet size={18} />,           label: 'Pembayaran' },
   { href: '/jurnal-guru',     icon: <BookMarked size={18} />,       label: 'Jurnal Guru' },
@@ -40,6 +41,7 @@ const levelMenu = (level: string): MenuItem[] => [
   { href: '/absensi-gerbang', icon: <DoorOpen size={18} />,         label: 'Absensi Gerbang' },
   { href: '/rfid-registrasi', icon: <CreditCard size={18} />,       label: 'Registrasi RFID' },
   { href: '/absensi',         icon: <ClipboardCheck size={18} />,   label: 'Absensi Kelas' },
+  { href: '/rekap-absensi',  icon: <BarChart3 size={18} />,        label: 'Rekap Absensi' },
   { href: '/nilai',           icon: <FileText size={18} />,         label: 'Nilai' },
   { href: '/laporan',         icon: <BarChart3 size={18} />,        label: 'Laporan' },
   { href: '/users',           icon: <UserCog size={18} />,          label: 'Kelola Akun' },
@@ -133,7 +135,7 @@ export default function Sidebar() {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium text-white truncate">{user?.nama}</p>
-            <p className="text-xs text-gray-500 truncate">{user?.email?.replace('@alfakhirschool.sch.id', '')}</p>
+            <p className="text-xs text-gray-500 truncate">{user?.email?.replace(/@.*/, '')}</p>
           </div>
         </div>
         <button

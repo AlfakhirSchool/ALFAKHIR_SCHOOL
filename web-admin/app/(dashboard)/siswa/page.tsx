@@ -4,11 +4,14 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 
-const JENJANG = ['SD', 'SMP', 'SMA'] as const;
+const ALL_JENJANG = ['SD', 'SMP', 'SMA'] as const;
 
 export default function SiswaPage() {
   const qc = useQueryClient();
+  const { user } = useAuthStore();
+  const JENJANG = user?.school_level ? [user.school_level] : [...ALL_JENJANG];
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [editSiswa, setEditSiswa] = useState<any>(null);
@@ -69,7 +72,7 @@ export default function SiswaPage() {
             className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
           />
           <button
-            onClick={() => setShowAdd(true)}
+            onClick={() => { setAddForm({ nama: '', nisn: '', nis: '', kelas_id: '', jenjang: JENJANG.length === 1 ? JENJANG[0] : '' }); setShowAdd(true); }}
             className="px-4 py-2.5 bg-[#3B7FD1] text-white rounded-lg hover:bg-[#2d6ab5] transition-colors font-medium"
           >
             + Tambah Siswa
@@ -170,20 +173,13 @@ export default function SiswaPage() {
               <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-xs text-blue-700">
                 Login: NIS sebagai username · Password: 4 angka terakhir NIS
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">NISN</label>
-                  <input value={addForm.nisn} onChange={e => setAddForm({ ...addForm, nisn: e.target.value })}
-                    placeholder="0012345678"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">NIS</label>
-                  <input value={addForm.nis} onChange={e => setAddForm({ ...addForm, nis: e.target.value })}
-                    placeholder="2024001"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
-                </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">NIS <span className="text-red-500">*</span></label>
+                <input value={addForm.nis} onChange={e => setAddForm({ ...addForm, nis: e.target.value })}
+                  placeholder="2024001"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
               </div>
+              {JENJANG.length > 1 && (
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Jenjang <span className="text-red-500">*</span></label>
                 <select
@@ -195,6 +191,7 @@ export default function SiswaPage() {
                   {JENJANG.map(j => <option key={j} value={j}>{j}</option>)}
                 </select>
               </div>
+              )}
               {addForm.jenjang && (
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Kelas <span className="text-red-500">*</span></label>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
@@ -28,6 +29,39 @@ export default function DashboardGuruPage() {
   const kpi = data?.kpi || {};
   const jadwalHariIni = data?.jadwalHariIni || [];
   const pendingJurnal = data?.pendingJurnal || [];
+  const schoolLevels: string[] = data?.school_levels || [];
+
+  const [rekapKelas, setRekapKelas] = useState('');
+  const [rekapLoading, setRekapLoading] = useState(false);
+
+  const { data: kelasList = [] } = useQuery({
+    queryKey: ['kelas-guru'],
+    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+  });
+
+  const downloadRekap = async () => {
+    if (!rekapKelas) return;
+    setRekapLoading(true);
+    try {
+      const now = new Date();
+      const token = localStorage.getItem('access_token');
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const res = await fetch(`${base}/absensi/rekap-download?kelas_id=${rekapKelas}&bulan=${now.getMonth() + 1}&tahun=${now.getFullYear()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const kelasNama = (kelasList as any[]).find((k: any) => k.id === rekapKelas)?.nama || 'Kelas';
+      const bulanNama = now.toLocaleString('id-ID', { month: 'long' });
+      a.download = `Absensi_${kelasNama.replace(/\s+/g, '')}_${bulanNama}${now.getFullYear()}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { alert('Gagal download rekap'); }
+    finally { setRekapLoading(false); }
+  };
 
   const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -36,8 +70,32 @@ export default function DashboardGuruPage() {
       <Header title="Dashboard Guru" />
       <div className="p-6">
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-[#1A2332]">Selamat datang, {user?.nama} 👋</h2>
-          <p className="text-gray-500 text-sm mt-1">{today}</p>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="text-xl font-bold text-[#1A2332]">Selamat datang, {user?.nama} 👋</h2>
+              <p className="text-gray-500 text-sm mt-1">{today}</p>
+            </div>
+            {schoolLevels.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {schoolLevels.map(lvl => {
+                  const cfg: Record<string, { bg: string; text: string; label: string }> = {
+                    SD:  { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Guru SD' },
+                    SMP: { bg: 'bg-teal-100',   text: 'text-teal-700',   label: 'Guru SMP' },
+                    SMA: { bg: 'bg-blue-100',   text: 'text-blue-700',   label: 'Guru SMA' },
+                  };
+                  const c = cfg[lvl] || { bg: 'bg-gray-100', text: 'text-gray-700', label: `Guru ${lvl}` };
+                  return (
+                    <span key={lvl} className={`${c.bg} ${c.text} text-sm font-bold px-4 py-1.5 rounded-full`}>
+                      {c.label}
+                    </span>
+                  );
+                })}
+                {schoolLevels.length > 1 && (
+                  <span className="text-xs text-gray-400 font-medium">Guru Gabungan</span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {isLoading ? (
@@ -95,6 +153,38 @@ export default function DashboardGuruPage() {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Download Rekap Absensi */}
+            <div className="mt-6 bg-white rounded-xl p-6 shadow-sm border border-teal-100">
+              <h3 className="font-semibold text-[#1A2332] mb-4 flex items-center gap-2">
+                <span>📥</span> Download Rekap Absensi Bulan Ini
+              </h3>
+              <div className="flex gap-3 flex-wrap items-end">
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Pilih Kelas</label>
+                  <select
+                    value={rekapKelas}
+                    onChange={e => setRekapKelas(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1B8B87]"
+                  >
+                    <option value="">-- Pilih Kelas --</option>
+                    {(kelasList as any[]).map((k: any) => (
+                      <option key={k.id} value={k.id}>{k.nama}</option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={downloadRekap}
+                  disabled={!rekapKelas || rekapLoading}
+                  className="px-5 py-2.5 bg-[#1B8B87] text-white rounded-lg text-sm font-semibold hover:bg-[#156f6c] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                >
+                  {rekapLoading ? '⏳ Mengunduh...' : '📊 Download Excel'}
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                Nama file: Absensi_[Kelas]_{new Date().toLocaleString('id-ID', { month: 'long' })}{new Date().getFullYear()}.xlsx
+              </p>
             </div>
           </>
         )}

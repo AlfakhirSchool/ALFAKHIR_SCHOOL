@@ -13,11 +13,13 @@ interface AbsensiAttributes {
   qr_code_scanned: boolean;
   input_code: string | null;
   catatan: string | null;
+  latitude: number | null;
+  longitude: number | null;
   created_by: string;
   created_at?: Date;
 }
 
-interface AbsensiCreationAttributes extends Optional<AbsensiAttributes, 'id' | 'waktu_hadir' | 'qr_code_scanned' | 'input_code' | 'catatan'> {}
+interface AbsensiCreationAttributes extends Optional<AbsensiAttributes, 'id' | 'waktu_hadir' | 'qr_code_scanned' | 'input_code' | 'catatan' | 'latitude' | 'longitude'> {}
 
 class Absensi extends Model<AbsensiAttributes, AbsensiCreationAttributes> implements AbsensiAttributes {
   declare id: string;
@@ -29,6 +31,8 @@ class Absensi extends Model<AbsensiAttributes, AbsensiCreationAttributes> implem
   declare qr_code_scanned: boolean;
   declare input_code: string | null;
   declare catatan: string | null;
+  declare latitude: number | null;
+  declare longitude: number | null;
   declare created_by: string;
   declare readonly created_at: Date;
 }
@@ -44,6 +48,8 @@ Absensi.init(
     qr_code_scanned: { type: DataTypes.BOOLEAN, defaultValue: false },
     input_code: { type: DataTypes.STRING(6), allowNull: true },
     catatan: { type: DataTypes.TEXT, allowNull: true },
+    latitude: { type: DataTypes.DOUBLE, allowNull: true },
+    longitude: { type: DataTypes.DOUBLE, allowNull: true },
     created_by: { type: DataTypes.UUID, allowNull: false },
   },
   {

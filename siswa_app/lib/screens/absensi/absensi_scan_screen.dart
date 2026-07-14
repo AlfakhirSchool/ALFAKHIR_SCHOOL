@@ -84,7 +84,10 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
         setState(() { _resultSuccess = true; _resultMessage = respMsg; _loading = false; });
       } else {
         // QR absensi kelas biasa
-        await dio.post('/absensi/scan-qr', data: {'qr_data': rawQrData, 'siswa_id': siswaId});
+        final pos = await _getLocation();
+        final data = <String, dynamic>{'qr_data': rawQrData, 'siswa_id': siswaId};
+        if (pos != null) { data['latitude'] = pos.latitude; data['longitude'] = pos.longitude; }
+        await dio.post('/absensi/scan-qr', data: data);
         setState(() { _resultSuccess = true; _resultMessage = 'Absensi berhasil dicatat!'; _loading = false; });
       }
     } catch (e) {
@@ -105,7 +108,10 @@ class _AbsensiScanScreenState extends State<AbsensiScanScreen> {
       return;
     }
     try {
-      await dio.post('/absensi/input-code', data: {'code': code, 'siswa_id': siswaId});
+      final pos = await _getLocation();
+      final data = <String, dynamic>{'code': code, 'siswa_id': siswaId};
+      if (pos != null) { data['latitude'] = pos.latitude; data['longitude'] = pos.longitude; }
+      await dio.post('/absensi/input-code', data: data);
       setState(() { _resultSuccess = true; _resultMessage = 'Absensi berhasil dicatat!'; _loading = false; });
     } catch (e) {
       setState(() { _resultSuccess = false; _resultMessage = _parseError(e); _loading = false; });
@@ -366,9 +372,19 @@ class _ScanView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final frameColor = isGerbang ? Colors.teal : colorSMP;
+    final screenW = MediaQuery.of(context).size.width;
+    final frameSize = screenW * 0.82;
     return Stack(
       children: [
-        MobileScanner(controller: controller, onDetect: onDetect),
+        MobileScanner(
+          controller: controller,
+          onDetect: onDetect,
+          scanWindow: Rect.fromCenter(
+            center: Offset(screenW / 2, MediaQuery.of(context).size.height / 2),
+            width: frameSize,
+            height: frameSize,
+          ),
+        ),
         ColorFiltered(
           colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.5), BlendMode.srcOut),
           child: Stack(
@@ -376,8 +392,8 @@ class _ScanView extends StatelessWidget {
               Container(decoration: const BoxDecoration(color: Colors.black, backgroundBlendMode: BlendMode.dstOut)),
               Center(
                 child: Container(
-                  width: 240, height: 240,
-                  decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(16)),
+                  width: frameSize, height: frameSize,
+                  decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(20)),
                 ),
               ),
             ],
@@ -385,16 +401,16 @@ class _ScanView extends StatelessWidget {
         ),
         Center(
           child: Container(
-            width: 240, height: 240,
+            width: frameSize, height: frameSize,
             decoration: BoxDecoration(
               border: Border.all(color: frameColor, width: 3),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
         ),
         Center(
           child: SizedBox(
-            width: 240, height: 240,
+            width: frameSize, height: frameSize,
             child: Stack(
               children: [
                 _Corner(top: true, left: true),

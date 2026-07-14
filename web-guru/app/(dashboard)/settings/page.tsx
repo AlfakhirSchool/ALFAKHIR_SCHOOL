@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import { useAuthStore } from '@/store/authStore';
@@ -9,6 +10,7 @@ import api from '@/lib/api';
 export default function SettingsPage() {
   const { user, updateUser } = useAuthStore();
   const [pwForm, setPwForm] = useState({ current_password: '', new_password: '', confirm: '' });
+  const [showPw, setShowPw] = useState<Record<string, boolean>>({});
   const [msg, setMsg] = useState('');
   const [photoMsg, setPhotoMsg] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -123,27 +125,24 @@ export default function SettingsPage() {
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password Saat Ini</label>
-              <input type="password" value={pwForm.current_password}
-                onChange={(e) => setPwForm({ ...pwForm, current_password: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8B87]"
-                placeholder="••••••••" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
-              <input type="password" value={pwForm.new_password}
-                onChange={(e) => setPwForm({ ...pwForm, new_password: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8B87]"
-                placeholder="Min. 8 karakter" minLength={8} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
-              <input type="password" value={pwForm.confirm}
-                onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8B87]"
-                placeholder="••••••••" />
-            </div>
+            {([
+              { label: 'Password Saat Ini', key: 'current_password', ph: '••••••••' },
+              { label: 'Password Baru', key: 'new_password', ph: 'Min. 8 karakter' },
+              { label: 'Konfirmasi Password Baru', key: 'confirm', ph: '••••••••' },
+            ] as const).map(({ label, key, ph }) => (
+              <div key={key}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                <div className="relative">
+                  <input type={showPw[key] ? 'text' : 'password'} value={pwForm[key]}
+                    onChange={(e) => setPwForm({ ...pwForm, [key]: e.target.value })}
+                    className="w-full px-4 py-2.5 pr-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1B8B87]"
+                    placeholder={ph} />
+                  <button type="button" onClick={() => setShowPw(v => ({ ...v, [key]: !v[key] }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showPw[key] ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+            ))}
             <button type="submit" disabled={changePassword.isPending}
               className="px-6 py-2.5 bg-[#1B8B87] text-white rounded-lg font-medium hover:bg-[#156f6c] disabled:opacity-50">
               {changePassword.isPending ? 'Menyimpan...' : 'Ubah Password'}

@@ -13,11 +13,12 @@ interface UserAttributes {
   school_level: SchoolLevel;
   is_active: boolean;
   profile_pic: string | null;
+  device_id: string | null;
   created_at?: Date;
   updated_at?: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'is_active' | 'profile_pic' | 'school_level'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'is_active' | 'profile_pic' | 'school_level' | 'device_id'> {}
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   declare id: string;
@@ -28,6 +29,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   declare school_level: SchoolLevel;
   declare is_active: boolean;
   declare profile_pic: string | null;
+  declare device_id: string | null;
   declare readonly created_at: Date;
   declare readonly updated_at: Date;
 }
@@ -42,6 +44,7 @@ User.init(
     school_level: { type: DataTypes.ENUM('SD', 'SMP', 'SMA'), allowNull: true },
     is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
     profile_pic: { type: DataTypes.STRING(500), allowNull: true },
+    device_id: { type: DataTypes.STRING(255), allowNull: true },
   },
   {
     sequelize,

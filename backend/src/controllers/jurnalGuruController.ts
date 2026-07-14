@@ -6,8 +6,14 @@ import { createError } from '../middleware/errorHandler';
 import { kelasIdFilter } from '../utils/levelFilter';
 
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
-  const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
-  if (!guru) throw createError('Data guru tidak ditemukan', 404);
+  let guru = await Guru.findOne({ where: { user_id: req.user!.id } });
+  if (!guru) {
+    if (req.user!.role === 'admin') {
+      guru = await Guru.create({ user_id: req.user!.id, school_levels: [] });
+    } else {
+      throw createError('Data guru tidak ditemukan', 404);
+    }
+  }
 
   const jurnal = await JurnalGuru.create({ ...req.body, guru_id: guru.id, status: 'draft' });
   res.status(201).json({ success: true, message: 'Jurnal berhasil dibuat', data: jurnal });

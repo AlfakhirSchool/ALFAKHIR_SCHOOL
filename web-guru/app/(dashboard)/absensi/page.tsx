@@ -94,7 +94,7 @@ export default function AbsensiGuruPage() {
     const d = new Date(tgl);
     const bulan = d.getMonth() + 1;
     const tahun = d.getFullYear();
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : '';
     const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
     const res = await fetch(`${base}/absensi/rekap-download?kelas_id=${kId}&bulan=${bulan}&tahun=${tahun}`, {
       headers: { Authorization: `Bearer ${token}` },

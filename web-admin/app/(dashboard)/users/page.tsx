@@ -146,6 +146,12 @@ export default function UsersPage() {
     onError: (e: any) => showFeedback('error', e.response?.data?.message || 'Gagal menghapus akun'),
   });
 
+  const resetDeviceMut = useMutation({
+    mutationFn: (id: string) => api.post(`/auth/reset-device/${id}`).then(r => r.data),
+    onSuccess: (d) => showFeedback('success', d.message),
+    onError: (e: any) => showFeedback('error', e.response?.data?.message || 'Gagal reset perangkat'),
+  });
+
   const jenjangMut = useMutation({
     mutationFn: ({ id, school_levels }: { id: string; school_levels: string[] }) =>
       api.put(`/users/${id}/set-jenjang`, { school_levels }).then(r => r.data),
@@ -311,6 +317,15 @@ export default function UsersPage() {
                       >
                         {u.is_active ? '⛔ Nonaktifkan' : '✅ Aktifkan'}
                       </button>
+                      {(u.role === 'siswa' || u.role === 'ortu') && (
+                        <button
+                          onClick={() => { if (confirm(`Reset perangkat ${u.nama}? Mereka bisa login di HP baru.`)) resetDeviceMut.mutate(u.id); }}
+                          disabled={resetDeviceMut.isPending}
+                          className="px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg text-xs font-semibold transition-colors"
+                        >
+                          📱 Reset HP
+                        </button>
+                      )}
                       <button
                         onClick={() => { if (confirm(`Hapus akun ${u.nama}? Data tidak dapat dikembalikan.`)) deleteMut.mutate(u.id); }}
                         disabled={deleteMut.isPending}

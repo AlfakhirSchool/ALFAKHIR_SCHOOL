@@ -45,7 +45,7 @@ const generateTokens = (user: { id: string; email: string; nama: string; role: s
 };
 
 export const login = async (req: Request, res: Response): Promise<void> => {
-  const { email, nis, password, role: loginRole } = req.body;
+  const { email, nis, password, role: loginRole, device_id } = req.body;
 
   if (!password || (!email && !nis)) {
     res.status(400).json({ success: false, message: 'NIS/email dan password wajib diisi' });
@@ -93,6 +93,24 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   if (!validPassword) {
     res.status(401).json({ success: false, message: 'NIS/email atau password salah' });
     return;
+  }
+
+  // Device lock — hanya untuk role siswa & ortu (mobile app)
+  if (device_id && (user.role === 'siswa' || user.role === 'ortu')) {
+    // Cek: device ini sudah terdaftar di akun LAIN
+    const deviceOwner = await User.findOne({ where: { device_id } });
+    if (deviceOwner && deviceOwner.id !== user.id) {
+      res.status(403).json({
+        success: false,
+        message: 'Perangkat ini sudah terdaftar untuk akun lain. Hubungi admin untuk mereset perangkat.',
+        code: 'DEVICE_LOCKED',
+      });
+      return;
+    }
+    // Simpan device_id ke akun ini (pertama kali login)
+    if (!user.device_id) {
+      await user.update({ device_id });
+    }
   }
 
   const { accessToken, refreshToken } = generateTokens(user);
@@ -217,6 +235,13 @@ export const uploadProfilePhoto = async (req: AuthRequest, res: Response): Promi
   await user.update({ profile_pic: profilePicUrl });
 
   res.json({ success: true, data: { profile_pic: profilePicUrl } });
+};
+
+export const resetDevice = async (req: AuthRequest, res: Response): Promise<void> => {
+  const user = await User.findByPk(req.params.userId as string);
+  if (!user) throw createError('User tidak ditemukan', 404);
+  await user.update({ device_id: null });
+  res.json({ success: true, message: 'Perangkat berhasil direset. User dapat login di perangkat baru.' });
 };
 
 export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {

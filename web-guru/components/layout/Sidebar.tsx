@@ -10,6 +10,7 @@ const menuItems = [
   { href: '/absensi', icon: '📋', label: 'Absensi' },
   { href: '/nilai', icon: '📝', label: 'Input Nilai' },
   { href: '/rapor', icon: '📄', label: 'Rapor Kelas' },
+  { href: '/rekap-absensi', icon: '📊', label: 'Rekap Absensi' },
   { href: '/jurnal', icon: '📓', label: 'Jurnal Guru' },
   { href: '/kelas', icon: '👥', label: 'Kelas Saya' },
   { href: '/jadwal', icon: '📅', label: 'Jadwal' },

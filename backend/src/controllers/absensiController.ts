@@ -67,7 +67,7 @@ export const closeQrSession = async (req: AuthRequest, res: Response): Promise<v
 };
 
 export const scanQr = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { qr_data, siswa_id } = req.body as { qr_data: string; siswa_id: string };
+  const { qr_data, siswa_id, latitude, longitude } = req.body as { qr_data: string; siswa_id: string; latitude?: number; longitude?: number };
 
   // Backward compat: QR gerbang dikirim ke endpoint ini oleh APK lama
   if (qr_data && qr_data.startsWith('GATE:')) {
@@ -138,6 +138,8 @@ export const scanQr = async (req: AuthRequest, res: Response): Promise<void> => 
     waktu_hadir: new Date(),
     status: 'hadir',
     qr_code_scanned: true,
+    latitude: latitude ?? null,
+    longitude: longitude ?? null,
     created_by: req.user!.id,
   });
 
@@ -145,7 +147,7 @@ export const scanQr = async (req: AuthRequest, res: Response): Promise<void> => 
 };
 
 export const inputCode = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { code, siswa_id } = req.body as { code: string; siswa_id: string };
+  const { code, siswa_id, latitude, longitude } = req.body as { code: string; siswa_id: string; latitude?: number; longitude?: number };
 
   const session = await QrCodeSession.findOne({ where: { unique_code: code, aktif: true } });
   if (!session) {
@@ -170,6 +172,8 @@ export const inputCode = async (req: AuthRequest, res: Response): Promise<void> 
     status: 'hadir',
     qr_code_scanned: false,
     input_code: code,
+    latitude: latitude ?? null,
+    longitude: longitude ?? null,
     created_by: req.user!.id,
   });
 
@@ -486,4 +490,90 @@ export const getSiswaDetail = async (req: AuthRequest, res: Response): Promise<v
   });
 
   res.json({ success: true, data: absensiList });
+};
+
+// JSON data untuk preview rekap absensi per mata pelajaran
+export const rekapData = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { kelas_id, bulan, tahun } = req.query;
+  const b = parseInt(bulan as string) || new Date().getMonth() + 1;
+  const y = parseInt(tahun as string) || new Date().getFullYear();
+
+  const kelas = await Kelas.findByPk(kelas_id as string);
+  if (!kelas) throw createError('Kelas tidak ditemukan', 404);
+
+  const startDate = new Date(y, b - 1, 1).toISOString().split('T')[0];
+  const endDate = new Date(y, b, 0).toISOString().split('T')[0];
+  const daysInMonth = new Date(y, b, 0).getDate();
+
+  // Ambil semua siswa di kelas
+  const siswaList = await sequelize.query<any>(
+    `SELECT s.id, u.nama, s.nis FROM siswa s JOIN users u ON s.user_id = u.id WHERE s.kelas_id = :kelas_id ORDER BY u.nama`,
+    { replacements: { kelas_id }, type: QueryTypes.SELECT }
+  );
+
+  // Ambil semua mata pelajaran yang punya jadwal di kelas ini
+  const mapelList = await sequelize.query<any>(
+    `SELECT DISTINCT mp.id, mp.nama FROM mata_pelajaran mp
+     JOIN jadwal_pelajaran jp ON jp.mata_pelajaran_id = mp.id
+     WHERE jp.kelas_id = :kelas_id ORDER BY mp.nama`,
+    { replacements: { kelas_id }, type: QueryTypes.SELECT }
+  );
+
+  // Ambil semua absensi kelas bulan ini per mapel
+  const rows = await sequelize.query<any>(
+    `SELECT a.siswa_id, mp.id AS mapel_id, mp.nama AS mapel_nama,
+            EXTRACT(DAY FROM a.tanggal::date)::int AS tgl, a.status
+     FROM absensi a
+     JOIN jadwal_pelajaran jp ON a.jadwal_pelajaran_id = jp.id
+     JOIN mata_pelajaran mp ON jp.mata_pelajaran_id = mp.id
+     WHERE jp.kelas_id = :kelas_id AND a.tanggal BETWEEN :start AND :end`,
+    { replacements: { kelas_id, start: startDate, end: endDate }, type: QueryTypes.SELECT }
+  );
+
+  // Bangun struktur: mapel → siswa → { tgl: status }
+  const byMapel: Record<string, Record<string, Record<number, string>>> = {};
+  for (const r of rows) {
+    if (!byMapel[r.mapel_id]) byMapel[r.mapel_id] = {};
+    if (!byMapel[r.mapel_id][r.siswa_id]) byMapel[r.mapel_id][r.siswa_id] = {};
+    byMapel[r.mapel_id][r.siswa_id][r.tgl] = r.status;
+  }
+
+  const days = Array.from({ length: daysInMonth }, (_, i) => {
+    const d = i + 1;
+    const dow = new Date(y, b - 1, d).getDay();
+    return { tgl: d, hari: ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'][dow], libur: dow === 0 };
+  });
+
+  const mapelData = mapelList.map(mp => ({
+    id: mp.id,
+    nama: mp.nama,
+    siswa: siswaList.map(s => {
+      const dayMap = byMapel[mp.id]?.[s.id] || {};
+      let H = 0, S = 0, I = 0, A = 0;
+      const absensi: Record<number, string> = {};
+      for (const day of days) {
+        if (!day.libur) {
+          const st = dayMap[day.tgl];
+          absensi[day.tgl] = st || '';
+          if (st === 'hadir') H++;
+          else if (st === 'sakit') S++;
+          else if (st === 'izin') I++;
+          else if (st === 'alfa') A++;
+        }
+      }
+      return { id: s.id, nama: s.nama, nis: s.nis, absensi, H, S, I, A };
+    }),
+  }));
+
+  res.json({
+    success: true,
+    data: {
+      kelas: kelas.nama,
+      bulan: b,
+      tahun: y,
+      namaBulan: new Date(y, b - 1, 1).toLocaleString('id-ID', { month: 'long' }),
+      days,
+      mapel: mapelData,
+    },
+  });
 };

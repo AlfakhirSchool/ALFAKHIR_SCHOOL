@@ -22,6 +22,9 @@ export default function JurnalPage() {
   const [view, setView] = useState<'list' | 'form'>('list');
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
+  const [filterTgl, setFilterTgl] = useState('');
+  const [rekapKelas, setRekapKelas] = useState('');
+  const [rekapLoading, setRekapLoading] = useState(false);
 
   const { data: jurnalList, isLoading } = useQuery({
     queryKey: ['jurnal-guru'],
@@ -32,6 +35,34 @@ export default function JurnalPage() {
     queryKey: ['kelas-list'],
     queryFn: () => api.get('/kelas').then(r => r.data.data || []),
   });
+
+  const filteredJurnal = filterTgl
+    ? (jurnalList || []).filter((j: any) => j.tanggal?.split('T')[0] === filterTgl)
+    : (jurnalList || []);
+
+  const downloadRekap = async () => {
+    if (!rekapKelas) return;
+    setRekapLoading(true);
+    try {
+      const now = new Date();
+      const token = localStorage.getItem('access_token');
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const res = await fetch(`${base}/absensi/rekap-download?kelas_id=${rekapKelas}&bulan=${now.getMonth() + 1}&tahun=${now.getFullYear()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const kelasNama = (kelasList as any[] || []).find((k: any) => k.id === rekapKelas)?.nama || 'Kelas';
+      const bulanNama = now.toLocaleString('id-ID', { month: 'long' });
+      a.download = `Absensi_${kelasNama.replace(/\s+/g, '')}_${bulanNama}${now.getFullYear()}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { alert('Gagal download rekap'); }
+    finally { setRekapLoading(false); }
+  };
 
   const { data: mapelList } = useQuery({
     queryKey: ['mapel-list'],
@@ -77,8 +108,31 @@ export default function JurnalPage() {
 
         {view === 'list' && (
           <>
-            <div className="flex justify-between items-center mb-6">
-              <p className="text-sm text-gray-500">{jurnalList?.length || 0} jurnal</p>
+            {/* Download Rekap Absensi */}
+            <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
+              <div>
+                <p className="text-xs font-semibold text-teal-800 mb-1.5">📥 Download Rekap Absensi Bulan Ini</p>
+                <select value={rekapKelas} onChange={e => setRekapKelas(e.target.value)}
+                  className="px-3 py-2 border border-teal-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] bg-white min-w-[180px]">
+                  <option value="">-- Pilih Kelas --</option>
+                  {(kelasList as any[] || []).map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                </select>
+              </div>
+              <button onClick={downloadRekap} disabled={!rekapKelas || rekapLoading}
+                className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-semibold hover:bg-[#156f6c] disabled:opacity-40 flex items-center gap-2">
+                {rekapLoading ? '⏳ Mengunduh...' : '📊 Download Excel'}
+              </button>
+            </div>
+
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-gray-500">{filteredJurnal.length} jurnal</p>
+                <div className="flex items-center gap-2">
+                  <input type="date" value={filterTgl} onChange={e => setFilterTgl(e.target.value)}
+                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]" />
+                  {filterTgl && <button onClick={() => setFilterTgl('')} className="text-xs text-gray-400 hover:text-red-500">✕ Reset</button>}
+                </div>
+              </div>
               <button
                 onClick={() => { setForm(emptyForm); setEditId(null); setView('form'); }}
                 className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-medium hover:bg-[#156f6c]"
@@ -89,12 +143,12 @@ export default function JurnalPage() {
 
             <div className="space-y-3">
               {isLoading && <div className="text-center py-12 text-gray-400">Memuat...</div>}
-              {!isLoading && (jurnalList || []).length === 0 && (
+              {!isLoading && filteredJurnal.length === 0 && (
                 <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-                  <p className="text-gray-400">Belum ada jurnal. Klik tombol di atas untuk membuat.</p>
+                  <p className="text-gray-400">{filterTgl ? 'Tidak ada jurnal pada tanggal ini.' : 'Belum ada jurnal. Klik tombol di atas untuk membuat.'}</p>
                 </div>
               )}
-              {(jurnalList || []).map((j: any) => (
+              {filteredJurnal.map((j: any) => (
                 <div key={j.id} className="bg-white rounded-xl shadow-sm p-5">
                   <div className="flex items-start justify-between">
                     <div>

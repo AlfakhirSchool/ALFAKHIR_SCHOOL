@@ -21,6 +21,8 @@ router.post('/bulk-guru', authorize('guru', 'admin'), absensiController.bulkGuru
 router.get('/wali-kelas', authorize('guru', 'admin'), absensiController.rekapWaliKelas);
 // Download rekap bulanan Excel
 router.get('/rekap-download', authorize('guru', 'admin'), absensiController.downloadRekap);
+// JSON data preview rekap per mata pelajaran
+router.get('/rekap-data', authorize('guru', 'admin'), absensiController.rekapData);
 router.get('/:siswa_id/detail', authorize('admin', 'guru', 'siswa', 'ortu'), absensiController.getSiswaDetail);
 
 export default router;

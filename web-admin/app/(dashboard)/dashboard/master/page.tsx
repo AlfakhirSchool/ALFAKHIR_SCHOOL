@@ -97,17 +97,28 @@ export default function MasterDashboard() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['delete-requests-pending'] }),
   });
 
+  const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const prevIds = useState<Set<string>>(new Set())[0];
+
   const fetchFeed = async () => {
     try {
-      const r = await api.get('/audit-log/live?limit=30');
-      setFeed(r.data.data || []);
+      const r = await api.get('/audit-log/live?limit=50');
+      const rows = r.data.data || [];
+      const incoming = new Set<string>(rows.map((x: any) => x.id));
+      const fresh = new Set<string>([...incoming].filter(id => !prevIds.has(id)));
+      if (fresh.size > 0) {
+        setNewIds(fresh);
+        setTimeout(() => setNewIds(new Set()), 4000);
+      }
+      rows.forEach((x: any) => prevIds.add(x.id));
+      setFeed(rows);
     } catch {}
     setFeedLoading(false);
   };
 
   useEffect(() => {
     fetchFeed();
-    const t = setInterval(fetchFeed, 10000);
+    const t = setInterval(fetchFeed, 5000);
     return () => clearInterval(t);
   }, []);
 
@@ -244,7 +255,7 @@ export default function MasterDashboard() {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               <h3 className="font-bold text-[#1A2332]">Aktivitas Live</h3>
-              <span className="text-xs text-gray-400">· refresh setiap 10 detik</span>
+              <span className="text-xs text-gray-400">· refresh setiap 5 detik</span>
             </div>
             <a href="/audit-log" className="text-xs text-blue-600 hover:underline">Lihat semua →</a>
           </div>
@@ -256,7 +267,7 @@ export default function MasterDashboard() {
           ) : (
             <ul className="divide-y divide-gray-50">
               {feed.map((log) => (
-                <li key={log.id} className="flex items-start gap-3 px-6 py-3 hover:bg-gray-50 transition-colors">
+                <li key={log.id} className={`flex items-start gap-3 px-6 py-3 transition-colors ${newIds.has(log.id) ? 'bg-green-50 border-l-4 border-green-400' : 'hover:bg-gray-50'}`}>
                   {/* Role badge */}
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-base flex-shrink-0 mt-0.5"
@@ -267,6 +278,7 @@ export default function MasterDashboard() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
+                      {newIds.has(log.id) && <span className="text-xs bg-green-500 text-white px-1.5 py-0.5 rounded font-bold animate-pulse">BARU</span>}
                       <span className="font-semibold text-sm text-[#1A2332] truncate">{log.nama || 'Anonim'}</span>
                       {log.role && (
                         <span

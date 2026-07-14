@@ -70,7 +70,10 @@ export const guruDashboard = async (req: AuthRequest, res: Response): Promise<vo
 
   res.json({
     success: true,
-    data: { kpi: { jurnalBulanIni, jurnalPending } },
+    data: {
+      kpi: { jurnalBulanIni, jurnalPending },
+      school_levels: guru.school_levels || [],
+    },
   });
 };
 
