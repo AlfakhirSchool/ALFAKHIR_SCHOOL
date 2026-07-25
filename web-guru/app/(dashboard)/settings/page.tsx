@@ -50,8 +50,23 @@ export default function SettingsPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) uploadPhoto.mutate(file);
+    if (!file) return;
     e.target.value = '';
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const size = Math.min(img.width, img.height);
+      const sx = (img.width - size) / 2;
+      const sy = (img.height - size) / 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = 400; canvas.height = 400;
+      canvas.getContext('2d')!.drawImage(img, sx, sy, size, size, 0, 0, 400, 400);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob => {
+        if (blob) uploadPhoto.mutate(new File([blob], 'profile.jpg', { type: 'image/jpeg' }));
+      }, 'image/jpeg', 0.9);
+    };
+    img.src = url;
   };
 
   const requestPassword = useMutation({
