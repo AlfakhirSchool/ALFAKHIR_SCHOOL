@@ -58,10 +58,17 @@ export default function JurnalPage() {
   });
 
   const [submitError, setSubmitError] = useState('');
+  const [detailJurnal, setDetailJurnal] = useState<any>(null);
+
   const submitJurnal = useMutation({
     mutationFn: (id: string) => api.post(`/jurnal-guru/${id}/submit`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['jurnal-guru'] }); setSubmitError(''); },
     onError: (e: any) => setSubmitError(e?.response?.data?.message || 'Gagal submit jurnal'),
+  });
+
+  const deleteJurnal = useMutation({
+    mutationFn: (id: string) => api.delete(`/jurnal-guru/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['jurnal-guru'] }),
   });
 
   const openEdit = (j: any) => {
@@ -115,7 +122,7 @@ export default function JurnalPage() {
                 </div>
               )}
               {filteredJurnal.map((j: any) => (
-                <div key={j.id} className="bg-white rounded-xl shadow-sm p-5">
+                <div key={j.id} className="bg-white rounded-xl shadow-sm p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={() => setDetailJurnal(j)}>
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-3 mb-1">
@@ -125,34 +132,25 @@ export default function JurnalPage() {
                         </span>
                       </div>
                       <p className="text-sm text-gray-500">
-                        {j.kelas?.nama} · {j.mataPelajaran?.nama} · {new Date(j.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {j.kelas?.nama} · {j.mataPelajaran?.nama || '—'} · {new Date(j.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2" onClick={e => e.stopPropagation()}>
                       {j.status === 'draft' && (
                         <>
-                          <button
-                            onClick={() => openEdit(j)}
-                            className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => submitJurnal.mutate(j.id)}
-                            disabled={submitJurnal.isPending}
-                            className="text-xs px-3 py-1.5 bg-[#1B8B87] text-white rounded-lg hover:bg-[#156f6c] disabled:opacity-50"
-                          >
-                            Submit
-                          </button>
+                          <button onClick={() => openEdit(j)} className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50">Edit</button>
+                          <button onClick={() => submitJurnal.mutate(j.id)} disabled={submitJurnal.isPending} className="text-xs px-3 py-1.5 bg-[#1B8B87] text-white rounded-lg hover:bg-[#156f6c] disabled:opacity-50">Submit</button>
                         </>
                       )}
+                      <button
+                        onClick={() => { if (confirm('Hapus jurnal ini?')) deleteJurnal.mutate(j.id); }}
+                        disabled={deleteJurnal.isPending}
+                        className="text-xs px-3 py-1.5 border border-red-200 text-red-500 rounded-lg hover:bg-red-50 disabled:opacity-40"
+                      >
+                        Hapus
+                      </button>
                     </div>
                   </div>
-                  {j.hambatan_pembelajaran && (
-                    <p className="text-xs text-gray-400 mt-2 line-clamp-1">
-                      Hambatan: {j.hambatan_pembelajaran}
-                    </p>
-                  )}
                 </div>
               ))}
             </div>
@@ -237,6 +235,46 @@ export default function JurnalPage() {
           </div>
         )}
       </div>
+
+      {/* Modal Detail Jurnal */}
+      {detailJurnal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setDetailJurnal(null)}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+              <div>
+                <h2 className="font-semibold text-[#1A2332]">{detailJurnal.topik_pelajaran}</h2>
+                <span className={`text-xs px-2 py-0.5 rounded font-medium ${STATUS_STYLES[detailJurnal.status]}`}>{detailJurnal.status}</span>
+              </div>
+              <button onClick={() => setDetailJurnal(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+            </div>
+            <div className="p-6 space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
+                <div><span className="font-medium block">Kelas</span>{detailJurnal.kelas?.nama || '—'}</div>
+                <div><span className="font-medium block">Mata Pelajaran</span>{detailJurnal.mataPelajaran?.nama || '—'}</div>
+                <div><span className="font-medium block">Tanggal</span>{new Date(detailJurnal.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
+              </div>
+              {detailJurnal.deskripsi_pembelajaran && (
+                <div><p className="text-xs font-medium text-gray-600 mb-1">Tugas</p><p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{detailJurnal.deskripsi_pembelajaran}</p></div>
+              )}
+              {detailJurnal.hasil_pembelajaran && (
+                <div><p className="text-xs font-medium text-gray-600 mb-1">Catatan Guru</p><p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{detailJurnal.hasil_pembelajaran}</p></div>
+              )}
+              {detailJurnal.rencana_tindak_lanjut && (
+                <div><p className="text-xs font-medium text-gray-600 mb-1">Rencana Tindak Lanjut</p><p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{detailJurnal.rencana_tindak_lanjut}</p></div>
+              )}
+              <div className="flex gap-2 pt-2">
+                {detailJurnal.status === 'draft' && (
+                  <>
+                    <button onClick={() => { openEdit(detailJurnal); setDetailJurnal(null); }} className="px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Edit</button>
+                    <button onClick={() => { submitJurnal.mutate(detailJurnal.id); setDetailJurnal(null); }} className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm hover:bg-[#156f6c]">Submit</button>
+                  </>
+                )}
+                <button onClick={() => { if (confirm('Hapus jurnal ini?')) { deleteJurnal.mutate(detailJurnal.id); setDetailJurnal(null); } }} className="px-4 py-2 border border-red-200 text-red-500 rounded-lg text-sm hover:bg-red-50 ml-auto">Hapus</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
