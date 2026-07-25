@@ -25,7 +25,7 @@ export default function LoginPage() {
 
     try {
       const res = await api.post('/auth/login', { email, password });
-      const { user, accessToken, refreshToken } = res.data.data;
+      const { user, accessToken, refreshToken, profile_detail } = res.data.data;
 
       if (!['guru', 'admin'].includes(user.role)) {
         setError('Akses hanya untuk Guru');
@@ -33,7 +33,12 @@ export default function LoginPage() {
         return;
       }
 
-      login(user, accessToken, refreshToken);
+      const enrichedUser = {
+        ...user,
+        school_levels: profile_detail?.school_levels || [],
+        spesialisasi: profile_detail?.spesialisasi || '',
+      };
+      login(enrichedUser, accessToken, refreshToken);
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login gagal');

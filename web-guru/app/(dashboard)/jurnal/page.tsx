@@ -23,6 +23,11 @@ export default function JurnalPage() {
   const qc = useQueryClient();
   const { user } = useAuthStore();
   const schoolLevels: string[] = (user as any)?.school_levels || [];
+  const spesialisasi: string = (user as any)?.spesialisasi || '';
+  // Parse "SD:English, SD:MATH" → Set of mapel names per level
+  const spesSet = new Set(
+    spesialisasi.split(',').map(s => s.trim().split(':').slice(1).join(':').trim().toLowerCase()).filter(Boolean)
+  );
   const [view, setView] = useState<'list' | 'form'>('list');
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
@@ -51,7 +56,10 @@ export default function JurnalPage() {
       return results.flat();
     },
   });
-  const mapelList = mapelListRaw || [];
+  // Filter by spesialisasi if set, otherwise show all from school_levels
+  const mapelList = (mapelListRaw || []).filter((m: any) =>
+    spesSet.size === 0 || spesSet.has(m.nama.toLowerCase())
+  );
 
   const saveJurnal = useMutation({
     mutationFn: () => editId

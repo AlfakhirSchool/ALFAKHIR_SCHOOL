@@ -7,6 +7,8 @@ interface User {
   nama: string;
   role: string;
   profile_pic?: string;
+  school_levels?: string[];
+  spesialisasi?: string;
 }
 
 interface AuthState {
