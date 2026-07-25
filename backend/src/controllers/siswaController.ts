@@ -159,35 +159,43 @@ async function doImportRows(rows: { nama: string; kelas_nama: string; nis: strin
 }
 
 export const syncFromSheets = async (_req: AuthRequest, res: Response): Promise<void> => {
-  const allRows: { nama: string; kelas_nama: string; nis: string; status: string }[] = [];
-  for (const tab of SHEET_TABS) {
-    try {
-      const csv = await fetchSheetCsv(tab.gid);
-      allRows.push(...parseCsvRows(csv));
-    } catch (e) {
-      // skip tab jika gagal fetch
+  try {
+    const allRows: { nama: string; kelas_nama: string; nis: string; status: string }[] = [];
+    for (const tab of SHEET_TABS) {
+      try {
+        const csv = await fetchSheetCsv(tab.gid);
+        allRows.push(...parseCsvRows(csv));
+      } catch (e) {
+        // skip tab jika gagal fetch
+      }
     }
+    if (allRows.length === 0) {
+      res.json({ success: true, message: 'Tidak ada data baru di spreadsheet', data: [] });
+      return;
+    }
+    const results = await doImportRows(allRows);
+    const created = results.filter(r => r.status === 'created').length;
+    const skipped = results.filter(r => r.status === 'skipped').length;
+    res.json({ success: true, message: `${created} siswa ditambahkan, ${skipped} dilewati`, data: results });
+  } catch (e: any) {
+    res.status(500).json({ success: false, message: `Gagal sync: ${e?.message || 'Error tidak diketahui'}` });
   }
-  if (allRows.length === 0) {
-    res.json({ success: true, message: 'Tidak ada data baru di spreadsheet', data: [] });
-    return;
-  }
-  const results = await doImportRows(allRows);
-  const created = results.filter(r => r.status === 'created').length;
-  const skipped = results.filter(r => r.status === 'skipped').length;
-  res.json({ success: true, message: `${created} siswa ditambahkan, ${skipped} dilewati`, data: results });
 };
 
 export const importCsv = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { rows } = req.body as { rows: { nama: string; kelas_nama: string; nis: string; status?: string }[] };
-  if (!rows || !Array.isArray(rows) || rows.length === 0) {
-    res.status(400).json({ success: false, message: 'Data kosong' });
-    return;
+  try {
+    const { rows } = req.body as { rows: { nama: string; kelas_nama: string; nis: string; status?: string }[] };
+    if (!rows || !Array.isArray(rows) || rows.length === 0) {
+      res.status(400).json({ success: false, message: 'Data kosong' });
+      return;
+    }
+    const results = await doImportRows(rows as any);
+    const created = results.filter(r => r.status === 'created').length;
+    const skipped = results.filter(r => r.status === 'skipped').length;
+    res.json({ success: true, message: `${created} siswa ditambahkan, ${skipped} dilewati`, data: results });
+  } catch (e: any) {
+    res.status(500).json({ success: false, message: `Gagal import: ${e?.message || 'Error tidak diketahui'}` });
   }
-  const results = await doImportRows(rows as any);
-  const created = results.filter(r => r.status === 'created').length;
-  const skipped = results.filter(r => r.status === 'skipped').length;
-  res.json({ success: true, message: `${created} siswa ditambahkan, ${skipped} dilewati`, data: results });
 };
 
 export const update = async (req: AuthRequest, res: Response): Promise<void> => {
