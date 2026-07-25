@@ -26,6 +26,8 @@ export default function MataPelajaranPage() {
     queryFn: () => api.get('/mata-pelajaran', { params: { jenjang: activeJenjang } }).then(r => r.data.data || []),
   });
 
+  const [saveError, setSaveError] = useState<string>('');
+
   const save = useMutation({
     mutationFn: () => {
       const payload = { ...form, kkm: parseInt(form.kkm), jam_pelajaran: form.jam_pelajaran ? parseInt(form.jam_pelajaran) : null };
@@ -36,9 +38,11 @@ export default function MataPelajaranPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['mata-pelajaran'] });
       setShowForm(false);
+      setSaveError('');
       setForm({ nama: '', kode: '', kkm: '75', jenjang: activeJenjang, jam_pelajaran: '' });
       setEditId(null);
     },
+    onError: (e: any) => setSaveError(e?.response?.data?.message || e?.message || 'Gagal menyimpan'),
   });
 
   const deleteMut = useMutation({
@@ -119,12 +123,13 @@ export default function MataPelajaranPage() {
                 </select>
               </div>
             </div>
+            {saveError && <p className="mt-3 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{saveError}</p>}
             <div className="flex gap-3 mt-4">
               <button onClick={() => save.mutate()} disabled={!form.nama || save.isPending}
                 className="px-5 py-2 bg-[#3B7FD1] text-white rounded-lg text-sm font-medium disabled:opacity-50">
                 {save.isPending ? 'Menyimpan...' : 'Simpan'}
               </button>
-              <button onClick={() => { setShowForm(false); setEditId(null); }} className="px-5 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Batal</button>
+              <button onClick={() => { setShowForm(false); setEditId(null); setSaveError(''); }} className="px-5 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Batal</button>
             </div>
           </div>
         )}

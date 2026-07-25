@@ -1,0 +1,1 @@
+ALTER TABLE mata_pelajaran ADD COLUMN IF NOT EXISTS jenjang VARCHAR(10);
