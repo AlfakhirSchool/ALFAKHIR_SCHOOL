@@ -18,8 +18,18 @@ const BULAN_LIST = Array.from({ length: 12 }, (_, i) => ({
   label: new Date(2024, i).toLocaleString('id-ID', { month: 'long' }),
 }));
 
+const JENJANG_COLOR: Record<string, { bg: string; text: string; ring: string; active: string }> = {
+  SD:  { bg: 'bg-orange-50', text: 'text-orange-700', ring: 'ring-orange-400', active: 'bg-orange-500 text-white' },
+  SMP: { bg: 'bg-teal-50',   text: 'text-teal-700',   ring: 'ring-teal-400',   active: 'bg-[#1B8B87] text-white' },
+  SMA: { bg: 'bg-blue-50',   text: 'text-blue-700',   ring: 'ring-blue-400',   active: 'bg-blue-600 text-white' },
+};
+const JENJANG_HEADER: Record<string, string> = {
+  SD: 'bg-orange-500', SMP: 'bg-[#1B8B87]', SMA: 'bg-blue-600',
+};
+
 export default function RekapAbsensiAdminPage() {
   const now = new Date();
+  const [jenjang, setJenjang] = useState('SD');
   const [kelasId, setKelasId] = useState('');
   const [bulan, setBulan] = useState(now.getMonth() + 1);
   const [tahun, setTahun] = useState(now.getFullYear());
@@ -29,6 +39,10 @@ export default function RekapAbsensiAdminPage() {
     queryKey: ['kelas-list'],
     queryFn: () => api.get('/kelas').then(r => r.data.data || []),
   });
+
+  const kelasByJenjang = (kelasList as any[]).filter(
+    (k: any) => k.sekolah?.level === jenjang || k.sekolah?.jenjang === jenjang
+  );
 
   const { data: rekap, isLoading } = useQuery({
     queryKey: ['rekap-data', kelasId, bulan, tahun],
@@ -65,14 +79,28 @@ export default function RekapAbsensiAdminPage() {
         <p className="text-gray-500 text-sm mt-1">Rekap kehadiran siswa per mata pelajaran</p>
       </div>
 
+      {/* Jenjang tabs */}
+      <div className="flex gap-2 mb-4">
+        {(['SD', 'SMP', 'SMA'] as const).map(j => {
+          const c = JENJANG_COLOR[j];
+          const isActive = jenjang === j;
+          return (
+            <button key={j} onClick={() => { setJenjang(j); setKelasId(''); setActiveMapel(0); }}
+              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${isActive ? c.active : `${c.bg} ${c.text} hover:opacity-80`}`}>
+              {j}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Filter bar */}
       <div className="bg-white rounded-xl shadow-sm p-4 mb-5 flex flex-wrap gap-3 items-end border border-gray-100">
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">Kelas</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Kelas {jenjang}</label>
           <select value={kelasId} onChange={e => { setKelasId(e.target.value); setActiveMapel(0); }}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] min-w-[160px]">
             <option value="">-- Pilih Kelas --</option>
-            {(kelasList as any[]).map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
+            {kelasByJenjang.map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
           </select>
         </div>
         <div>
@@ -109,12 +137,12 @@ export default function RekapAbsensiAdminPage() {
 
       {rekap && (
         <>
-          <div className="bg-[#1A2332] text-white rounded-xl p-4 mb-4 flex items-center justify-between">
+          <div className={`${JENJANG_HEADER[jenjang] || 'bg-[#1B8B87]'} text-white rounded-xl p-4 mb-4 flex items-center justify-between`}>
             <div>
-              <p className="font-bold text-lg">SD Islam Modern Al-Fakhir</p>
-              <p className="text-sm text-gray-300">Rekap Absensi Bulanan · Kelas {rekap.kelas} · {rekap.namaBulan} {rekap.tahun}</p>
+              <p className="font-bold text-lg">{rekap.namaSekolah || 'Al Fakhir School'}</p>
+              <p className="text-sm text-white/80">Rekap Absensi Bulanan · Kelas {rekap.kelas} · {rekap.namaBulan} {rekap.tahun}</p>
             </div>
-            <div className="text-right text-sm text-gray-300">
+            <div className="text-right text-sm text-white/80">
               <p>Dicetak: {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
             </div>
           </div>
