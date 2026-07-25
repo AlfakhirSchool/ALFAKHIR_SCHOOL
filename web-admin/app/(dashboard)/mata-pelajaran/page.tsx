@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 
 const JENJANG_LIST = ['SD', 'SMP', 'SMA'] as const;
 const JENJANG_COLOR: Record<string, { active: string; passive: string; badge: string }> = {
@@ -14,7 +15,10 @@ const JENJANG_COLOR: Record<string, { active: string; passive: string; badge: st
 
 export default function MataPelajaranPage() {
   const qc = useQueryClient();
-  const [activeJenjang, setActiveJenjang] = useState<string>('SD');
+  const { user } = useAuthStore();
+  const adminLevel = (user as any)?.school_level as string | null;
+  const allowedJenjang = adminLevel ? [adminLevel] : JENJANG_LIST;
+  const [activeJenjang, setActiveJenjang] = useState<string>(adminLevel || 'SD');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ nama: '', kode: '', kkm: '75', jenjang: 'SD', jam_pelajaran: '' });
   const [editId, setEditId] = useState<string | null>(null);
@@ -71,7 +75,7 @@ export default function MataPelajaranPage() {
 
         {/* Jenjang tabs */}
         <div className="flex gap-2 mb-5">
-          {JENJANG_LIST.map(j => {
+          {allowedJenjang.map(j => {
             const c = JENJANG_COLOR[j];
             return (
               <button key={j} onClick={() => { setActiveJenjang(j); setShowForm(false); }}
@@ -119,7 +123,7 @@ export default function MataPelajaranPage() {
                 <label className="block text-xs font-medium text-gray-600 mb-1">Jenjang *</label>
                 <select value={form.jenjang} onChange={e => setForm({ ...form, jenjang: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]">
-                  {JENJANG_LIST.map(j => <option key={j} value={j}>{j}</option>)}
+                  {allowedJenjang.map(j => <option key={j} value={j}>{j}</option>)}
                 </select>
               </div>
             </div>
