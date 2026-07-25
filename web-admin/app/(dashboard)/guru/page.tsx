@@ -14,12 +14,6 @@ const LEVEL_COLOR: Record<string, string> = {
 const LEVELS = ['SD', 'SMP', 'SMA'] as const;
 const DOMAIN = '@alfakhirschool.sch.id';
 
-const MAPEL_JENJANG: Record<string, string[]> = {
-  SD: ['Bahasa Indonesia', 'Matematika', 'IPA', 'IPS', 'PAI', 'Bahasa Inggris', 'PJOK', 'SBdP', 'PKN', 'Bahasa Arab', 'Informatika'],
-  SMP: ['Bahasa Indonesia', 'Matematika', 'IPA', 'IPS', 'PAI', 'Bahasa Inggris', 'PJOK', 'Seni Budaya', 'PKN', 'Bahasa Arab', 'Bahasa Sunda', 'Informatika', 'Fiqih', 'Bahasa Jepang', 'Bahasa Korea', 'Enterpreneur'],
-  SMA: ['Bahasa Indonesia', 'Matematika', 'Fisika', 'Kimia', 'Biologi', 'Ekonomi', 'Geografi', 'Sejarah', 'PAI', 'Bahasa Inggris', 'PJOK', 'Seni Budaya', 'PKN', 'Bahasa Arab', 'Informatika', 'Fiqih', 'Bahasa Jepang', 'Bahasa Korea', 'Enterpreneur'],
-};
-
 function LevelBadges({ levels }: { levels: string[] | null }) {
   if (!levels || levels.length === 0) {
     return <span className="text-xs text-gray-400 italic">Belum ditentukan</span>;
@@ -75,6 +69,18 @@ export default function GuruPage() {
     queryFn: () => api.get('/guru', {
       params: { search: search || undefined, jenjang: jenjangFilter || undefined, page, limit: 20 },
     }).then(r => r.data),
+  });
+
+  const { data: mapelData } = useQuery({
+    queryKey: ['mapel-all-for-guru'],
+    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []),
+  });
+
+  const mapelByJenjang: Record<string, string[]> = {};
+  (mapelData || []).forEach((m: any) => {
+    const j = m.jenjang || 'Lainnya';
+    if (!mapelByJenjang[j]) mapelByJenjang[j] = [];
+    mapelByJenjang[j].push(m.nama);
   });
 
   const buildEmail = (username: string) =>
@@ -347,7 +353,7 @@ export default function GuruPage() {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Spesialisasi / Mata Pelajaran</label>
                 {(() => {
-                  const selectedLevels = LEVELS as unknown as string[];
+                  const jenjangKeys = LEVELS.filter(l => mapelByJenjang[l]?.length > 0);
                   const checkedSet = new Set(form.spesialisasi ? form.spesialisasi.split(',').map(s => s.trim()).filter(Boolean) : []);
                   const key = (level: string, m: string) => `${level}:${m}`;
                   const toggleMapel = (level: string, m: string) => {
@@ -356,10 +362,11 @@ export default function GuruPage() {
                     next.has(k) ? next.delete(k) : next.add(k);
                     setForm(f => ({ ...f, spesialisasi: Array.from(next).join(', ') }));
                   };
+                  if (jenjangKeys.length === 0) return <p className="text-sm text-gray-400 italic">Belum ada mata pelajaran. Tambah mata pelajaran dulu.</p>;
                   return (
                     <div className="border border-gray-200 rounded-xl overflow-hidden">
-                      {selectedLevels.map((level, li) => {
-                        const mapels = MAPEL_JENJANG[level] || [];
+                      {jenjangKeys.map((level, li) => {
+                        const mapels = mapelByJenjang[level];
                         return (
                           <div key={level} className={li > 0 ? 'border-t border-gray-100' : ''}>
                             <div className="px-3 py-1.5 text-xs font-bold text-white" style={{ backgroundColor: LEVEL_COLOR[level] || '#888' }}>
