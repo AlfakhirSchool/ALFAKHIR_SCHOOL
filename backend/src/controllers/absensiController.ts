@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import QRCode from 'qrcode';
 import * as XLSX from 'xlsx';
 import { Op, QueryTypes } from 'sequelize';
-import { Absensi, QrCodeSession, JadwalPelajaran, Siswa, Kelas, MataPelajaran, Guru, User } from '../models';
+import { Absensi, QrCodeSession, JadwalPelajaran, Siswa, Kelas, MataPelajaran, Guru, User, Sekolah } from '../models';
 import sequelize from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
@@ -498,7 +498,7 @@ export const rekapData = async (req: AuthRequest, res: Response): Promise<void> 
   const b = parseInt(bulan as string) || new Date().getMonth() + 1;
   const y = parseInt(tahun as string) || new Date().getFullYear();
 
-  const kelas = await Kelas.findByPk(kelas_id as string);
+  const kelas = await Kelas.findByPk(kelas_id as string, { include: [{ model: Sekolah, as: 'sekolah' }] });
   if (!kelas) throw createError('Kelas tidak ditemukan', 404);
 
   const startDate = new Date(y, b - 1, 1).toISOString().split('T')[0];
@@ -569,6 +569,7 @@ export const rekapData = async (req: AuthRequest, res: Response): Promise<void> 
     success: true,
     data: {
       kelas: kelas.nama,
+      namaSekolah: (kelas as any).sekolah?.nama || 'Al Fakhir School',
       bulan: b,
       tahun: y,
       namaBulan: new Date(y, b - 1, 1).toLocaleString('id-ID', { month: 'long' }),

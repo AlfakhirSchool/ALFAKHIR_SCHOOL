@@ -108,9 +108,9 @@ export default function RekapAbsensiPage() {
         {rekap && (
           <>
             {/* Info header */}
-            <div className="bg-[#1A2332] text-white rounded-xl p-4 mb-4 flex items-center justify-between">
+            <div className="bg-[#1B8B87] text-white rounded-xl p-4 mb-4 flex items-center justify-between">
               <div>
-                <p className="font-bold text-lg">SD Islam Modern Al-Fakhir</p>
+                <p className="font-bold text-lg">{rekap.namaSekolah || 'Al Fakhir School'}</p>
                 <p className="text-sm text-gray-300">Rekap Absensi Bulanan · Kelas {rekap.kelas} · {rekap.namaBulan} {rekap.tahun}</p>
               </div>
               <div className="text-right text-sm text-gray-300">
@@ -148,9 +148,9 @@ export default function RekapAbsensiPage() {
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs border-collapse">
                         <thead>
-                          <tr className="bg-[#1A2332] text-white">
-                            <th className="px-3 py-2 text-left sticky left-0 bg-[#1A2332] z-10 min-w-[40px]">No</th>
-                            <th className="px-3 py-2 text-left sticky left-10 bg-[#1A2332] z-10 min-w-[180px]">Nama Siswa</th>
+                          <tr className="bg-[#1B8B87] text-white">
+                            <th className="px-3 py-2 text-left sticky left-0 bg-[#1B8B87] z-10 min-w-[40px]">No</th>
+                            <th className="px-3 py-2 text-left sticky left-10 bg-[#1B8B87] z-10 min-w-[180px]">Nama Siswa</th>
                             {days.map((d: any) => (
                               <th key={d.tgl}
                                 className={`px-1 py-1 text-center min-w-[32px] ${d.libur ? 'bg-gray-600' : ''}`}>
