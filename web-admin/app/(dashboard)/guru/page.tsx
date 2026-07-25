@@ -233,7 +233,18 @@ export default function GuruPage() {
                     </div>
                   </td>
                   <td className="px-5 py-3.5"><LevelBadges levels={g.school_levels} /></td>
-                  <td className="px-5 py-3.5 text-sm text-gray-500">{g.spesialisasi || '—'}</td>
+                  <td className="px-5 py-3.5">
+                    {g.spesialisasi ? (
+                      <div className="flex flex-wrap gap-1 max-w-xs">
+                        {g.spesialisasi.split(',').map((s: string) => s.trim()).filter(Boolean).map((s: string) => {
+                          const [lvl, ...rest] = s.split(':');
+                          const label = rest.join(':').trim();
+                          const color = lvl === 'SD' ? 'bg-orange-50 text-orange-700' : lvl === 'SMP' ? 'bg-teal-50 text-teal-700' : 'bg-blue-50 text-blue-700';
+                          return <span key={s} className={`px-1.5 py-0.5 rounded text-xs font-medium ${color}`}>{label || s}</span>;
+                        })}
+                      </div>
+                    ) : <span className="text-gray-300 text-sm">—</span>}
+                  </td>
                   <td className="px-5 py-3.5">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${g.user?.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {g.user?.is_active ? '● Aktif' : '● Nonaktif'}
