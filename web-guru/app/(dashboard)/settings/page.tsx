@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { Eye, EyeOff, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
@@ -16,6 +16,12 @@ export default function SettingsPage() {
   const [namaMsg, setNamaMsg] = useState('');
   const [photoMsg, setPhotoMsg] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropState, setCropState] = useState<{ img: HTMLImageElement; url: string } | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef({ mx: 0, my: 0, ox: 0, oy: 0 });
+  const CANVAS_SIZE = 300;
 
   const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
   const profilePicUrl = user?.profile_pic
@@ -54,20 +60,37 @@ export default function SettingsPage() {
     e.target.value = '';
     const img = new Image();
     const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const size = Math.min(img.width, img.height);
-      const sx = (img.width - size) / 2;
-      const sy = (img.height - size) / 2;
-      const canvas = document.createElement('canvas');
-      canvas.width = 400; canvas.height = 400;
-      canvas.getContext('2d')!.drawImage(img, sx, sy, size, size, 0, 0, 400, 400);
-      URL.revokeObjectURL(url);
-      canvas.toBlob(blob => {
-        if (blob) uploadPhoto.mutate(new File([blob], 'profile.jpg', { type: 'image/jpeg' }));
-      }, 'image/jpeg', 0.9);
-    };
+    img.onload = () => { setCropState({ img, url }); setZoom(1); setOffset({ x: 0, y: 0 }); };
     img.src = url;
   };
+
+  const cropAndUpload = useCallback(() => {
+    if (!cropState) return;
+    const { img } = cropState;
+    const canvas = document.createElement('canvas');
+    canvas.width = 400; canvas.height = 400;
+    const ctx = canvas.getContext('2d')!;
+    const scale = Math.min(img.width, img.height) / CANVAS_SIZE;
+    const drawSize = CANVAS_SIZE * zoom;
+    const sx = ((img.width - drawSize * scale) / 2) - offset.x * scale;
+    const sy = ((img.height - drawSize * scale) / 2) - offset.y * scale;
+    ctx.drawImage(img, sx, sy, drawSize * scale, drawSize * scale, 0, 0, 400, 400);
+    URL.revokeObjectURL(cropState.url);
+    setCropState(null);
+    canvas.toBlob(blob => {
+      if (blob) uploadPhoto.mutate(new File([blob], 'profile.jpg', { type: 'image/jpeg' }));
+    }, 'image/jpeg', 0.9);
+  }, [cropState, zoom, offset, uploadPhoto]);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    setDragging(true);
+    dragStart.current = { mx: e.clientX, my: e.clientY, ox: offset.x, oy: offset.y };
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!dragging) return;
+    setOffset({ x: dragStart.current.ox + (e.clientX - dragStart.current.mx), y: dragStart.current.oy + (e.clientY - dragStart.current.my) });
+  };
+  const onMouseUp = () => setDragging(false);
 
   const requestPassword = useMutation({
     mutationFn: () => api.post('/pending-changes/request', {
@@ -129,6 +152,44 @@ export default function SettingsPage() {
   return (
     <div>
       <Header title="Pengaturan" />
+
+      {/* Crop Modal */}
+      {cropState && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 className="font-semibold text-[#1A2332] mb-4 text-center">Atur Posisi Foto</h3>
+            <div className="relative mx-auto overflow-hidden rounded-full border-4 border-[#1B8B87] cursor-move select-none"
+              style={{ width: CANVAS_SIZE, height: CANVAS_SIZE }}
+              onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}>
+              <img src={cropState.url} alt="" draggable={false}
+                style={{
+                  position: 'absolute',
+                  width: CANVAS_SIZE * zoom,
+                  height: CANVAS_SIZE * zoom,
+                  left: '50%', top: '50%',
+                  transform: `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`,
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                }} />
+            </div>
+            <div className="mt-4">
+              <label className="text-xs text-gray-500 block mb-1">Zoom</label>
+              <input type="range" min="1" max="3" step="0.05" value={zoom}
+                onChange={e => setZoom(parseFloat(e.target.value))}
+                className="w-full accent-[#1B8B87]" />
+            </div>
+            <p className="text-xs text-gray-400 text-center mt-2">Drag foto untuk mengatur posisi</p>
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => { URL.revokeObjectURL(cropState.url); setCropState(null); }}
+                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50">Batal</button>
+              <button onClick={cropAndUpload} disabled={uploadPhoto.isPending}
+                className="flex-1 px-4 py-2.5 bg-[#1B8B87] text-white rounded-xl text-sm font-bold hover:bg-[#156f6c] disabled:opacity-50">
+                {uploadPhoto.isPending ? 'Mengupload...' : 'Simpan Foto'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="p-6 max-w-2xl space-y-6">
 
         {/* Profil */}
