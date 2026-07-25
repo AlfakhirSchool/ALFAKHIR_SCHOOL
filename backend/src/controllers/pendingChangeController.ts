@@ -50,7 +50,16 @@ export const requestChange = async (req: AuthRequest, res: Response): Promise<vo
   res.json({ success: true, message: `Permintaan ${type === 'password' ? 'ubah password' : 'ubah nama'} berhasil dikirim. Menunggu persetujuan Admin Master.` });
 };
 
+const assertMasterAdmin = (req: AuthRequest, res: Response): boolean => {
+  if (req.user?.school_level) {
+    res.status(403).json({ success: false, message: 'Hanya Admin Master yang dapat mengakses fitur ini' });
+    return false;
+  }
+  return true;
+};
+
 export const listPending = async (req: AuthRequest, res: Response): Promise<void> => {
+  if (!assertMasterAdmin(req, res)) return;
   const { status = 'pending' } = req.query;
   const statusStr = typeof status === 'string' ? status : 'pending';
   const items = await PendingChange.findAll({
@@ -62,6 +71,7 @@ export const listPending = async (req: AuthRequest, res: Response): Promise<void
 };
 
 export const reviewChange = async (req: AuthRequest, res: Response): Promise<void> => {
+  if (!assertMasterAdmin(req, res)) return;
   const { id } = req.params;
   const { action, catatan } = req.body; // action: 'approve' | 'reject'
 

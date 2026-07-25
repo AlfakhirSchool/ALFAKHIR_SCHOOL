@@ -186,8 +186,22 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
 
   const { nama, email, kelas_id, nisn, nis, no_induk, tempat_lahir, tanggal_lahir, alamat, is_active, jenis_kelamin } = req.body;
 
-  await (siswa as any).user.update({ nama, email, is_active });
-  await siswa.update({ kelas_id, nisn, nis, no_induk, tempat_lahir, tanggal_lahir, alamat, jenis_kelamin: jenis_kelamin || null });
+  const userUpdate: any = {};
+  if (nama !== undefined) userUpdate.nama = nama;
+  if (email !== undefined) userUpdate.email = email;
+  if (is_active !== undefined) userUpdate.is_active = is_active;
+  if (Object.keys(userUpdate).length) await (siswa as any).user.update(userUpdate);
+
+  const siswaUpdate: any = {};
+  if (kelas_id !== undefined) siswaUpdate.kelas_id = kelas_id;
+  if (nisn !== undefined) siswaUpdate.nisn = nisn;
+  if (nis !== undefined) siswaUpdate.nis = nis;
+  if (no_induk !== undefined) siswaUpdate.no_induk = no_induk;
+  if (tempat_lahir !== undefined) siswaUpdate.tempat_lahir = tempat_lahir;
+  if (tanggal_lahir !== undefined) siswaUpdate.tanggal_lahir = tanggal_lahir;
+  if (alamat !== undefined) siswaUpdate.alamat = alamat;
+  if (jenis_kelamin !== undefined) siswaUpdate.jenis_kelamin = jenis_kelamin || null;
+  if (Object.keys(siswaUpdate).length) await siswa.update(siswaUpdate);
 
   res.json({ success: true, message: 'Data siswa berhasil diperbarui' });
 };
