@@ -21,6 +21,10 @@ const menuItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { logout, user } = useAuthStore();
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
+  const picUrl = user?.profile_pic
+    ? user.profile_pic.startsWith('http') ? user.profile_pic : `${apiBase}${user.profile_pic}`
+    : null;
   const router = useRouter();
 
   const handleLogout = () => {
@@ -45,8 +49,10 @@ export default function Sidebar() {
       {user && (
         <div className="px-5 py-4 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-[#1B8B87]/30 rounded-full flex items-center justify-center text-[#1B8B87] font-bold">
-              {user.nama?.charAt(0)}
+            <div className="w-9 h-9 bg-[#1B8B87]/30 rounded-full overflow-hidden flex items-center justify-center text-[#1B8B87] font-bold">
+              {picUrl
+                ? <img src={picUrl} alt="" className="w-full h-full object-cover" />
+                : user.nama?.charAt(0)}
             </div>
             <div>
               <p className="text-sm font-medium truncate">{user.nama}</p>

@@ -8,6 +8,10 @@ interface HeaderProps {
 
 export default function Header({ title }: HeaderProps) {
   const { user } = useAuthStore();
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
+  const picUrl = user?.profile_pic
+    ? user.profile_pic.startsWith('http') ? user.profile_pic : `${apiBase}${user.profile_pic}`
+    : null;
 
   return (
     <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-30">
@@ -18,8 +22,10 @@ export default function Header({ title }: HeaderProps) {
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">!</span>
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-[#1B8B87] rounded-full flex items-center justify-center text-white text-sm font-bold">
-            {user?.nama?.charAt(0) || 'G'}
+          <div className="w-8 h-8 bg-[#1B8B87] rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold">
+            {picUrl
+              ? <img src={picUrl} alt="" className="w-full h-full object-cover" />
+              : user?.nama?.charAt(0) || 'G'}
           </div>
           <div className="hidden md:block">
             <p className="text-sm font-medium text-gray-800">{user?.nama}</p>
