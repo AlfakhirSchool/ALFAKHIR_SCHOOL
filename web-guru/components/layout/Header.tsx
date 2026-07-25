@@ -1,6 +1,9 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
+import api from '@/lib/api';
 
 interface HeaderProps {
   title: string;
@@ -8,19 +11,105 @@ interface HeaderProps {
 
 export default function Header({ title }: HeaderProps) {
   const { user } = useAuthStore();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
   const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
   const picUrl = user?.profile_pic
     ? user.profile_pic.startsWith('http') ? user.profile_pic : `${apiBase}${user.profile_pic}`
     : null;
 
+  const { data: pending = [] } = useQuery({
+    queryKey: ['my-pending'],
+    queryFn: () => api.get('/pending-changes/mine').then(r => r.data.data || []),
+    refetchInterval: 30000,
+  });
+
+  const { data: dashData } = useQuery({
+    queryKey: ['guru-dashboard'],
+    queryFn: () => api.get('/dashboard/guru').then(r => r.data.data),
+    refetchInterval: 60000,
+  });
+
+  const jadwalHariIni: any[] = dashData?.jadwalHariIni || [];
+  const pendingJurnal: any[] = dashData?.pendingJurnal || [];
+
+  type NotifItem = { id: string; type: string; text: string; sub?: string; status?: string };
+  const notifs: NotifItem[] = [
+    ...(pending as any[]).map((p: any) => ({
+      id: p.id,
+      type: p.status === 'approved' ? 'ok' : p.status === 'rejected' ? 'err' : 'pending',
+      text: p.type === 'password' ? 'Permintaan ubah password' : `Permintaan ubah nama`,
+      sub: p.status === 'approved' ? 'Disetujui admin' : p.status === 'rejected' ? 'Ditolak admin' : 'Menunggu persetujuan admin',
+      status: p.status,
+    })),
+    ...jadwalHariIni.slice(0, 3).map((j: any) => ({
+      id: `jadwal-${j.id}`,
+      type: 'info',
+      text: `Jadwal: ${j.mata_pelajaran?.nama || j.mapel || 'Pelajaran'}`,
+      sub: `${j.kelas?.nama || ''} · ${j.jam_mulai || ''}–${j.jam_selesai || ''}`,
+    })),
+    ...pendingJurnal.slice(0, 2).map((j: any) => ({
+      id: `jurnal-${j.id}`,
+      type: 'warn',
+      text: `Jurnal belum disubmit`,
+      sub: j.kelas?.nama || '',
+    })),
+  ];
+
+  const unread = notifs.filter(n => n.status === 'pending' || n.type === 'warn').length
+    + (jadwalHariIni.length > 0 ? 1 : 0);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const iconFor = (type: string) => type === 'ok' ? '✅' : type === 'err' ? '❌' : type === 'warn' ? '⚠️' : type === 'pending' ? '🕐' : '📅';
+
   return (
     <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-30">
       <h1 className="text-lg font-semibold text-[#1A2332]">{title}</h1>
       <div className="flex items-center gap-4">
-        <button className="relative text-gray-500 hover:text-gray-700">
-          🔔
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">!</span>
-        </button>
+
+        {/* Bell */}
+        <div className="relative" ref={ref}>
+          <button onClick={() => setOpen(v => !v)}
+            className="relative text-gray-500 hover:text-gray-700 text-xl p-1">
+            🔔
+            {unread > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-0.5">
+                {unread > 9 ? '9+' : unread}
+              </span>
+            )}
+          </button>
+
+          {open && (
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100">
+                <p className="font-semibold text-sm text-[#1A2332]">Notifikasi</p>
+              </div>
+              {notifs.length === 0 ? (
+                <div className="px-4 py-8 text-center text-sm text-gray-400">Tidak ada notifikasi</div>
+              ) : (
+                <ul className="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                  {notifs.map(n => (
+                    <li key={n.id} className="px-4 py-3 hover:bg-gray-50 flex gap-3 items-start">
+                      <span className="text-base mt-0.5">{iconFor(n.type)}</span>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">{n.text}</p>
+                        {n.sub && <p className="text-xs text-gray-400 mt-0.5">{n.sub}</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* User */}
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-[#1B8B87] rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold">
             {picUrl
