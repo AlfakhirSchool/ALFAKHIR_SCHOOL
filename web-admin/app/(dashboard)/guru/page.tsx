@@ -318,7 +318,8 @@ export default function GuruPage() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Lengkap <span className="text-red-400">*</span></label>
                 <input value={form.nama} onChange={e => setForm(f => ({ ...f, nama: e.target.value }))}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
-                  placeholder="Nama lengkap guru" />
+                  placeholder="Contoh: Budi Santoso S.Pd" />
+                <p className="text-xs text-gray-400 mt-1">Huruf kapital setiap kata — cth: Siti Rahmawati</p>
               </div>
 
               {/* Email */}
@@ -327,10 +328,11 @@ export default function GuruPage() {
                 <input
                   type="text"
                   value={form.email}
-                  onChange={e => setForm(f => ({ ...f, email: e.target.value.trim().replace(/[@\s]/g, '') }))}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value.trim().toLowerCase().replace(/[@\s]/g, '') }))}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
                   placeholder="nama.guru"
                 />
+                <p className="text-xs text-blue-500 mt-1">Otomatis huruf kecil semua — cth: budi.santoso</p>
               </div>
 
               {/* Password (hanya saat create) */}

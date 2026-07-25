@@ -268,8 +268,9 @@ export default function SiswaPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Nama Lengkap <span className="text-red-500">*</span></label>
                 <input value={addForm.nama} onChange={e => setAddForm({ ...addForm, nama: e.target.value })}
-                  placeholder="Nama lengkap siswa"
+                  placeholder="Contoh: Ahmad Fauzi Ramadhan"
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+                <p className="text-xs text-gray-400 mt-0.5">Huruf kapital setiap kata — cth: Ahmad Fauzi</p>
               </div>
               <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-xs text-blue-700">
                 Login: NIS sebagai username · Password: 4 angka terakhir NIS

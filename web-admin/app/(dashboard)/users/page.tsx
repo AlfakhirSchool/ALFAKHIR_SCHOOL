@@ -513,17 +513,19 @@ export default function UsersPage() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Lengkap <span className="text-red-400">*</span></label>
                 <input value={createForm.nama} onChange={e => setCreateForm(f => ({ ...f, nama: e.target.value }))}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
-                  placeholder="Nama lengkap" />
+                  placeholder="Contoh: Ahmad Fauzi" />
+                <p className="text-xs text-gray-400 mt-1">Huruf kapital setiap kata</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Username <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   value={createForm.email}
-                  onChange={e => setCreateForm(f => ({ ...f, email: e.target.value.trim().replace(/[@\s]/g, '') }))}
+                  onChange={e => setCreateForm(f => ({ ...f, email: e.target.value.trim().toLowerCase().replace(/[@\s]/g, '') }))}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
-                  placeholder="nama.guru"
+                  placeholder="nama.admin"
                 />
+                <p className="text-xs text-blue-500 mt-1">Otomatis huruf kecil — cth: admin.sd</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password <span className="text-red-400">*</span></label>

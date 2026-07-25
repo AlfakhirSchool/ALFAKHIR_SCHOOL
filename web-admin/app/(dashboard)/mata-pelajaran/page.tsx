@@ -93,11 +93,13 @@ export default function MataPelajaranPage() {
                 <label className="block text-xs font-medium text-gray-600 mb-1">Nama Mata Pelajaran *</label>
                 <input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })}
                   placeholder="Matematika" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+                <p className="text-xs text-gray-400 mt-0.5">Huruf kapital awal kata — cth: Matematika</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Kode</label>
-                <input value={form.kode} onChange={(e) => setForm({ ...form, kode: e.target.value })}
-                  placeholder="MTK" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+                <input value={form.kode} onChange={(e) => setForm({ ...form, kode: e.target.value.toUpperCase() })}
+                  placeholder="MTK" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1] uppercase" />
+                <p className="text-xs text-blue-500 mt-0.5">Otomatis HURUF BESAR — cth: MTK, IPA</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">KKM (0-100)</label>

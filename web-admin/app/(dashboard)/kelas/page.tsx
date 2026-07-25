@@ -325,9 +325,10 @@ function KelasForm({ form, setForm, guruList }: { form: any; setForm: any; guruL
     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Nama Kelas</label>
-        <input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })}
-          placeholder="Contoh: 1A An Na'im"
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+        <input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value.toUpperCase() })}
+          placeholder="Contoh: AN NA'IM"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1] uppercase" />
+        <p className="text-xs text-blue-500 mt-0.5">Otomatis HURUF BESAR — contoh: AN NA'IM, DARUSSALAM</p>
       </div>
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Tahun Ajaran</label>
