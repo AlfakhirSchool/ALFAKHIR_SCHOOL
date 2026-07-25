@@ -26,13 +26,14 @@ export default function JurnalPage() {
   // Fetch guru profile to get school_levels + spesialisasi (handles old sessions)
   const { data: profileData } = useQuery({
     queryKey: ['guru-profile'],
-    queryFn: () => api.get('/auth/me').then(r => r.data.data),
-    staleTime: 5 * 60 * 1000,
-    onSuccess: (d: any) => {
-      if (d?.guru && (!((user as any)?.school_levels)?.length)) {
+    queryFn: () => api.get('/auth/me').then(r => {
+      const d = r.data.data;
+      if (d?.guru && !((user as any)?.school_levels)?.length) {
         updateUser({ school_levels: d.guru.school_levels || [], spesialisasi: d.guru.spesialisasi || '' });
       }
-    },
+      return d;
+    }),
+    staleTime: 5 * 60 * 1000,
   });
 
   const schoolLevels: string[] = (user as any)?.school_levels?.length
