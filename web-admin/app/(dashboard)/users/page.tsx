@@ -53,6 +53,12 @@ function JenjangCell({ u }: { u: any }) {
       ? <Badge text={u.school_level} color={LEVEL_COLOR[u.school_level] || '#888'} />
       : <span className="text-xs text-gray-400 italic">Master</span>;
   }
+  if (u.role === 'siswa') {
+    const lvl = u.siswa_detail?.kelas?.sekolah?.level;
+    return lvl
+      ? <Badge text={lvl} color={LEVEL_COLOR[lvl] || '#888'} />
+      : <span className="text-xs text-gray-400">—</span>;
+  }
   return <span className="text-xs text-gray-400">—</span>;
 }
 

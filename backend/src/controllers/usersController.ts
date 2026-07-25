@@ -97,7 +97,10 @@ export const listUsers = async (req: AuthRequest, res: Response): Promise<void> 
   const { count, rows } = await User.findAndCountAll({
     where,
     attributes: { exclude: ['password_hash'] }, // password_default tetap disertakan
-    include: [{ model: Guru, as: 'guru_detail', attributes: ['id', 'school_levels'], required: false }],
+    include: [
+      { model: Guru, as: 'guru_detail', attributes: ['id', 'school_levels'], required: false },
+      { model: Siswa, as: 'siswa_detail', required: false, include: [{ model: Kelas, as: 'kelas', include: [{ model: Sekolah, as: 'sekolah', attributes: ['level', 'nama'] }] }] },
+    ],
     order: [['created_at', 'DESC']],
     limit: Number(limit),
     offset,
