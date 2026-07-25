@@ -12,15 +12,18 @@ export const getSekolahList = async (_req: AuthRequest, res: Response): Promise<
 };
 
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { kelas_id, tahun_ajaran, search, page = '1', limit = '20' } = req.query;
+  const { kelas_id, tahun_ajaran, search, page = '1', limit = '20', jenjang } = req.query;
   const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
   const levelWhere = await kelasIdFilter(req.user?.school_level);
   const where: Record<string, unknown> = { ...levelWhere };
-  if (kelas_id) where.kelas_id = kelas_id; // override jika spesifik
+  if (kelas_id) where.kelas_id = kelas_id;
 
   const kelasWhere: Record<string, unknown> = {};
   if (tahun_ajaran) kelasWhere.tahun_ajaran = tahun_ajaran;
+
+  const sekolahWhere: Record<string, unknown> = {};
+  if (jenjang) sekolahWhere.level = jenjang;
 
   const userWhere: Record<string, unknown> = {};
   if (search) {
@@ -31,7 +34,7 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
     where,
     include: [
       { model: User, as: 'user', where: userWhere, attributes: { exclude: ['password_hash'] } },
-      { model: Kelas, as: 'kelas', where: kelasWhere, include: [{ model: Sekolah, as: 'sekolah' }] },
+      { model: Kelas, as: 'kelas', where: kelasWhere, required: true, include: [{ model: Sekolah, as: 'sekolah', where: Object.keys(sekolahWhere).length ? sekolahWhere : undefined }] },
     ],
     limit: parseInt(limit as string),
     offset,

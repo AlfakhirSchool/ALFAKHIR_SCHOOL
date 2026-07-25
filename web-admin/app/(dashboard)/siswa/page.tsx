@@ -9,10 +9,18 @@ import { useAuthStore } from '@/store/authStore';
 
 const ALL_JENJANG = ['SD', 'SMP', 'SMA'] as const;
 
+const JENJANG_COLOR: Record<string, { active: string; passive: string }> = {
+  SD:  { active: 'bg-orange-500 text-white', passive: 'bg-orange-50 text-orange-700 hover:bg-orange-100' },
+  SMP: { active: 'bg-[#1B8B87] text-white',  passive: 'bg-teal-50 text-teal-700 hover:bg-teal-100' },
+  SMA: { active: 'bg-blue-600 text-white',    passive: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
+};
+
 export default function SiswaPage() {
   const qc = useQueryClient();
   const { user } = useAuthStore();
+  const isMaster = !user?.school_level;
   const JENJANG = user?.school_level ? [user.school_level] : [...ALL_JENJANG];
+  const [activeJenjang, setActiveJenjang] = useState(JENJANG[0]);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [editSiswa, setEditSiswa] = useState<any>(null);
@@ -26,8 +34,8 @@ export default function SiswaPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['siswa', search, page],
-    queryFn: () => api.get('/siswa', { params: { search, page, limit: 20 } }).then(r => r.data),
+    queryKey: ['siswa', search, page, activeJenjang],
+    queryFn: () => api.get('/siswa', { params: { search, page, limit: 20, jenjang: activeJenjang } }).then(r => r.data),
   });
 
   const { data: kelasList = [] } = useQuery({
@@ -39,7 +47,10 @@ export default function SiswaPage() {
   const pagination = data?.pagination || {};
 
   const kelasByJenjang = (jenjang: string) =>
-    (kelasList as any[]).filter((k: any) => k.sekolah?.level === jenjang || k.sekolah?.level?.toUpperCase() === jenjang);
+    (kelasList as any[]).filter((k: any) => {
+      const lvl = k.sekolah?.level || k.sekolah?.jenjang || '';
+      return lvl === jenjang || lvl.toUpperCase() === jenjang;
+    });
 
   const openEdit = (s: any) => {
     setEditSiswa(s);
@@ -124,6 +135,20 @@ export default function SiswaPage() {
     <div>
       <Header title="Manajemen Siswa" />
       <div className="p-6">
+        {/* Jenjang tabs — hanya tampil untuk master admin */}
+        {isMaster && (
+          <div className="flex gap-2 mb-4">
+            {ALL_JENJANG.map(j => {
+              const c = JENJANG_COLOR[j];
+              return (
+                <button key={j} onClick={() => { setActiveJenjang(j); setPage(1); setSearch(''); }}
+                  className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${activeJenjang === j ? c.active : c.passive}`}>
+                  {j}
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <input
             type="text"
