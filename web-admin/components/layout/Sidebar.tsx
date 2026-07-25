@@ -6,7 +6,7 @@ import { useAuthStore, SchoolLevel } from '@/store/authStore';
 import {
   LayoutDashboard, Users, GraduationCap, School, BookOpen, Calendar,
   DoorOpen, CreditCard, ClipboardCheck, FileText, Wallet, BookMarked,
-  BarChart3, UserCog, Search, Settings, Bell,
+  BarChart3, UserCog, Search, Settings, Bell, MessageSquare,
 } from 'lucide-react';
 
 type MenuItem = { href: string; icon: React.ReactNode; label: string };
@@ -29,6 +29,7 @@ const masterMenu: MenuItem[] = [
   { href: '/users',           icon: <UserCog size={18} />,          label: 'Kelola Akun' },
   { href: '/pending-changes', icon: <Bell size={18} />,             label: 'Permintaan Akun' },
   { href: '/audit-log',       icon: <Search size={18} />,           label: 'Audit Log' },
+  { href: '/feedback',        icon: <MessageSquare size={18} />,    label: 'Feedback & Saran' },
   { href: '/settings',        icon: <Settings size={18} />,         label: 'Pengaturan' },
 ];
 

@@ -23,6 +23,7 @@ import notifikasiRoutes from './routes/notifikasi';
 import deleteRequestsRoutes from './routes/deleteRequests';
 import absensiGerbangRoutes from './routes/absensiGerbang';
 import rfidRoutes from './routes/rfid';
+import feedbackRoutes from './routes/feedback';
 import pendingChangesRoutes from './routes/pendingChanges';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { globalAuditLogger } from './middleware/auditLog';
@@ -90,6 +91,7 @@ app.use(`${PREFIX}/delete-requests`, deleteRequestsRoutes);
 app.use(`${PREFIX}/absensi-gerbang`, absensiGerbangRoutes);
 app.use(`${PREFIX}/rfid`, rfidRoutes);
 app.use(`${PREFIX}/pending-changes`, pendingChangesRoutes);
+app.use(`${PREFIX}/feedback`, feedbackRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

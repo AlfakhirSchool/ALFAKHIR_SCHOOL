@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
-import { LayoutDashboard, ClipboardList, BookOpen, FileText, BarChart3, BookMarked, Users, Calendar, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, BookOpen, FileText, BarChart3, BookMarked, Users, Calendar, Settings, LogOut, MessageSquare } from 'lucide-react';
 
 const menuItems = [
   { href: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
@@ -15,6 +15,7 @@ const menuItems = [
   { href: '/jurnal',        icon: BookMarked,       label: 'Jurnal Guru' },
   { href: '/kelas',         icon: Users,            label: 'Kelas Saya' },
   { href: '/jadwal',        icon: Calendar,         label: 'Jadwal' },
+  { href: '/feedback',      icon: MessageSquare,    label: 'Saran & Pertanyaan' },
   { href: '/settings',      icon: Settings,         label: 'Pengaturan' },
 ];
 
