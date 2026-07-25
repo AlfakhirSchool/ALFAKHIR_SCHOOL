@@ -68,7 +68,10 @@ router.put('/:id', authorize('admin'), async (req: AuthRequest, res: Response): 
   if (req.user?.school_level && (kelas as any).sekolah?.level !== req.user.school_level) {
     res.status(403).json({ success: false, message: 'Akses ditolak' }); return;
   }
-  await kelas.update(req.body);
+  const { sekolah_id, ...rest } = req.body;
+  const updateData: any = { ...rest };
+  if (sekolah_id) updateData.sekolah_id = sekolah_id;
+  await kelas.update(updateData);
   res.json({ success: true, data: kelas });
 });
 

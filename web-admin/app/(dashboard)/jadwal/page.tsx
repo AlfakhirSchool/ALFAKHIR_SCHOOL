@@ -127,7 +127,7 @@ export default function JadwalPage() {
                       {items.sort((a: any, b: any) => a.jam_mulai.localeCompare(b.jam_mulai)).map((j: any) => (
                         <tr key={j.id} className="hover:bg-gray-50/50">
                           <td className="px-6 py-3 text-[#3B7FD1] font-medium w-28">{j.jam_mulai}–{j.jam_selesai}</td>
-                          <td className="px-6 py-3 font-medium text-gray-800">{j.mataPelajaran?.nama}</td>
+                          <td className="px-6 py-3 font-medium text-gray-800">{j.mata_pelajaran?.nama}</td>
                           <td className="px-6 py-3 text-gray-500">{j.kelas?.nama}</td>
                           <td className="px-6 py-3 text-gray-500">{j.guru?.user?.nama}</td>
                           <td className="px-6 py-3 text-gray-400">Ruang {j.ruangan}</td>
@@ -135,7 +135,7 @@ export default function JadwalPage() {
                             <div className="flex gap-2">
                               <button className="text-[#3B7FD1] hover:underline text-xs">Edit</button>
                               <button
-                                onClick={() => { setHapusId(j.id); setHapusInfo(`${j.mataPelajaran?.nama} — ${j.kelas?.nama} (${j.hari} ${j.jam_mulai})`); }}
+                                onClick={() => { setHapusId(j.id); setHapusInfo(`${j.mata_pelajaran?.nama} — ${j.kelas?.nama} (${j.hari} ${j.jam_mulai})`); }}
                                 className="text-red-500 hover:underline text-xs">Hapus</button>
                             </div>
                           </td>
