@@ -53,9 +53,11 @@ const assertInScope = async (adminJenjang: string | null, targetUserId: string, 
 };
 
 export const listUsers = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { role, search, page = 1, limit = 50 } = req.query;
+  const { role, search, page = 1, limit = 50, jenjang: jenjangParam } = req.query;
   const offset = (Number(page) - 1) * Number(limit);
   const adminJenjang = req.user?.school_level ?? null;
+  // Master admin can filter by jenjang via query param
+  const effectiveJenjang = adminJenjang ?? (jenjangParam && VALID_JENJANG.includes(jenjangParam as string) ? (jenjangParam as string) : null);
 
   const where: any = {};
   if (role) where.role = role;
@@ -67,8 +69,8 @@ export const listUsers = async (req: AuthRequest, res: Response): Promise<void> 
   }
 
   // Jenjang admin: filter berdasarkan lingkup jenjang
-  if (adminJenjang && VALID_JENJANG.includes(adminJenjang)) {
-    const j = adminJenjang;
+  if (effectiveJenjang && VALID_JENJANG.includes(effectiveJenjang)) {
+    const j = effectiveJenjang;
     if (role === 'admin') {
       where.school_level = j;
     } else if (role === 'guru') {

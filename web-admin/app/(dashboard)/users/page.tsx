@@ -78,6 +78,7 @@ export default function UsersPage() {
 
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [jenjangFilter, setJenjangFilter] = useState('');
   const [page, setPage] = useState(1);
 
   const [resetModal, setResetModal] = useState<{ id: string; nama: string; role: string } | null>(null);
@@ -99,9 +100,9 @@ export default function UsersPage() {
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: ['users', search, roleFilter, page],
+    queryKey: ['users', search, roleFilter, jenjangFilter, page],
     queryFn: () => api.get('/users', {
-      params: { search: search || undefined, role: roleFilter || undefined, page, limit: 30 },
+      params: { search: search || undefined, role: roleFilter || undefined, jenjang: jenjangFilter || undefined, page, limit: 30 },
     }).then(r => r.data),
   });
 
@@ -199,6 +200,28 @@ export default function UsersPage() {
               <p className="font-bold text-sm">Mode Admin {adminJenjang}</p>
               <p className="text-xs opacity-85">Anda hanya melihat dan mengelola akun dalam lingkup {adminJenjang}. Admin Master mengelola semua jenjang.</p>
             </div>
+          </div>
+        )}
+
+        {/* Jenjang tabs — master admin only */}
+        {isMaster && (
+          <div className="flex gap-2">
+            {(['', 'SD', 'SMP', 'SMA'] as const).map(j => {
+              const labels: Record<string, string> = { '': 'Semua', SD: 'SD', SMP: 'SMP', SMA: 'SMA' };
+              const colors: Record<string, { active: string; passive: string }> = {
+                '':   { active: 'bg-gray-700 text-white', passive: 'bg-gray-100 text-gray-600 hover:bg-gray-200' },
+                SD:   { active: 'bg-orange-500 text-white', passive: 'bg-orange-50 text-orange-700 hover:bg-orange-100' },
+                SMP:  { active: 'bg-[#1B8B87] text-white', passive: 'bg-teal-50 text-teal-700 hover:bg-teal-100' },
+                SMA:  { active: 'bg-blue-600 text-white', passive: 'bg-blue-50 text-blue-700 hover:bg-blue-100' },
+              };
+              const isActive = jenjangFilter === j;
+              return (
+                <button key={j} onClick={() => { setJenjangFilter(j); setPage(1); }}
+                  className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${isActive ? colors[j].active : colors[j].passive}`}>
+                  {labels[j]}
+                </button>
+              );
+            })}
           </div>
         )}
 
