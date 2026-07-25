@@ -9,13 +9,20 @@ import { useAuthStore } from '@/store/authStore';
 
 const BLANK_FORM = { nama: '', tingkat: '', sekolah_id: '', wali_kelas_id: '', tahun_ajaran: '2025/2026' };
 
+const JENJANG_LIST = ['SD', 'SMP', 'SMA'] as const;
+const JENJANG_COLOR: Record<string, { active: string; passive: string; badge: string; card: string }> = {
+  SD:  { active: 'bg-orange-500 text-white', passive: 'bg-orange-50 text-orange-700 hover:bg-orange-100', badge: 'bg-orange-100 text-orange-700', card: 'border-orange-400' },
+  SMP: { active: 'bg-[#1B8B87] text-white',  passive: 'bg-teal-50 text-teal-700 hover:bg-teal-100',      badge: 'bg-teal-100 text-teal-700',   card: 'border-[#1B8B87]' },
+  SMA: { active: 'bg-blue-600 text-white',    passive: 'bg-blue-50 text-blue-700 hover:bg-blue-100',      badge: 'bg-blue-100 text-blue-700',   card: 'border-blue-500' },
+};
+
 export default function KelasPage() {
   const qc = useQueryClient();
   const { user } = useAuthStore();
   const isMaster = !user?.school_level;
 
   const [selectedKelas, setSelectedKelas] = useState<any>(null);
-  const [filterJenjang, setFilterJenjang] = useState('');
+  const [activeJenjang, setActiveJenjang] = useState<string>(user?.school_level || 'SD');
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
   const [form, setForm] = useState({ ...BLANK_FORM });
@@ -25,8 +32,8 @@ export default function KelasPage() {
   const [deleteMsg, setDeleteMsg] = useState('');
 
   const { data: kelasList, isLoading } = useQuery({
-    queryKey: ['kelas-admin', filterJenjang],
-    queryFn: () => api.get('/kelas', { params: filterJenjang ? { jenjang: filterJenjang } : {} }).then(r => r.data.data || []),
+    queryKey: ['kelas-admin', activeJenjang],
+    queryFn: () => api.get('/kelas', { params: { jenjang: activeJenjang } }).then(r => r.data.data || []),
   });
 
   const { data: siswaData } = useQuery({
@@ -106,17 +113,25 @@ export default function KelasPage() {
     <div>
       <Header title="Manajemen Kelas" />
       <div className="p-6">
-        <div className="flex gap-4 mb-6">
-          <select value={filterJenjang} onChange={(e) => setFilterJenjang(e.target.value)}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B7FD1] text-sm">
-            <option value="">Semua Jenjang</option>
-            <option value="SD">SD</option>
-            <option value="SMP">SMP</option>
-            <option value="SMA">SMA</option>
-          </select>
+        {/* Jenjang tabs — hanya tampil untuk master admin */}
+        {isMaster && (
+          <div className="flex gap-2 mb-5">
+            {JENJANG_LIST.map(j => {
+              const c = JENJANG_COLOR[j];
+              return (
+                <button key={j} onClick={() => { setActiveJenjang(j); setShowForm(false); setEditTarget(null); setSelectedKelas(null); }}
+                  className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${activeJenjang === j ? c.active : c.passive}`}>
+                  {j}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="flex justify-end mb-4">
           <button onClick={() => { setShowForm(!showForm); setEditTarget(null); setForm({ ...BLANK_FORM }); }}
             className="px-4 py-2.5 bg-[#3B7FD1] text-white rounded-lg hover:bg-[#2d6ab5] font-medium text-sm">
-            + Tambah Kelas
+            + Tambah Kelas {activeJenjang}
           </button>
         </div>
 
@@ -156,11 +171,14 @@ export default function KelasPage() {
         {/* Daftar kelas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           {isLoading && <div className="col-span-3 text-center py-8 text-gray-400">Memuat...</div>}
-          {(kelasList || []).map((k: any) => (
-            <div key={k.id} className={`bg-white rounded-xl shadow-sm border-2 transition-all ${selectedKelas?.id === k.id ? 'border-[#3B7FD1]' : 'border-transparent hover:border-gray-200'}`}>
+          {(kelasList || []).map((k: any) => {
+            const jenjang = k.sekolah?.level || activeJenjang;
+            const jc = JENJANG_COLOR[jenjang] || JENJANG_COLOR.SD;
+            return (
+            <div key={k.id} className={`bg-white rounded-xl shadow-sm border-2 transition-all ${selectedKelas?.id === k.id ? jc.card : 'border-transparent hover:border-gray-200'}`}>
               <button className="w-full p-5 text-left" onClick={() => setSelectedKelas(selectedKelas?.id === k.id ? null : k)}>
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-[#3B7FD1]/10 rounded-lg flex items-center justify-center text-[#3B7FD1] font-bold text-lg">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg ${jc.badge}`}>
                     {k.tingkat}
                   </div>
                   <div>
@@ -192,7 +210,8 @@ export default function KelasPage() {
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Daftar siswa */}
