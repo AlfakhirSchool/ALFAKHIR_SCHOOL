@@ -60,7 +60,7 @@ export const getById = async (req: AuthRequest, res: Response): Promise<void> =>
 };
 
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { email, password, nama, nisn, nis, no_induk, kelas_id, tempat_lahir, tanggal_lahir, alamat } = req.body;
+  const { email, password, nama, nisn, nis, no_induk, kelas_id, tempat_lahir, tanggal_lahir, alamat, jenis_kelamin } = req.body;
 
   const autoEmail = email || `${nis}@siswa.alfakhir.sch.id`;
   const autoPassword = password || nis.slice(-4);
@@ -80,7 +80,7 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   const password_hash = await bcrypt.hash(autoPassword, 10);
 
   const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa', password_default: autoPassword } as any);
-  const siswa = await Siswa.create({ user_id: user.id, kelas_id, nisn: finalNisn, nis, no_induk: no_induk || nis, tempat_lahir, tanggal_lahir, alamat });
+  const siswa = await Siswa.create({ user_id: user.id, kelas_id, nisn: finalNisn, nis, no_induk: no_induk || nis, tempat_lahir, tanggal_lahir, alamat, jenis_kelamin: jenis_kelamin || null });
 
   // Kirim ke n8n async — tidak block response
   const webhookUrl = process.env.N8N_WEBHOOK_SISWA;
@@ -184,10 +184,10 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
   const siswa = await Siswa.findByPk(req.params.id as string, { include: [{ model: User, as: 'user' }] });
   if (!siswa) throw createError('Siswa tidak ditemukan', 404);
 
-  const { nama, email, kelas_id, nisn, nis, no_induk, tempat_lahir, tanggal_lahir, alamat, is_active } = req.body;
+  const { nama, email, kelas_id, nisn, nis, no_induk, tempat_lahir, tanggal_lahir, alamat, is_active, jenis_kelamin } = req.body;
 
   await (siswa as any).user.update({ nama, email, is_active });
-  await siswa.update({ kelas_id, nisn, nis, no_induk, tempat_lahir, tanggal_lahir, alamat });
+  await siswa.update({ kelas_id, nisn, nis, no_induk, tempat_lahir, tanggal_lahir, alamat, jenis_kelamin: jenis_kelamin || null });
 
   res.json({ success: true, message: 'Data siswa berhasil diperbarui' });
 };

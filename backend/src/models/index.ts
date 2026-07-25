@@ -14,6 +14,7 @@ import PembayaranDetail from './PembayaranDetail';
 import Rapor from './Rapor';
 import JurnalGuru from './JurnalGuru';
 import ActivityLog from './ActivityLog';
+import PendingChange from './PendingChange';
 
 // User <-> Guru / Siswa / OrangTua
 User.hasOne(Guru, { foreignKey: 'user_id', as: 'guru_detail' });
@@ -97,10 +98,14 @@ JurnalGuru.belongsTo(MataPelajaran, { foreignKey: 'mata_pelajaran_id', as: 'mata
 ActivityLog.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 User.hasMany(ActivityLog, { foreignKey: 'user_id', as: 'activity_logs' });
 
+// Pending Changes
+PendingChange.belongsTo(User, { foreignKey: 'user_id', as: 'requester' });
+User.hasMany(PendingChange, { foreignKey: 'user_id', as: 'pending_changes' });
+
 export {
   User, Sekolah, Kelas, MataPelajaran,
   Siswa, Guru, OrangTua,
   JadwalPelajaran, Absensi, QrCodeSession,
   Nilai, Pembayaran, PembayaranDetail,
-  Rapor, JurnalGuru, ActivityLog,
+  Rapor, JurnalGuru, ActivityLog, PendingChange,
 };

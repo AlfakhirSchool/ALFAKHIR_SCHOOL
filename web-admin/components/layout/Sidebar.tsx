@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Users, GraduationCap, School, BookOpen, Calendar,
   DoorOpen, CreditCard, ClipboardCheck, FileText, Wallet, BookMarked,
-  BarChart3, UserCog, Search, Settings, LogOut,
+  BarChart3, UserCog, Search, Settings, LogOut, Bell,
 } from 'lucide-react';
 
 type MenuItem = { href: string; icon: React.ReactNode; label: string };
@@ -28,6 +28,7 @@ const masterMenu: MenuItem[] = [
   { href: '/jurnal-guru',     icon: <BookMarked size={18} />,       label: 'Jurnal Guru' },
   { href: '/laporan',         icon: <BarChart3 size={18} />,        label: 'Laporan' },
   { href: '/users',           icon: <UserCog size={18} />,          label: 'Kelola Akun' },
+  { href: '/pending-changes', icon: <Bell size={18} />,             label: 'Permintaan Akun' },
   { href: '/audit-log',       icon: <Search size={18} />,           label: 'Audit Log' },
   { href: '/settings',        icon: <Settings size={18} />,         label: 'Pengaturan' },
 ];

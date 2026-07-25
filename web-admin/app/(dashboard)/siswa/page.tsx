@@ -24,9 +24,9 @@ export default function SiswaPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [editSiswa, setEditSiswa] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ nama: '', nis: '', kelas_id: '' });
+  const [editForm, setEditForm] = useState({ nama: '', nis: '', kelas_id: '', jenis_kelamin: '' });
   const [showAdd, setShowAdd] = useState(false);
-  const [addForm, setAddForm] = useState({ nama: '', nis: '', kelas_id: '', jenjang: '' });
+  const [addForm, setAddForm] = useState({ nama: '', nis: '', kelas_id: '', jenjang: '', jenis_kelamin: '' });
   const [showImport, setShowImport] = useState(false);
   const [importRows, setImportRows] = useState<{ nama: string; kelas_nama: string; nis: string; status: string }[]>([]);
   const [importResult, setImportResult] = useState<any>(null);
@@ -54,7 +54,7 @@ export default function SiswaPage() {
 
   const openEdit = (s: any) => {
     setEditSiswa(s);
-    setEditForm({ nama: s.user?.nama || '', nis: s.nis || '', kelas_id: s.kelas_id || '' });
+    setEditForm({ nama: s.user?.nama || '', nis: s.nis || '', kelas_id: s.kelas_id || '', jenis_kelamin: s.jenis_kelamin || '' });
   };
 
   const updateSiswa = useMutation({
@@ -67,7 +67,7 @@ export default function SiswaPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['siswa'] });
       setShowAdd(false);
-      setAddForm({ nama: '', nis: '', kelas_id: '', jenjang: '' });
+      setAddForm({ nama: '', nis: '', kelas_id: '', jenjang: '', jenis_kelamin: '' });
     },
   });
 
@@ -158,7 +158,7 @@ export default function SiswaPage() {
             className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
           />
           <button
-            onClick={() => { setAddForm({ nama: '', nis: '', kelas_id: '', jenjang: JENJANG.length === 1 ? JENJANG[0] : '' }); setShowAdd(true); }}
+            onClick={() => { setAddForm({ nama: '', nis: '', kelas_id: '', jenjang: JENJANG.length === 1 ? JENJANG[0] : '', jenis_kelamin: '' }); setShowAdd(true); }}
             className="px-4 py-2.5 bg-[#3B7FD1] text-white rounded-lg hover:bg-[#2d6ab5] transition-colors font-medium"
           >
             + Tambah Siswa
@@ -176,6 +176,7 @@ export default function SiswaPage() {
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Nama</th>
+                <th className="text-left px-6 py-4 font-semibold text-gray-700">JK</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Kelas</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">NIS (Login)</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Password Default</th>
@@ -187,7 +188,7 @@ export default function SiswaPage() {
               {isLoading ? (
                 <tr><td colSpan={6} className="text-center py-12 text-gray-400">Memuat data...</td></tr>
               ) : siswaList.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-gray-400">Tidak ada data siswa</td></tr>
+                <tr><td colSpan={7} className="text-center py-12 text-gray-400">Tidak ada data siswa</td></tr>
               ) : siswaList.map((siswa: any) => (
                 <tr key={siswa.id} className="hover:bg-gray-50/50 transition-colors">
                   <td className="px-6 py-4">
@@ -197,6 +198,13 @@ export default function SiswaPage() {
                       </div>
                       <span className="font-medium text-gray-800">{siswa.user?.nama}</span>
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {siswa.jenis_kelamin ? (
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${siswa.jenis_kelamin === 'L' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>
+                        {siswa.jenis_kelamin}
+                      </span>
+                    ) : <span className="text-gray-300 text-xs">—</span>}
                   </td>
                   <td className="px-6 py-4">
                     <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
@@ -303,6 +311,18 @@ export default function SiswaPage() {
                   )}
                 </div>
               )}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Jenis Kelamin</label>
+                <div className="flex gap-3">
+                  {[['L', 'Laki-laki'], ['P', 'Perempuan']].map(([val, label]) => (
+                    <button key={val} type="button"
+                      onClick={() => setAddForm({ ...addForm, jenis_kelamin: addForm.jenis_kelamin === val ? '' : val })}
+                      className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${addForm.jenis_kelamin === val ? (val === 'L' ? 'bg-blue-500 text-white border-blue-500' : 'bg-pink-500 text-white border-pink-500') : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               {addSiswa.isError && (
                 <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">
                   {(addSiswa.error as any)?.response?.data?.message || 'Gagal menambah siswa'}
@@ -472,6 +492,18 @@ export default function SiswaPage() {
                     <option key={k.id} value={k.id}>{k.sekolah?.level ? `[${k.sekolah.level}] ` : ''}{k.nama}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Jenis Kelamin</label>
+                <div className="flex gap-3">
+                  {[['L', 'Laki-laki'], ['P', 'Perempuan']].map(([val, label]) => (
+                    <button key={val} type="button"
+                      onClick={() => setEditForm({ ...editForm, jenis_kelamin: editForm.jenis_kelamin === val ? '' : val })}
+                      className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${editForm.jenis_kelamin === val ? (val === 'L' ? 'bg-blue-500 text-white border-blue-500' : 'bg-pink-500 text-white border-pink-500') : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="flex gap-3 px-6 pb-6">

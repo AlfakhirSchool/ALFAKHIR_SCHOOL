@@ -11,9 +11,10 @@ interface SiswaAttributes {
   tempat_lahir: string | null;
   tanggal_lahir: Date | null;
   alamat: string | null;
+  jenis_kelamin: string | null;
 }
 
-interface SiswaCreationAttributes extends Optional<SiswaAttributes, 'id' | 'tempat_lahir' | 'tanggal_lahir' | 'alamat'> {}
+interface SiswaCreationAttributes extends Optional<SiswaAttributes, 'id' | 'tempat_lahir' | 'tanggal_lahir' | 'alamat' | 'jenis_kelamin'> {}
 
 class Siswa extends Model<SiswaAttributes, SiswaCreationAttributes> implements SiswaAttributes {
   declare id: string;
@@ -25,6 +26,7 @@ class Siswa extends Model<SiswaAttributes, SiswaCreationAttributes> implements S
   declare tempat_lahir: string | null;
   declare tanggal_lahir: Date | null;
   declare alamat: string | null;
+  declare jenis_kelamin: string | null;
 }
 
 Siswa.init(
@@ -38,6 +40,7 @@ Siswa.init(
     tempat_lahir: { type: DataTypes.STRING(100), allowNull: true },
     tanggal_lahir: { type: DataTypes.DATEONLY, allowNull: true },
     alamat: { type: DataTypes.TEXT, allowNull: true },
+    jenis_kelamin: { type: DataTypes.STRING(1), allowNull: true },
   },
   { sequelize, tableName: 'siswa', timestamps: false }
 );
