@@ -10,8 +10,9 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
-  const { sekolah_id, tahun_ajaran } = req.query;
+  const { sekolah_id, tahun_ajaran, jenjang } = req.query;
   const where: Record<string, unknown> = {};
+  const sekolahWhere: Record<string, unknown> = {};
 
   if (req.user?.role === 'guru') {
     // Guru hanya melihat kelas yang menjadi wali kelas atau mengajar via jadwal
@@ -30,6 +31,9 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     where.sekolah_id = sid;
   } else if (sekolah_id) {
     where.sekolah_id = sekolah_id;
+  } else if (jenjang) {
+    // Master admin filter by jenjang via sekolah.level
+    sekolahWhere.level = jenjang as string;
   }
 
   if (tahun_ajaran) where.tahun_ajaran = tahun_ajaran;
@@ -37,7 +41,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   const kelasList = await Kelas.findAll({
     where,
     include: [
-      { model: Sekolah, as: 'sekolah' },
+      { model: Sekolah, as: 'sekolah', where: Object.keys(sekolahWhere).length ? sekolahWhere : undefined },
       { model: Guru, as: 'wali_kelas', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
     ],
     order: [['tingkat', 'ASC'], ['nama', 'ASC']],
