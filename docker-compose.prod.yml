@@ -207,7 +207,7 @@ services:
       context: ./web-admin
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://10.10.9.73/api}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
     container_name: alfakhir_web_admin
     restart: unless-stopped
     ports:
@@ -222,7 +222,7 @@ services:
       context: ./web-guru
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://10.10.9.73/api}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
     container_name: alfakhir_web_guru
     restart: unless-stopped
     ports:
