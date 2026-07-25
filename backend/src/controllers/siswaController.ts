@@ -103,54 +103,75 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   res.status(201).json({ success: true, message: 'Siswa berhasil dibuat', data: { user, siswa } });
 };
 
+const SHEET_ID = '1NaxhH1ORhzYGms_o98miCFxqoZCi8xRrciicPt5XHGw';
+const SHEET_TABS = [{ nama: 'SD', gid: '0' }, { nama: 'SMP', gid: '2540234' }];
+
+async function fetchSheetCsv(gid: string): Promise<string> {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+  const res = await fetch(url, { redirect: 'follow' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.text();
+}
+
+function parseCsvRows(csv: string): { nama: string; kelas_nama: string; nis: string; status: string }[] {
+  const lines = csv.trim().split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z_]/g, ''));
+  return lines.slice(1).map(line => {
+    const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+    const obj: any = {};
+    header.forEach((h, i) => { obj[h] = cols[i] || ''; });
+    return { nama: obj['nama'] || '', kelas_nama: obj['kelas'] || '', nis: obj['nis'] || '', status: obj['status'] || 'AKTIF' };
+  }).filter(r => r.nama && r.nis);
+}
+
+async function doImportRows(rows: { nama: string; kelas_nama: string; nis: string; status: string }[]) {
+  const results: { nama: string; nis: string; status: 'created' | 'skipped'; reason?: string }[] = [];
+  for (const row of rows) {
+    const { nama, nis, kelas_nama } = row;
+    if (!nama || !nis || !kelas_nama) { results.push({ nama: nama || '?', nis: nis || '?', status: 'skipped', reason: 'Data tidak lengkap' }); continue; }
+    const kelas = await Kelas.findOne({ where: { nama: { [Op.iLike]: kelas_nama } } });
+    if (!kelas) { results.push({ nama, nis, status: 'skipped', reason: `Kelas "${kelas_nama}" tidak ditemukan` }); continue; }
+    const autoEmail = `${nis}@siswa.alfakhir.sch.id`;
+    if (await User.findOne({ where: { email: autoEmail } })) { results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' }); continue; }
+    if (await Siswa.findOne({ where: { nis } })) { results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' }); continue; }
+    const autoPassword = nis.slice(-4);
+    const is_active = !row.status || row.status.toUpperCase() !== 'TIDAK AKTIF';
+    const password_hash = await bcrypt.hash(autoPassword, 10);
+    const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa', password_default: autoPassword, is_active } as any);
+    await Siswa.create({ user_id: user.id, kelas_id: (kelas as any).id, nisn: nis, nis, no_induk: nis });
+    results.push({ nama, nis, status: 'created' });
+  }
+  return results;
+}
+
+export const syncFromSheets = async (_req: AuthRequest, res: Response): Promise<void> => {
+  const allRows: { nama: string; kelas_nama: string; nis: string; status: string }[] = [];
+  for (const tab of SHEET_TABS) {
+    try {
+      const csv = await fetchSheetCsv(tab.gid);
+      allRows.push(...parseCsvRows(csv));
+    } catch (e) {
+      // skip tab jika gagal fetch
+    }
+  }
+  if (allRows.length === 0) {
+    res.json({ success: true, message: 'Tidak ada data baru di spreadsheet', data: [] });
+    return;
+  }
+  const results = await doImportRows(allRows);
+  const created = results.filter(r => r.status === 'created').length;
+  const skipped = results.filter(r => r.status === 'skipped').length;
+  res.json({ success: true, message: `${created} siswa ditambahkan, ${skipped} dilewati`, data: results });
+};
+
 export const importCsv = async (req: AuthRequest, res: Response): Promise<void> => {
   const { rows } = req.body as { rows: { nama: string; kelas_nama: string; nis: string; status?: string }[] };
   if (!rows || !Array.isArray(rows) || rows.length === 0) {
     res.status(400).json({ success: false, message: 'Data kosong' });
     return;
   }
-
-  const results: { nama: string; nis: string; status: 'created' | 'skipped'; reason?: string }[] = [];
-
-  for (const row of rows) {
-    const nama = row.nama?.trim();
-    const nis = row.nis?.toString().trim();
-    const kelas_nama = row.kelas_nama?.trim();
-
-    if (!nama || !nis || !kelas_nama) {
-      results.push({ nama: nama || '?', nis: nis || '?', status: 'skipped', reason: 'Data tidak lengkap' });
-      continue;
-    }
-
-    // cari kelas by nama
-    const kelas = await Kelas.findOne({ where: { nama: { [Op.iLike]: kelas_nama } } });
-    if (!kelas) {
-      results.push({ nama, nis, status: 'skipped', reason: `Kelas "${kelas_nama}" tidak ditemukan` });
-      continue;
-    }
-
-    const autoEmail = `${nis}@siswa.alfakhir.sch.id`;
-    const existingUser = await User.findOne({ where: { email: autoEmail } });
-    if (existingUser) {
-      results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' });
-      continue;
-    }
-
-    const existingSiswa = await Siswa.findOne({ where: { nis } });
-    if (existingSiswa) {
-      results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' });
-      continue;
-    }
-
-    const autoPassword = nis.slice(-4);
-    const is_active = !row.status || row.status.toUpperCase() !== 'TIDAK AKTIF';
-    const password_hash = await bcrypt.hash(autoPassword, 10);
-    const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa', password_default: autoPassword, is_active } as any);
-    await Siswa.create({ user_id: user.id, kelas_id: (kelas as any).id, nisn: nis, nis, no_induk: nis });
-
-    results.push({ nama, nis, status: 'created' });
-  }
-
+  const results = await doImportRows(rows as any);
   const created = results.filter(r => r.status === 'created').length;
   const skipped = results.filter(r => r.status === 'skipped').length;
   res.json({ success: true, message: `${created} siswa ditambahkan, ${skipped} dilewati`, data: results });

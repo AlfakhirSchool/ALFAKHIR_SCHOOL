@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Key, Upload, CheckCircle, XCircle, FileSpreadsheet } from 'lucide-react';
+import { Key, Upload, CheckCircle, XCircle, FileSpreadsheet, RefreshCw } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -105,6 +105,18 @@ export default function SiswaPage() {
       if (fileRef.current) fileRef.current.value = '';
     } catch (e: any) {
       setImportResult({ success: false, message: e?.response?.data?.message || 'Gagal import' });
+    } finally { setImportLoading(false); }
+  };
+
+  const syncFromSheets = async () => {
+    setImportLoading(true);
+    setImportResult(null);
+    try {
+      const res = await api.post('/siswa/sync-sheets');
+      setImportResult(res.data);
+      qc.invalidateQueries({ queryKey: ['siswa'] });
+    } catch (e: any) {
+      setImportResult({ success: false, message: e?.response?.data?.message || 'Gagal sync' });
     } finally { setImportLoading(false); }
   };
 
@@ -295,6 +307,29 @@ export default function SiswaPage() {
               <button onClick={() => setShowImport(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
             </div>
             <div className="p-6 space-y-4">
+              {/* Sync dari Google Sheets */}
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                <p className="text-sm font-semibold text-green-800 mb-1 flex items-center gap-2">
+                  <FileSpreadsheet size={16} /> Sync dari Google Sheets
+                </p>
+                <p className="text-xs text-green-700 mb-3">
+                  Ambil data langsung dari spreadsheet Data Siswa (tab SD & SMP). Siswa yang sudah ada akan dilewati otomatis.
+                </p>
+                <button
+                  onClick={syncFromSheets}
+                  disabled={importLoading}
+                  className="w-full py-2.5 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {importLoading ? <><RefreshCw size={14} className="animate-spin" />Mengambil data...</> : <><RefreshCw size={14} />Sync dari Google Sheets</>}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 text-xs text-gray-400">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span>atau upload file CSV manual</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+
               <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-xs text-blue-800 space-y-1">
                 <p className="font-semibold">Format CSV (header baris pertama):</p>
                 <p className="font-mono bg-white rounded px-2 py-1 text-xs">NAMA,KELAS,NIS,STATUS</p>
