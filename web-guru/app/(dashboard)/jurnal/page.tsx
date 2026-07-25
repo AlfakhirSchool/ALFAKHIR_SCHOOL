@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700',
@@ -20,6 +21,8 @@ const emptyForm = {
 
 export default function JurnalPage() {
   const qc = useQueryClient();
+  const { user } = useAuthStore();
+  const schoolLevels: string[] = (user as any)?.school_levels || [];
   const [view, setView] = useState<'list' | 'form'>('list');
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
@@ -40,10 +43,15 @@ export default function JurnalPage() {
     : (jurnalList || []);
 
 
-  const { data: mapelList } = useQuery({
-    queryKey: ['mapel-list'],
-    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []),
+  const { data: mapelListRaw } = useQuery({
+    queryKey: ['mapel-list', schoolLevels],
+    queryFn: async () => {
+      if (schoolLevels.length === 0) return api.get('/mata-pelajaran').then(r => r.data.data || []);
+      const results = await Promise.all(schoolLevels.map(lvl => api.get('/mata-pelajaran', { params: { jenjang: lvl } }).then(r => r.data.data || [])));
+      return results.flat();
+    },
   });
+  const mapelList = mapelListRaw || [];
 
   const saveJurnal = useMutation({
     mutationFn: () => editId
