@@ -33,7 +33,7 @@ router.get('/', authorize('admin'), async (req: AuthRequest, res: Response): Pro
 
 // Balas feedback (admin master)
 router.put('/:id/balas', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
-  const fb = await Feedback.findByPk(req.params.id);
+  const fb = await Feedback.findByPk(req.params.id as string);
   if (!fb) { res.status(404).json({ success: false, message: 'Tidak ditemukan' }); return; }
   await (fb as any).update({ balasan: req.body.balasan, status: 'dibalas', dibalas_at: new Date() });
   res.json({ success: true, message: 'Balasan terkirim' });
@@ -41,7 +41,7 @@ router.put('/:id/balas', authorize('admin'), async (req: AuthRequest, res: Respo
 
 // Tandai dibaca
 router.patch('/:id/baca', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
-  const fb = await Feedback.findByPk(req.params.id);
+  const fb = await Feedback.findByPk(req.params.id as string);
   if (!fb) { res.status(404).json({ success: false, message: 'Tidak ditemukan' }); return; }
   if ((fb as any).status === 'baru') await (fb as any).update({ status: 'dibaca' });
   res.json({ success: true });
