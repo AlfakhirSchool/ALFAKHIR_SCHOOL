@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
+import * as XLSX from 'xlsx';
 import { JurnalGuru, Guru, Kelas, MataPelajaran, User } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
@@ -154,6 +155,50 @@ export const exportPdf = async (req: AuthRequest, res: Response): Promise<void> 
   });
   if (!jurnal) throw createError('Jurnal tidak ditemukan', 404);
 
-  // PDF generation akan di-implement dengan jsPDF atau pdfkit
   res.json({ success: true, message: 'Export PDF jurnal - coming soon', data: jurnal });
+};
+
+export const downloadExcel = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { kelas_id, status, guru_id, start_date, end_date } = req.query;
+
+  const levelWhere = await kelasIdFilter(req.user?.school_level);
+  const where: any = {};
+  if (status) where.status = status;
+  if (start_date) where.tanggal = { [Op.gte]: start_date };
+  if (start_date && end_date) where.tanggal = { [Op.between]: [start_date, end_date] };
+
+  const kelasWhere: any = { ...levelWhere };
+  if (kelas_id) kelasWhere.id = kelas_id;
+
+  const list = await JurnalGuru.findAll({
+    where,
+    include: [
+      { model: Guru, as: 'guru', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
+      { model: Kelas, as: 'kelas', where: Object.keys(kelasWhere).length ? kelasWhere : undefined, required: !!kelas_id },
+      { model: MataPelajaran, as: 'mataPelajaran' },
+    ],
+    order: [['tanggal', 'DESC']],
+  });
+
+  const rows = list.map((j: any) => ({
+    'Tanggal': j.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID') : '',
+    'Guru': j.guru?.user?.nama || '',
+    'Kelas': j.kelas?.nama || '',
+    'Mata Pelajaran': j.mataPelajaran?.nama || '',
+    'Topik': j.topik_pelajaran || '',
+    'Tugas': j.deskripsi_pembelajaran || '',
+    'Catatan Guru': j.hasil_pembelajaran || '',
+    'Rencana Tindak Lanjut': j.rencana_tindak_lanjut || '',
+    'Status': j.status || '',
+  }));
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [10, 20, 15, 20, 30, 40, 40, 30, 12].map(w => ({ wch: w }));
+  XLSX.utils.book_append_sheet(wb, ws, 'Jurnal Guru');
+
+  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Disposition', `attachment; filename="JurnalGuru_${new Date().toISOString().split('T')[0]}.xlsx"`);
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.send(buf);
 };

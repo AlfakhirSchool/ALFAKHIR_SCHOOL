@@ -17,6 +17,31 @@ export default function JurnalGuruAdminPage() {
   const [filter, setFilter] = useState({ kelas_id: '', status: '', tanggal_awal: '' });
   const [page, setPage] = useState(1);
   const [detail, setDetail] = useState<any>(null);
+  const [dlLoading, setDlLoading] = useState(false);
+
+  const downloadExcel = async () => {
+    setDlLoading(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const params = new URLSearchParams();
+      if (filter.kelas_id) params.set('kelas_id', filter.kelas_id);
+      if (filter.status) params.set('status', filter.status);
+      if (filter.tanggal_awal) params.set('start_date', filter.tanggal_awal);
+      const res = await fetch(`${base}/jurnal-guru/download/excel?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `JurnalGuru_${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch { alert('Gagal download'); }
+    finally { setDlLoading(false); }
+  };
 
   const { data: kelasList } = useQuery({ queryKey: ['kelas-all'], queryFn: () => api.get('/kelas').then(r => r.data.data || []) });
 
@@ -77,7 +102,10 @@ export default function JurnalGuruAdminPage() {
           </select>
           <input type="date" value={filter.tanggal_awal} onChange={(e) => setFilter({ ...filter, tanggal_awal: e.target.value })}
             className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]" />
-          <button className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Export Excel</button>
+          <button onClick={downloadExcel} disabled={dlLoading}
+            className="px-4 py-2.5 bg-[#3B7FD1] text-white rounded-lg text-sm font-semibold hover:bg-[#2d6ab5] disabled:opacity-50 flex items-center gap-2">
+            {dlLoading ? 'Mengunduh...' : 'Export Excel'}
+          </button>
         </div>
 
         {/* Table */}

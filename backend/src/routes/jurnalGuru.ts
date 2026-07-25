@@ -9,6 +9,7 @@ router.use(authenticate);
 router.post('/', authorize('guru', 'admin'), jurnalController.create);
 router.get('/', authorize('admin', 'guru'), jurnalController.getAll);
 router.get('/laporan/kelas/:id', authorize('admin', 'guru'), jurnalController.getLaporanKelas);
+router.get('/download/excel', authorize('admin', 'guru'), jurnalController.downloadExcel);
 router.get('/:id', authorize('admin', 'guru', 'ortu'), jurnalController.getById);
 router.put('/:id', authorize('guru', 'admin'), jurnalController.update);
 router.delete('/:id', authorize('admin', 'guru'), jurnalController.remove);
