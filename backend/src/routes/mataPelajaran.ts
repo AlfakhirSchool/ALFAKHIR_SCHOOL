@@ -17,8 +17,16 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 router.post('/', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
-  const mapel = await MataPelajaran.create(req.body);
-  res.status(201).json({ success: true, data: mapel });
+  try {
+    const mapel = await MataPelajaran.create(req.body);
+    res.status(201).json({ success: true, data: mapel });
+  } catch (e: any) {
+    if (e.name === 'SequelizeUniqueConstraintError') {
+      res.status(400).json({ success: false, message: `Kode "${req.body.kode}" sudah digunakan mata pelajaran lain` });
+    } else {
+      res.status(500).json({ success: false, message: e.message || 'Gagal menyimpan' });
+    }
+  }
 });
 
 router.put('/:id', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
