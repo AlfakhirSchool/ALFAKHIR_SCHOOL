@@ -11,15 +11,27 @@ const runMigrations = async (): Promise<void> => {
   const migrationsDir = path.join(__dirname, 'migrations');
   if (!fs.existsSync(migrationsDir)) return;
 
-  // Only run numbered migration files (002 onward — 001 is init schema run by postgres init)
+  // Ensure tracking table exists
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      filename VARCHAR(255) PRIMARY KEY,
+      applied_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+
+  const [applied] = await sequelize.query('SELECT filename FROM schema_migrations') as any;
+  const appliedSet = new Set((applied as any[]).map((r: any) => r.filename));
+
   const files = fs.readdirSync(migrationsDir)
     .filter(f => /^\d{3}_/.test(f) && f.endsWith('.sql') && f !== '001_init_schema.sql')
     .sort();
 
   for (const file of files) {
+    if (appliedSet.has(file)) continue; // already ran
     try {
       const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf-8');
       await sequelize.query(sql);
+      await sequelize.query('INSERT INTO schema_migrations (filename) VALUES (:f)', { replacements: { f: file } });
       logger.info(`Migration applied: ${file}`);
     } catch (err: any) {
       logger.warn(`Migration ${file} warning: ${err.message}`);
