@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { Key, Upload, CheckCircle, XCircle, FileSpreadsheet } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -15,9 +16,14 @@ export default function SiswaPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [editSiswa, setEditSiswa] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ nama: '', nisn: '', nis: '', kelas_id: '' });
+  const [editForm, setEditForm] = useState({ nama: '', nis: '', kelas_id: '' });
   const [showAdd, setShowAdd] = useState(false);
-  const [addForm, setAddForm] = useState({ nama: '', nisn: '', nis: '', kelas_id: '', jenjang: '' });
+  const [addForm, setAddForm] = useState({ nama: '', nis: '', kelas_id: '', jenjang: '' });
+  const [showImport, setShowImport] = useState(false);
+  const [importRows, setImportRows] = useState<{ nama: string; kelas_nama: string; nis: string; status: string }[]>([]);
+  const [importResult, setImportResult] = useState<any>(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['siswa', search, page],
@@ -37,7 +43,7 @@ export default function SiswaPage() {
 
   const openEdit = (s: any) => {
     setEditSiswa(s);
-    setEditForm({ nama: s.user?.nama || '', nisn: s.nisn || '', nis: s.nis || '', kelas_id: s.kelas_id || '' });
+    setEditForm({ nama: s.user?.nama || '', nis: s.nis || '', kelas_id: s.kelas_id || '' });
   };
 
   const updateSiswa = useMutation({
@@ -50,7 +56,7 @@ export default function SiswaPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['siswa'] });
       setShowAdd(false);
-      setAddForm({ nama: '', nisn: '', nis: '', kelas_id: '', jenjang: '' });
+      setAddForm({ nama: '', nis: '', kelas_id: '', jenjang: '' });
     },
   });
 
@@ -58,6 +64,49 @@ export default function SiswaPage() {
     mutationFn: (s: any) => api.put(`/siswa/${s.id}`, { is_active: !s.user?.is_active }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['siswa'] }),
   });
+
+  const parseCsv = (text: string) => {
+    const lines = text.trim().split('\n').filter(l => l.trim());
+    if (lines.length < 2) return [];
+    const header = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z_]/g, ''));
+    return lines.slice(1).map(line => {
+      const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+      const obj: any = {};
+      header.forEach((h, i) => { obj[h] = cols[i] || ''; });
+      return {
+        nama: obj['nama'] || '',
+        kelas_nama: obj['kelas'] || '',
+        nis: obj['nis'] || '',
+        status: obj['status'] || 'AKTIF',
+      };
+    }).filter(r => r.nama && r.nis);
+  };
+
+  const handleCsvFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const rows = parseCsv(ev.target?.result as string);
+      setImportRows(rows);
+      setImportResult(null);
+    };
+    reader.readAsText(file);
+  };
+
+  const submitImport = async () => {
+    if (!importRows.length) return;
+    setImportLoading(true);
+    try {
+      const res = await api.post('/siswa/import-csv', { rows: importRows });
+      setImportResult(res.data);
+      qc.invalidateQueries({ queryKey: ['siswa'] });
+      setImportRows([]);
+      if (fileRef.current) fileRef.current.value = '';
+    } catch (e: any) {
+      setImportResult({ success: false, message: e?.response?.data?.message || 'Gagal import' });
+    } finally { setImportLoading(false); }
+  };
 
   return (
     <div>
@@ -72,13 +121,16 @@ export default function SiswaPage() {
             className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
           />
           <button
-            onClick={() => { setAddForm({ nama: '', nisn: '', nis: '', kelas_id: '', jenjang: JENJANG.length === 1 ? JENJANG[0] : '' }); setShowAdd(true); }}
+            onClick={() => { setAddForm({ nama: '', nis: '', kelas_id: '', jenjang: JENJANG.length === 1 ? JENJANG[0] : '' }); setShowAdd(true); }}
             className="px-4 py-2.5 bg-[#3B7FD1] text-white rounded-lg hover:bg-[#2d6ab5] transition-colors font-medium"
           >
             + Tambah Siswa
           </button>
-          <button className="px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-            Import CSV
+          <button
+            onClick={() => { setShowImport(true); setImportResult(null); setImportRows([]); }}
+            className="px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+          >
+            <Upload size={16} /> Import CSV
           </button>
         </div>
 
@@ -87,9 +139,9 @@ export default function SiswaPage() {
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Nama</th>
-                <th className="text-left px-6 py-4 font-semibold text-gray-700">NISN</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Kelas</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">NIS (Login)</th>
+                <th className="text-left px-6 py-4 font-semibold text-gray-700">Password Default</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Status</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Aksi</th>
               </tr>
@@ -109,13 +161,17 @@ export default function SiswaPage() {
                       <span className="font-medium text-gray-800">{siswa.user?.nama}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-600">{siswa.nisn}</td>
                   <td className="px-6 py-4">
                     <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
                       {siswa.kelas?.nama}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-gray-600">{siswa.nis}</td>
+                  <td className="px-6 py-4">
+                    <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded text-gray-700">
+                      {siswa.user?.password_default || (siswa.nis ? siswa.nis.slice(-4) : '—')}
+                    </span>
+                  </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
                       siswa.user?.is_active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
@@ -230,6 +286,99 @@ export default function SiswaPage() {
         </div>
       )}
 
+      {/* Modal Import CSV */}
+      {showImport && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+              <h2 className="font-semibold text-[#1A2332] flex items-center gap-2"><FileSpreadsheet size={18} /> Import Siswa dari CSV</h2>
+              <button onClick={() => setShowImport(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-xs text-blue-800 space-y-1">
+                <p className="font-semibold">Format CSV (header baris pertama):</p>
+                <p className="font-mono bg-white rounded px-2 py-1 text-xs">NAMA,KELAS,NIS,STATUS</p>
+                <p>Kolom STATUS isi: <strong>AKTIF</strong> atau <strong>TIDAK AKTIF</strong> (opsional, default AKTIF)</p>
+                <p>Password otomatis = 4 digit terakhir NIS. Nama kelas harus sama persis dengan di sistem.</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-2">Pilih file CSV</label>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={handleCsvFile}
+                  className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#3B7FD1] file:text-white file:text-sm file:font-medium hover:file:bg-[#2d6ab5] cursor-pointer"
+                />
+              </div>
+
+              {importRows.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-2">{importRows.length} baris ditemukan — preview:</p>
+                  <div className="overflow-x-auto rounded-lg border border-gray-200">
+                    <table className="w-full text-xs">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-gray-600">Nama</th>
+                          <th className="px-3 py-2 text-left text-gray-600">Kelas</th>
+                          <th className="px-3 py-2 text-left text-gray-600">NIS</th>
+                          <th className="px-3 py-2 text-left text-gray-600">PW Default</th>
+                          <th className="px-3 py-2 text-left text-gray-600">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {importRows.slice(0, 20).map((r, i) => (
+                          <tr key={i}>
+                            <td className="px-3 py-2">{r.nama}</td>
+                            <td className="px-3 py-2">{r.kelas_nama}</td>
+                            <td className="px-3 py-2 font-mono">{r.nis}</td>
+                            <td className="px-3 py-2 font-mono text-gray-500">{r.nis?.slice(-4)}</td>
+                            <td className="px-3 py-2">{r.status || 'AKTIF'}</td>
+                          </tr>
+                        ))}
+                        {importRows.length > 20 && (
+                          <tr><td colSpan={5} className="px-3 py-2 text-gray-400 text-center">...dan {importRows.length - 20} baris lagi</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {importResult && (
+                <div className={`rounded-lg px-4 py-3 text-sm ${importResult.success ? 'bg-green-50 border border-green-100 text-green-800' : 'bg-red-50 border border-red-100 text-red-800'}`}>
+                  <p className="font-semibold mb-2">{importResult.message}</p>
+                  {importResult.data && (
+                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                      {importResult.data.map((r: any, i: number) => (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          {r.status === 'created'
+                            ? <CheckCircle size={12} className="text-green-600 flex-shrink-0" />
+                            : <XCircle size={12} className="text-red-500 flex-shrink-0" />}
+                          <span>{r.nama} ({r.nis})</span>
+                          {r.reason && <span className="text-gray-500">— {r.reason}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 px-6 pb-6">
+              <button
+                onClick={submitImport}
+                disabled={importLoading || importRows.length === 0}
+                className="flex-1 py-2.5 bg-[#3B7FD1] text-white rounded-lg text-sm font-medium hover:bg-[#2d6ab5] disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {importLoading ? 'Mengimpor...' : <><Upload size={14} /> Import {importRows.length > 0 ? `${importRows.length} Siswa` : ''}</>}
+              </button>
+              <button onClick={() => setShowImport(false)} className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Tutup</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Edit Siswa */}
       {editSiswa && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -244,17 +393,15 @@ export default function SiswaPage() {
                 <input value={editForm.nama} onChange={e => setEditForm({ ...editForm, nama: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">NISN</label>
-                  <input value={editForm.nisn} onChange={e => setEditForm({ ...editForm, nisn: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">NIS</label>
-                  <input value={editForm.nis} onChange={e => setEditForm({ ...editForm, nis: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
-                </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">NIS</label>
+                <input value={editForm.nis} onChange={e => setEditForm({ ...editForm, nis: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+              </div>
+              <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 text-xs text-amber-700">
+                <Key size={14} className="inline mr-1" />Password login: <span className="font-mono font-bold">
+                  {editSiswa?.user?.password_default || (editForm.nis ? editForm.nis.slice(-4) : '—')}
+                </span> (4 digit terakhir NIS)
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Kelas</label>
