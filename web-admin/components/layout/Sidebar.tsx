@@ -100,7 +100,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 overflow-y-auto">
+      <nav className="flex-1 p-3 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <ul className="space-y-0.5">
           {menuItems.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + '/');
