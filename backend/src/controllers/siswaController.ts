@@ -130,14 +130,17 @@ function parseCsvRows(csv: string): { nama: string; kelas_nama: string; nis: str
     header.forEach((h, i) => { obj[h] = cols[i] || ''; });
     const jk = (obj['jk'] || obj['jenis_kelamin'] || '').toUpperCase().trim();
     return { nama: obj['nama'] || '', kelas_nama: obj['kelas'] || '', nis: obj['nis'] || '', status: obj['status'] || 'AKTIF', jenis_kelamin: jk === 'L' || jk === 'P' ? jk : null };
-  }).filter(r => r.nama && r.nis);
+  }).filter(r => r.nama);
 }
 
 async function doImportRows(rows: { nama: string; kelas_nama: string; nis: string; status: string; jenis_kelamin?: string | null }[]) {
   const results: { nama: string; nis: string; status: 'created' | 'skipped'; reason?: string }[] = [];
-  for (const row of rows) {
-    const { nama, nis, kelas_nama } = row;
-    if (!nama || !nis || !kelas_nama) { results.push({ nama: nama || '?', nis: nis || '?', status: 'skipped', reason: 'Data tidak lengkap' }); continue; }
+  for (const [idx, row] of rows.entries()) {
+    const { nama, kelas_nama } = row;
+    let { nis } = row;
+    if (!nama || !kelas_nama) { results.push({ nama: nama || '?', nis: nis || '?', status: 'skipped', reason: 'Data tidak lengkap' }); continue; }
+    // Auto-generate NIS sementara jika kosong
+    if (!nis) nis = `TMP${Date.now()}${idx}`;
     const kelas = await Kelas.findOne({ where: { nama: { [Op.iLike]: kelas_nama } } });
     if (!kelas) { results.push({ nama, nis, status: 'skipped', reason: `Kelas "${kelas_nama}" tidak ditemukan` }); continue; }
     const autoEmail = `${nis}@siswa.alfakhir.sch.id`;
