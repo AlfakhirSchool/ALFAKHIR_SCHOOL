@@ -330,12 +330,6 @@ function KelasForm({ form, setForm, guruList }: { form: any; setForm: any; guruL
           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Tingkat</label>
-        <input value={form.tingkat} onChange={(e) => setForm({ ...form, tingkat: e.target.value })}
-          placeholder="Contoh: 1"
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
-      </div>
-      <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Tahun Ajaran</label>
         <input value={form.tahun_ajaran} onChange={(e) => setForm({ ...form, tahun_ajaran: e.target.value })}
           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
