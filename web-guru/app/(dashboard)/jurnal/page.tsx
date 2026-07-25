@@ -21,12 +21,26 @@ const emptyForm = {
 
 export default function JurnalPage() {
   const qc = useQueryClient();
-  const { user } = useAuthStore();
-  const schoolLevels: string[] = (user as any)?.school_levels || [];
-  const spesialisasi: string = (user as any)?.spesialisasi || '';
-  // Parse "SD:English, SD:MATH" → Set of mapel names per level
+  const { user, updateUser } = useAuthStore();
+
+  // Fetch guru profile to get school_levels + spesialisasi (handles old sessions)
+  const { data: profileData } = useQuery({
+    queryKey: ['guru-profile'],
+    queryFn: () => api.get('/auth/me').then(r => r.data.data),
+    staleTime: 5 * 60 * 1000,
+    onSuccess: (d: any) => {
+      if (d?.guru && (!((user as any)?.school_levels)?.length)) {
+        updateUser({ school_levels: d.guru.school_levels || [], spesialisasi: d.guru.spesialisasi || '' });
+      }
+    },
+  });
+
+  const schoolLevels: string[] = (user as any)?.school_levels?.length
+    ? (user as any).school_levels
+    : profileData?.guru?.school_levels || [];
+  const spesialisasi: string = (user as any)?.spesialisasi || profileData?.guru?.spesialisasi || '';
   const spesSet = new Set(
-    spesialisasi.split(',').map(s => s.trim().split(':').slice(1).join(':').trim().toLowerCase()).filter(Boolean)
+    spesialisasi.split(',').map((s: string) => s.trim().split(':').slice(1).join(':').trim().toLowerCase()).filter(Boolean)
   );
   const [view, setView] = useState<'list' | 'form'>('list');
   const [form, setForm] = useState(emptyForm);
