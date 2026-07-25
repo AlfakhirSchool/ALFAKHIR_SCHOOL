@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import { Op } from 'sequelize';
 import { MataPelajaran } from '../models';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
@@ -7,8 +8,11 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get('/', async (_req: AuthRequest, res: Response): Promise<void> => {
-  const list = await MataPelajaran.findAll({ order: [['nama', 'ASC']] });
+router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+  const { jenjang } = req.query;
+  const where: any = {};
+  if (jenjang && jenjang !== 'all') where.jenjang = jenjang as string;
+  const list = await MataPelajaran.findAll({ where, order: [['nama', 'ASC']] });
   res.json({ success: true, data: list });
 });
 

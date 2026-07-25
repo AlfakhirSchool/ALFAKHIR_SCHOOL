@@ -5,27 +5,38 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 
+const JENJANG_LIST = ['SD', 'SMP', 'SMA'] as const;
+const JENJANG_COLOR: Record<string, { active: string; passive: string; badge: string }> = {
+  SD:  { active: 'bg-orange-500 text-white', passive: 'bg-orange-50 text-orange-700 hover:bg-orange-100', badge: 'bg-orange-100 text-orange-700' },
+  SMP: { active: 'bg-[#1B8B87] text-white',  passive: 'bg-teal-50 text-teal-700 hover:bg-teal-100',      badge: 'bg-teal-100 text-teal-700' },
+  SMA: { active: 'bg-blue-600 text-white',    passive: 'bg-blue-50 text-blue-700 hover:bg-blue-100',      badge: 'bg-blue-100 text-blue-700' },
+};
+
 export default function MataPelajaranPage() {
   const qc = useQueryClient();
+  const [activeJenjang, setActiveJenjang] = useState<string>('SD');
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ nama: '', kode: '', kkm: '75' });
+  const [form, setForm] = useState({ nama: '', kode: '', kkm: '75', jenjang: 'SD' });
   const [editId, setEditId] = useState<string | null>(null);
   const [hapusId, setHapusId] = useState<string | null>(null);
   const [hapusNama, setHapusNama] = useState<string>('');
 
   const { data: mapelList, isLoading } = useQuery({
-    queryKey: ['mata-pelajaran'],
-    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []),
+    queryKey: ['mata-pelajaran', activeJenjang],
+    queryFn: () => api.get('/mata-pelajaran', { params: { jenjang: activeJenjang } }).then(r => r.data.data || []),
   });
 
   const save = useMutation({
-    mutationFn: () => editId
-      ? api.put(`/mata-pelajaran/${editId}`, { ...form, kkm: parseInt(form.kkm) })
-      : api.post('/mata-pelajaran', { ...form, kkm: parseInt(form.kkm) }),
+    mutationFn: () => {
+      const payload = { ...form, kkm: parseInt(form.kkm) };
+      return editId
+        ? api.put(`/mata-pelajaran/${editId}`, payload)
+        : api.post('/mata-pelajaran', payload);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['mata-pelajaran'] });
       setShowForm(false);
-      setForm({ nama: '', kode: '', kkm: '75' });
+      setForm({ nama: '', kode: '', kkm: '75', jenjang: activeJenjang });
       setEditId(null);
     },
   });
@@ -36,26 +47,48 @@ export default function MataPelajaranPage() {
   });
 
   const openEdit = (m: any) => {
-    setForm({ nama: m.nama, kode: m.kode || '', kkm: m.kkm?.toString() || '75' });
+    setForm({ nama: m.nama, kode: m.kode || '', kkm: m.kkm?.toString() || '75', jenjang: m.jenjang || activeJenjang });
     setEditId(m.id);
     setShowForm(true);
   };
+
+  const openAdd = () => {
+    setForm({ nama: '', kode: '', kkm: '75', jenjang: activeJenjang });
+    setEditId(null);
+    setShowForm(true);
+  };
+
+  const jc = JENJANG_COLOR[activeJenjang];
 
   return (
     <div>
       <Header title="Mata Pelajaran" />
       <div className="p-6">
-        <div className="flex justify-end mb-6">
-          <button onClick={() => { setShowForm(!showForm); setEditId(null); setForm({ nama: '', kode: '', kkm: '75' }); }}
+
+        {/* Jenjang tabs */}
+        <div className="flex gap-2 mb-5">
+          {JENJANG_LIST.map(j => {
+            const c = JENJANG_COLOR[j];
+            return (
+              <button key={j} onClick={() => { setActiveJenjang(j); setShowForm(false); }}
+                className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${activeJenjang === j ? c.active : c.passive}`}>
+                {j}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-end mb-4">
+          <button onClick={openAdd}
             className="px-4 py-2.5 bg-[#3B7FD1] text-white rounded-lg hover:bg-[#2d6ab5] font-medium text-sm">
-            + Tambah Mata Pelajaran
+            + Tambah Mata Pelajaran {activeJenjang}
           </button>
         </div>
 
         {showForm && (
           <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-[#3B7FD1]/20">
             <h3 className="font-semibold text-[#1A2332] mb-4">{editId ? 'Edit' : 'Tambah'} Mata Pelajaran</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Nama Mata Pelajaran *</label>
                 <input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })}
@@ -70,6 +103,13 @@ export default function MataPelajaranPage() {
                 <label className="block text-xs font-medium text-gray-600 mb-1">KKM (0-100)</label>
                 <input type="number" min="0" max="100" value={form.kkm} onChange={(e) => setForm({ ...form, kkm: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Jenjang *</label>
+                <select value={form.jenjang} onChange={e => setForm({ ...form, jenjang: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]">
+                  {JENJANG_LIST.map(j => <option key={j} value={j}>{j}</option>)}
+                </select>
               </div>
             </div>
             <div className="flex gap-3 mt-4">
@@ -89,14 +129,15 @@ export default function MataPelajaranPage() {
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Nama</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Kode</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">KKM</th>
+                <th className="text-left px-6 py-4 font-semibold text-gray-700">Jenjang</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
-                <tr><td colSpan={4} className="text-center py-12 text-gray-400">Memuat...</td></tr>
+                <tr><td colSpan={5} className="text-center py-12 text-gray-400">Memuat...</td></tr>
               ) : (mapelList || []).length === 0 ? (
-                <tr><td colSpan={4} className="text-center py-12 text-gray-400">Belum ada mata pelajaran</td></tr>
+                <tr><td colSpan={5} className="text-center py-12 text-gray-400">Belum ada mata pelajaran untuk jenjang {activeJenjang}</td></tr>
               ) : (mapelList || []).map((m: any) => (
                 <tr key={m.id} className="hover:bg-gray-50/50">
                   <td className="px-6 py-4 font-medium text-gray-800">{m.nama}</td>
@@ -106,6 +147,13 @@ export default function MataPelajaranPage() {
                   <td className="px-6 py-4">
                     <span className="font-medium text-gray-700">{m.kkm}</span>
                     <span className="text-gray-400 text-xs ml-1">(min lulus)</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {m.jenjang && (
+                      <span className={`px-2 py-0.5 rounded text-xs font-semibold ${JENJANG_COLOR[m.jenjang]?.badge || 'bg-gray-100 text-gray-600'}`}>
+                        {m.jenjang}
+                      </span>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex gap-3">
@@ -137,7 +185,7 @@ export default function MataPelajaranPage() {
                 className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50">
                 Batal
               </button>
-              <button onClick={() => deleteMut.mutate(hapusId)} disabled={deleteMut.isPending}
+              <button onClick={() => deleteMut.mutate(hapusId!)} disabled={deleteMut.isPending}
                 className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 disabled:opacity-50">
                 {deleteMut.isPending ? 'Menghapus...' : 'Ya, Hapus'}
               </button>
