@@ -141,7 +141,9 @@ async function doImportRows(rows: { nama: string; kelas_nama: string; nis: strin
     if (!nama || !kelas_nama) { results.push({ nama: nama || '?', nis: nis || '?', status: 'skipped', reason: 'Data tidak lengkap' }); continue; }
     // Auto-generate NIS sementara jika kosong
     if (!nis) nis = `TMP${Date.now()}${idx}`;
-    const kelas = await Kelas.findOne({ where: { nama: { [Op.iLike]: kelas_nama } } });
+    // Coba exact match dulu, fallback ke contains search
+    let kelas = await Kelas.findOne({ where: { nama: { [Op.iLike]: kelas_nama } } });
+    if (!kelas) kelas = await Kelas.findOne({ where: { nama: { [Op.iLike]: `%${kelas_nama}%` } } });
     if (!kelas) { results.push({ nama, nis, status: 'skipped', reason: `Kelas "${kelas_nama}" tidak ditemukan` }); continue; }
     const autoEmail = `${nis}@siswa.alfakhir.sch.id`;
     if (await User.findOne({ where: { email: autoEmail } })) { results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' }); continue; }
