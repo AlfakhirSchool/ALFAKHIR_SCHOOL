@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { CheckCircle, Clock } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -144,8 +145,8 @@ export default function RfidRegistrasiPage() {
           <h2 className="font-bold text-lg mb-1">Pendaftaran Kartu ID RFID</h2>
           <p className="text-sm opacity-80">Setiap siswa perlu didaftarkan kartu ID card-nya sekali. Setelah didaftarkan, siswa cukup tap kartu di terminal untuk absensi otomatis.</p>
           <div className="mt-3 flex gap-4 text-sm">
-            <span className="bg-white/20 px-3 py-1 rounded-full">✅ Terdaftar: {sudah}</span>
-            <span className="bg-white/20 px-3 py-1 rounded-full">⏳ Belum: {belum}</span>
+            <span className="bg-white/20 px-3 py-1 rounded-full flex items-center gap-1"><CheckCircle size={14} />Terdaftar: {sudah}</span>
+            <span className="bg-white/20 px-3 py-1 rounded-full flex items-center gap-1"><Clock size={14} />Belum: {belum}</span>
           </div>
         </div>
 
@@ -173,7 +174,7 @@ export default function RfidRegistrasiPage() {
               {(['semua', 'belum', 'sudah'] as const).map(f => (
                 <button key={f} onClick={() => setFilterKartu(f)}
                   className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-colors ${filterKartu === f ? 'bg-blue-500 text-white border-blue-500' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'}`}>
-                  {f === 'semua' ? 'Semua' : f === 'belum' ? '⏳ Belum' : '✅ Sudah'}
+                  {f === 'semua' ? 'Semua' : f === 'belum' ? <span className="flex items-center gap-1"><Clock size={12} />Belum</span> : <span className="flex items-center gap-1"><CheckCircle size={12} />Sudah</span>}
                 </button>
               ))}
             </div>
@@ -207,8 +208,8 @@ export default function RfidRegistrasiPage() {
                     <td className="px-5 py-3 text-gray-600">{s.nama_kelas}</td>
                     <td className="px-5 py-3">
                       {s.rfid_uid
-                        ? <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">✅ Terdaftar</span>
-                        : <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-medium">⏳ Belum</span>}
+                        ? <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1"><CheckCircle size={12} />Terdaftar</span>
+                        : <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1"><Clock size={12} />Belum</span>}
                     </td>
                     <td className="px-5 py-3 font-mono text-xs text-gray-500">{s.rfid_uid || '—'}</td>
                     <td className="px-5 py-3 text-right">

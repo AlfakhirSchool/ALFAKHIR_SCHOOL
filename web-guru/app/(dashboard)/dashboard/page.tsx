@@ -2,11 +2,12 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { School, Calendar, BookOpen, ClipboardList, Download, Loader2 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
-const KpiCard = ({ title, value, icon, color }: { title: string; value: string | number; icon: string; color: string }) => (
+const KpiCard = ({ title, value, icon, color }: { title: string; value: string | number; icon: import('react').ReactNode; color: string }) => (
   <div className={`bg-white rounded-xl p-6 border-l-4 ${color} shadow-sm`}>
     <div className="flex items-center justify-between">
       <div>
@@ -103,16 +104,16 @@ export default function DashboardGuruPage() {
         ) : (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <KpiCard title="Kelas Saya" value={kpi.totalKelas || 0} icon="🏫" color="border-[#1B8B87]" />
-              <KpiCard title="Jadwal Hari Ini" value={kpi.jadwalHariIni || 0} icon="📅" color="border-[#3B7FD1]" />
-              <KpiCard title="Jurnal Pending" value={kpi.jurnalPending || 0} icon="📓" color="border-yellow-500" />
-              <KpiCard title="Nilai Belum Input" value={kpi.nilaiPending || 0} icon="📝" color="border-[#FF8C42]" />
+              <KpiCard title="Kelas Saya" value={kpi.totalKelas || 0} icon={<School size={28} />} color="border-[#1B8B87]" />
+              <KpiCard title="Jadwal Hari Ini" value={kpi.jadwalHariIni || 0} icon={<Calendar size={28} />} color="border-[#3B7FD1]" />
+              <KpiCard title="Jurnal Pending" value={kpi.jurnalPending || 0} icon={<BookOpen size={28} />} color="border-yellow-500" />
+              <KpiCard title="Nilai Belum Input" value={kpi.nilaiPending || 0} icon={<ClipboardList size={28} />} color="border-[#FF8C42]" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <h3 className="font-semibold text-[#1A2332] mb-4 flex items-center gap-2">
-                  <span>📅</span> Jadwal Hari Ini
+                  <Calendar size={16} /> Jadwal Hari Ini
                 </h3>
                 {jadwalHariIni.length === 0 ? (
                   <p className="text-sm text-gray-400 text-center py-6">Tidak ada jadwal hari ini</p>
@@ -135,7 +136,7 @@ export default function DashboardGuruPage() {
 
               <div className="bg-white rounded-xl p-6 shadow-sm">
                 <h3 className="font-semibold text-[#1A2332] mb-4 flex items-center gap-2">
-                  <span>📓</span> Jurnal Belum Disubmit
+                  <BookOpen size={16} /> Jurnal Belum Disubmit
                 </h3>
                 {pendingJurnal.length === 0 ? (
                   <p className="text-sm text-gray-400 text-center py-6">Semua jurnal sudah disubmit</p>
@@ -158,7 +159,7 @@ export default function DashboardGuruPage() {
             {/* Download Rekap Absensi */}
             <div className="mt-6 bg-white rounded-xl p-6 shadow-sm border border-teal-100">
               <h3 className="font-semibold text-[#1A2332] mb-4 flex items-center gap-2">
-                <span>📥</span> Download Rekap Absensi Bulan Ini
+                <Download size={16} /> Download Rekap Absensi Bulan Ini
               </h3>
               <div className="flex gap-3 flex-wrap items-end">
                 <div className="flex-1 min-w-[200px]">
@@ -179,7 +180,7 @@ export default function DashboardGuruPage() {
                   disabled={!rekapKelas || rekapLoading}
                   className="px-5 py-2.5 bg-[#1B8B87] text-white rounded-lg text-sm font-semibold hover:bg-[#156f6c] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
                 >
-                  {rekapLoading ? '⏳ Mengunduh...' : '📊 Download Excel'}
+                  {rekapLoading ? <><Loader2 size={14} className="inline mr-1 animate-spin" />Mengunduh...</> : <><Download size={14} className="inline mr-1" />Download Excel</>}
                 </button>
               </div>
               <p className="text-xs text-gray-400 mt-2">

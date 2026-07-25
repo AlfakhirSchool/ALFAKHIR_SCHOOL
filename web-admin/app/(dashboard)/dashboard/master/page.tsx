@@ -1,19 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Users, GraduationCap, School, CheckCircle, BookOpen, Lock, Trash2, Shield, Smartphone, Globe, Cpu, KeyRound, Plus, Search, Settings, UserCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 
-const ROLE_ICON: Record<string, string> = {
-  admin: '🛡️', guru: '👨‍🏫', siswa: '👨‍🎓', ortu: '👨‍👧',
+const ROLE_ICON: Record<string, import('react').ReactNode> = {
+  admin: <Shield size={16} />, guru: <Users size={16} />, siswa: <GraduationCap size={16} />, ortu: <UserCircle size={16} />,
 };
 const ROLE_COLOR: Record<string, string> = {
   admin: '#F97316', guru: '#2563EB', siswa: '#16A34A', ortu: '#9333EA',
 };
-const APP_ICON: Record<string, string> = {
-  'Web': '🌐', 'Siswa App': '📱', 'Guru App': '📱', 'Orang Tua App': '📱',
-  'Mobile App': '📱', 'API': '🔌',
+const APP_ICON: Record<string, import('react').ReactNode> = {
+  'Web': <Globe size={14} />, 'Siswa App': <Smartphone size={14} />, 'Guru App': <Smartphone size={14} />,
+  'Orang Tua App': <Smartphone size={14} />, 'Mobile App': <Smartphone size={14} />, 'API': <Cpu size={14} />,
 };
 
 function timeAgo(dateStr: string) {
@@ -24,7 +25,7 @@ function timeAgo(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-const StatCard = ({ label, value, icon, color }: { label: string; value: number | string; icon: string; color: string }) => (
+const StatCard = ({ label, value, icon, color }: { label: string; value: number | string; icon: import('react').ReactNode; color: string }) => (
   <div className="bg-white rounded-xl p-5 shadow-sm border-l-4" style={{ borderLeftColor: color }}>
     <div className="flex items-center justify-between">
       <div>
@@ -162,10 +163,10 @@ export default function MasterDashboard() {
           <>
             {/* KPI */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Total Siswa"    value={kpi.totalSiswa    ?? 0} icon="👨‍🎓" color="#2563EB" />
-              <StatCard label="Total Guru"     value={kpi.totalGuru     ?? 0} icon="👨‍🏫" color="#F97316" />
-              <StatCard label="Total Kelas"    value={kpi.totalKelas    ?? 0} icon="🏫"  color="#7C3AED" />
-              <StatCard label="Hadir Hari Ini" value={kpi.absensiHariIni ?? 0} icon="✅" color="#16A34A" />
+              <StatCard label="Total Siswa"    value={kpi.totalSiswa    ?? 0} icon={<GraduationCap size={28} />} color="#2563EB" />
+              <StatCard label="Total Guru"     value={kpi.totalGuru     ?? 0} icon={<Users size={28} />}        color="#F97316" />
+              <StatCard label="Total Kelas"    value={kpi.totalKelas    ?? 0} icon={<School size={28} />}       color="#7C3AED" />
+              <StatCard label="Hadir Hari Ini" value={kpi.absensiHariIni ?? 0} icon={<CheckCircle size={28} />} color="#16A34A" />
             </div>
 
             {/* Per jenjang */}
@@ -178,7 +179,7 @@ export default function MasterDashboard() {
 
             {(kpi.pendingJurnal ?? 0) > 0 && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-3">
-                <span className="text-2xl">📓</span>
+                <BookOpen size={24} className="text-yellow-600" />
                 <div>
                   <p className="font-semibold text-yellow-800">Jurnal Guru Pending</p>
                   <p className="text-sm text-yellow-600">{kpi.pendingJurnal} jurnal menunggu review</p>
@@ -191,7 +192,7 @@ export default function MasterDashboard() {
             {(deleteReqs || []).length > 0 && (
               <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-red-100">
                 <div className="px-6 py-4 border-b border-red-100 flex items-center gap-3 bg-red-50">
-                  <span className="text-2xl">🔒</span>
+                  <Lock size={24} className="text-red-600" />
                   <div className="flex-1">
                     <p className="font-bold text-red-800">Permintaan Hapus Data</p>
                     <p className="text-sm text-red-600">{(deleteReqs || []).length} permintaan menunggu verifikasi Feri</p>
@@ -200,7 +201,7 @@ export default function MasterDashboard() {
                 <ul className="divide-y divide-gray-50">
                   {(deleteReqs || []).map((dr: any) => (
                     <li key={dr.id} className="px-6 py-4 flex items-start gap-4">
-                      <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center text-red-500 text-lg flex-shrink-0">🗑️</div>
+                      <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center text-red-500 flex-shrink-0"><Trash2 size={18} /></div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-[#1A2332] text-sm">{dr.resource_name}</p>
                         <p className="text-xs text-gray-500">
@@ -230,15 +231,15 @@ export default function MasterDashboard() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { href: '/users', icon: '🔑', label: 'Reset Password', desc: 'Pulihkan akun lupa sandi', color: '#2563EB' },
-            { href: '/users', icon: '➕', label: 'Daftar Akun Baru', desc: 'Tambah user guru/siswa', color: '#F97316' },
-            { href: '/audit-log', icon: '🔍', label: 'Audit Log', desc: 'Riwayat semua aktivitas', color: '#7C3AED' },
-            { href: '/settings', icon: '⚙️', label: 'Pengaturan', desc: 'Konfigurasi sistem', color: '#16A34A' },
-          ].map(item => (
+          {([
+            { href: '/users', icon: <KeyRound size={20} />, label: 'Reset Password', desc: 'Pulihkan akun lupa sandi', color: '#2563EB' },
+            { href: '/users', icon: <Plus size={20} />, label: 'Daftar Akun Baru', desc: 'Tambah user guru/siswa', color: '#F97316' },
+            { href: '/audit-log', icon: <Search size={20} />, label: 'Audit Log', desc: 'Riwayat semua aktivitas', color: '#7C3AED' },
+            { href: '/settings', icon: <Settings size={20} />, label: 'Pengaturan', desc: 'Konfigurasi sistem', color: '#16A34A' },
+          ] as { href: string; icon: import('react').ReactNode; label: string; desc: string; color: string }[]).map(item => (
             <a key={item.label} href={item.href}
               className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all border border-gray-100 hover:border-gray-200 flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0" style={{ backgroundColor: item.color + '15' }}>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: item.color + '15', color: item.color }}>
                 {item.icon}
               </div>
               <div>
@@ -273,7 +274,7 @@ export default function MasterDashboard() {
                     className="w-8 h-8 rounded-full flex items-center justify-center text-base flex-shrink-0 mt-0.5"
                     style={{ backgroundColor: (ROLE_COLOR[log.role] || '#888') + '20' }}
                   >
-                    {ROLE_ICON[log.role] || '👤'}
+                    {ROLE_ICON[log.role] || <UserCircle size={16} />}
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -304,7 +305,7 @@ export default function MasterDashboard() {
 
                   <div className="flex-shrink-0 text-right">
                     <div className="flex items-center gap-1 text-xs text-gray-400 justify-end">
-                      <span>{APP_ICON[log.app_source] || '🌐'}</span>
+                      <span>{APP_ICON[log.app_source] || <Globe size={14} />}</span>
                       <span>{log.app_source || 'Web'}</span>
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5">{timeAgo(log.created_at)}</p>

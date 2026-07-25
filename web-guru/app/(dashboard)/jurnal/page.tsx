@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, X, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -24,8 +24,6 @@ export default function JurnalPage() {
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
   const [filterTgl, setFilterTgl] = useState('');
-  const [rekapKelas, setRekapKelas] = useState('');
-  const [rekapLoading, setRekapLoading] = useState(false);
 
   const { data: jurnalList, isLoading } = useQuery({
     queryKey: ['jurnal-guru'],
@@ -41,29 +39,6 @@ export default function JurnalPage() {
     ? (jurnalList || []).filter((j: any) => j.tanggal?.split('T')[0] === filterTgl)
     : (jurnalList || []);
 
-  const downloadRekap = async () => {
-    if (!rekapKelas) return;
-    setRekapLoading(true);
-    try {
-      const now = new Date();
-      const token = localStorage.getItem('access_token');
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-      const res = await fetch(`${base}/absensi/rekap-download?kelas_id=${rekapKelas}&bulan=${now.getMonth() + 1}&tahun=${now.getFullYear()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error();
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const kelasNama = (kelasList as any[] || []).find((k: any) => k.id === rekapKelas)?.nama || 'Kelas';
-      const bulanNama = now.toLocaleString('id-ID', { month: 'long' });
-      a.download = `Absensi_${kelasNama.replace(/\s+/g, '')}_${bulanNama}${now.getFullYear()}.xlsx`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch { alert('Gagal download rekap'); }
-    finally { setRekapLoading(false); }
-  };
 
   const { data: mapelList } = useQuery({
     queryKey: ['mapel-list'],
@@ -111,21 +86,6 @@ export default function JurnalPage() {
 
         {view === 'list' && (
           <>
-            {/* Download Rekap Absensi */}
-            <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
-              <div>
-                <p className="text-xs font-semibold text-teal-800 mb-1.5 flex items-center gap-1"><Download size={12} />Download Rekap Absensi Bulan Ini</p>
-                <select value={rekapKelas} onChange={e => setRekapKelas(e.target.value)}
-                  className="px-3 py-2 border border-teal-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] bg-white min-w-[180px]">
-                  <option value="">-- Pilih Kelas --</option>
-                  {(kelasList as any[] || []).map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
-                </select>
-              </div>
-              <button onClick={downloadRekap} disabled={!rekapKelas || rekapLoading}
-                className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-semibold hover:bg-[#156f6c] disabled:opacity-40 flex items-center gap-2">
-                {rekapLoading ? <><Loader2 size={14} className="inline mr-1 animate-spin" />Mengunduh...</> : <><Download size={14} className="inline mr-1" />Download Excel</>}
-              </button>
-            </div>
 
             <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
               <div className="flex items-center gap-3">

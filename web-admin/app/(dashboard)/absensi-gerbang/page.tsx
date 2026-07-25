@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { Smartphone, Clock, School, MapPin, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -76,7 +77,7 @@ export default function AbsensiGerbangPage() {
         {/* Toast */}
         {toast && (
           <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-white font-medium text-sm transition-all ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-            {toast.type === 'success' ? '✅ ' : '❌ '}{toast.msg}
+            {toast.msg}
           </div>
         )}
 
@@ -99,7 +100,7 @@ export default function AbsensiGerbangPage() {
             className="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-teal-500 to-teal-600 text-white"
           >
             <div className="flex items-center gap-3">
-              <span className="text-2xl">📱</span>
+              <Smartphone size={24} />
               <div className="text-left">
                 <p className="font-bold text-base">QR Code Absensi Gerbang</p>
                 <p className="text-xs opacity-80">Tampilkan ke siswa untuk di-scan via App Siswa</p>
@@ -154,7 +155,7 @@ export default function AbsensiGerbangPage() {
                   ) : (
                     <div className="bg-white p-3 rounded-2xl shadow-md w-[256px] h-[256px] flex items-center justify-center">
                       <div className="text-center text-gray-400">
-                        <p className="text-4xl mb-2">⏳</p>
+                        <p className="mb-2 flex justify-center"><Clock size={40} className="text-gray-300" /></p>
                         <p className="text-sm">Memuat QR...</p>
                       </div>
                     </div>
@@ -183,7 +184,7 @@ export default function AbsensiGerbangPage() {
               </div>
 
               <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-                <p className="font-semibold mb-1">📲 Cara pakai:</p>
+                <p className="font-semibold mb-1">Cara pakai:</p>
                 <p>Siswa buka App Siswa → menu Absensi → pilih "Absensi Gerbang" → scan QR di atas atau masukkan kode 6 digit</p>
               </div>
             </div>
@@ -255,7 +256,7 @@ export default function AbsensiGerbangPage() {
           </div>
           {(hariIni as any[]).length === 0 ? (
             <div className="text-center py-12 text-gray-400">
-              <p className="text-4xl mb-3">🏫</p>
+              <p className="mb-3 flex justify-center"><School size={40} className="text-gray-300" /></p>
               <p className="text-sm">Belum ada siswa yang dicatat hari ini</p>
             </div>
           ) : (
@@ -285,16 +286,16 @@ export default function AbsensiGerbangPage() {
                         {r.waktu_masuk ? <span className="text-green-600 font-bold">{fmt(r.waktu_masuk)}</span> : <span className="text-gray-300">-</span>}
                       </td>
                       <td className="px-4 py-3 text-center text-xs">
-                        {r.lokasi_valid === true && <span className="text-green-600 font-medium" title={`${r.lokasi_jarak_meter}m dari sekolah`}>📍 Di Sekolah</span>}
-                        {r.lokasi_valid === false && <span className="text-red-500 font-medium" title={`${r.lokasi_jarak_meter}m dari sekolah`}>⚠️ Luar ({r.lokasi_jarak_meter}m)</span>}
+                        {r.lokasi_valid === true && <span className="text-green-600 font-medium inline-flex items-center gap-1" title={`${r.lokasi_jarak_meter}m dari sekolah`}><MapPin size={12} />Di Sekolah</span>}
+                        {r.lokasi_valid === false && <span className="text-red-500 font-medium inline-flex items-center gap-1" title={`${r.lokasi_jarak_meter}m dari sekolah`}><AlertTriangle size={12} />Luar ({r.lokasi_jarak_meter}m)</span>}
                         {r.lokasi_valid == null && <span className="text-gray-300">-</span>}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {r.waktu_pulang ? <span className="text-blue-600 font-bold">{fmt(r.waktu_pulang)}</span> : <span className="text-gray-300">-</span>}
                       </td>
                       <td className="px-4 py-3 text-center text-xs">
-                        {r.notif_masuk_sent && <span className="text-green-500">📱✓</span>}
-                        {r.notif_pulang_sent && <span className="text-blue-500 ml-1">📱✓</span>}
+                        {r.notif_masuk_sent && <CheckCircle size={12} className="inline text-green-500" />}
+                        {r.notif_pulang_sent && <CheckCircle size={12} className="inline text-blue-500 ml-1" />}
                         {!r.notif_masuk_sent && !r.notif_pulang_sent && <span className="text-gray-300">-</span>}
                       </td>
                       <td className="px-4 py-3">

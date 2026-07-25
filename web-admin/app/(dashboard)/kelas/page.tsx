@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Pencil, Trash2, Lock, CheckCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -138,7 +139,7 @@ export default function KelasPage() {
         {editTarget && (
           <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-amber-300">
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-amber-500">✏️</span>
+              <Pencil size={16} className="text-amber-500" />
               <h3 className="font-semibold text-[#1A2332]">Edit Kelas: {editTarget.nama}</h3>
             </div>
             <KelasForm form={form} setForm={setForm} guruList={guruList || []} />
@@ -176,17 +177,17 @@ export default function KelasPage() {
               <div className="px-5 pb-4 flex gap-2">
                 <button onClick={() => openEdit(k)}
                   className="flex-1 px-3 py-1.5 text-xs bg-amber-50 text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-100 font-medium transition-colors">
-                  ✏️ Edit
+                  <Pencil size={12} className="inline mr-1" />Edit
                 </button>
                 {isMaster ? (
                   <button onClick={() => openDeleteModal(k)}
                     className="flex-1 px-3 py-1.5 text-xs bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 font-medium transition-colors">
-                    🗑️ Hapus
+                    <Trash2 size={12} className="inline mr-1" />Hapus
                   </button>
                 ) : (
                   <button onClick={() => openDeleteModal(k)}
                     className="flex-1 px-3 py-1.5 text-xs bg-gray-50 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100 font-medium transition-colors">
-                    🔒 Minta Hapus
+                    <Lock size={12} className="inline mr-1" />Minta Hapus
                   </button>
                 )}
               </div>
@@ -234,7 +235,7 @@ export default function KelasPage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             {deleteMsg ? (
               <div className="text-center py-4">
-                <div className="text-4xl mb-3">✅</div>
+                <div className="mb-3 flex justify-center"><CheckCircle size={40} className="text-green-500" /></div>
                 <p className="font-semibold text-[#1A2332] mb-2">Permintaan Terkirim</p>
                 <p className="text-sm text-gray-500 mb-5">{deleteMsg}</p>
                 <button onClick={() => { setDeleteTarget(null); setDeleteMsg(''); }}
@@ -245,7 +246,7 @@ export default function KelasPage() {
             ) : isMaster ? (
               <>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600 text-xl">🗑️</div>
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600"><Trash2 size={20} /></div>
                   <div>
                     <p className="font-bold text-[#1A2332]">Hapus Kelas</p>
                     <p className="text-sm text-gray-500">{deleteTarget.nama}</p>
@@ -265,7 +266,7 @@ export default function KelasPage() {
             ) : (
               <>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-2xl">🔒</div>
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600"><Lock size={20} /></div>
                   <div>
                     <p className="font-bold text-[#1A2332]">Minta Verifikasi ke Feri</p>
                     <p className="text-sm text-gray-500">Hapus: {deleteTarget.nama}</p>

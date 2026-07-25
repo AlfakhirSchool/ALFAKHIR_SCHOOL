@@ -98,7 +98,7 @@ export const submit = async (req: AuthRequest, res: Response): Promise<void> => 
   if (!jurnal) throw createError('Jurnal tidak ditemukan', 404);
   if (jurnal.status !== 'draft') throw createError('Hanya jurnal draft yang bisa disubmit', 400);
 
-  const ttd_guru = req.body.ttd_guru || null;
+  const ttd_guru = req.body?.ttd_guru || null;
   await jurnal.update({ status: 'submitted', ttd_guru, signed_at: ttd_guru ? new Date() : null }, { validate: false });
   res.json({ success: true, message: 'Jurnal berhasil disubmit untuk review', data: jurnal });
 };

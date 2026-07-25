@@ -4,17 +4,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
+import { LayoutDashboard, ClipboardList, BookOpen, FileText, BarChart3, BookMarked, Users, Calendar, Settings, LogOut } from 'lucide-react';
 
 const menuItems = [
-  { href: '/dashboard', icon: '🏠', label: 'Dashboard' },
-  { href: '/absensi', icon: '📋', label: 'Absensi' },
-  { href: '/nilai', icon: '📝', label: 'Input Nilai' },
-  { href: '/rapor', icon: '📄', label: 'Rapor Kelas' },
-  { href: '/rekap-absensi', icon: '📊', label: 'Rekap Absensi' },
-  { href: '/jurnal', icon: '📓', label: 'Jurnal Guru' },
-  { href: '/kelas', icon: '👥', label: 'Kelas Saya' },
-  { href: '/jadwal', icon: '📅', label: 'Jadwal' },
-  { href: '/settings', icon: '⚙️', label: 'Pengaturan' },
+  { href: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/absensi',       icon: ClipboardList,   label: 'Absensi' },
+  { href: '/nilai',         icon: BookOpen,         label: 'Input Nilai' },
+  { href: '/rapor',         icon: FileText,         label: 'Rapor Kelas' },
+  { href: '/rekap-absensi', icon: BarChart3,        label: 'Rekap Absensi' },
+  { href: '/jurnal',        icon: BookMarked,       label: 'Jurnal Guru' },
+  { href: '/kelas',         icon: Users,            label: 'Kelas Saya' },
+  { href: '/jadwal',        icon: Calendar,         label: 'Jadwal' },
+  { href: '/settings',      icon: Settings,         label: 'Pengaturan' },
 ];
 
 export default function Sidebar() {
@@ -59,6 +60,7 @@ export default function Sidebar() {
         <ul className="space-y-1">
           {menuItems.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + '/');
+            const Icon = item.icon;
             return (
               <li key={item.href}>
                 <Link
@@ -69,7 +71,7 @@ export default function Sidebar() {
                       : 'text-gray-300 hover:bg-white/10 hover:text-white'
                   }`}
                 >
-                  <span>{item.icon}</span>
+                  <Icon size={18} />
                   {item.label}
                 </Link>
               </li>
@@ -83,7 +85,7 @@ export default function Sidebar() {
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-red-500/20 hover:text-red-300 transition-colors"
         >
-          <span>🚪</span> Keluar
+          <LogOut size={18} /> Keluar
         </button>
       </div>
     </aside>

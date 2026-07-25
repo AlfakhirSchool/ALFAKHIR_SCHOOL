@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { Lock } from 'lucide-react';
+import { CheckCircle, AlertCircle, FileText, XCircle, Download, QrCode, MapPin, AlertTriangle, Smartphone } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -11,8 +13,11 @@ const STATUS_STYLE: Record<string, string> = {
   izin:  'bg-yellow-100 text-yellow-700 border-yellow-300',
   alfa:  'bg-red-100 text-red-700 border-red-300',
 };
-const STATUS_ICON: Record<string, string> = {
-  hadir: '✅', sakit: '🤒', izin: '📝', alfa: '❌',
+const STATUS_ICON: Record<string, import('react').ReactNode> = {
+  hadir: <CheckCircle size={14} className="inline" />,
+  sakit: <AlertCircle size={14} className="inline" />,
+  izin:  <FileText size={14} className="inline" />,
+  alfa:  <XCircle size={14} className="inline" />,
 };
 
 type AbsensiRow = { siswa_id: string; nama_siswa: string; nis: string; status_gate: string; ket_gate: string; absensi_id: string | null; status_guru: string | null; catatan: string | null };
@@ -179,7 +184,7 @@ export default function AbsensiGuruPage() {
                   onClick={() => downloadRekap(kelasId, tanggal)}
                   className="w-full py-2.5 border border-teal-500 text-teal-600 hover:bg-teal-50 rounded-xl font-semibold text-sm"
                 >
-                  📥 Download Rekap Bulan Ini (Excel)
+                  <Download size={14} className="inline mr-1" />Download Rekap Bulan Ini (Excel)
                 </button>
               )}
             </div>
@@ -204,7 +209,7 @@ export default function AbsensiGuruPage() {
                     disabled={qrMut.isPending}
                     className="bg-white text-teal-700 font-bold text-sm px-4 py-2 rounded-xl hover:bg-teal-50 disabled:opacity-50 flex items-center gap-1.5"
                   >
-                    {qrMut.isPending ? '...' : '📱 Tampilkan QR'}
+                    {qrMut.isPending ? '...' : <span className="flex items-center gap-1"><QrCode size={14} />Tampilkan QR</span>}
                   </button>
                 </div>
               </div>
@@ -223,7 +228,7 @@ export default function AbsensiGuruPage() {
             {/* Daftar siswa */}
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
               <div className="px-5 py-3 border-b border-gray-100 text-sm text-gray-500 flex gap-2">
-                <span className="text-xs bg-teal-50 text-teal-700 px-2 py-1 rounded">📍 = dari gate scan</span>
+                <span className="text-xs bg-teal-50 text-teal-700 px-2 py-1 rounded flex items-center gap-1"><MapPin size={12} />= dari gate scan</span>
                 <span className="text-xs bg-gray-50 text-gray-500 px-2 py-1 rounded">Guru bisa ubah status per siswa</span>
               </div>
               <div className="divide-y divide-gray-50">
@@ -275,7 +280,7 @@ export default function AbsensiGuruPage() {
               disabled={submitMut.isPending}
               className="w-full py-4 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-bold text-base disabled:opacity-50"
             >
-              {submitMut.isPending ? 'Menyimpan...' : `💾 Simpan Absensi ${rows.length} Siswa`}
+              {submitMut.isPending ? 'Menyimpan...' : `Simpan Absensi ${rows.length} Siswa`}
             </button>
           </div>
         )}
@@ -283,7 +288,7 @@ export default function AbsensiGuruPage() {
         {/* Step 3: Done */}
         {step === 'done' && (
           <div className="bg-white rounded-xl shadow-sm p-10 text-center">
-            <p className="text-5xl mb-4">✅</p>
+            <p className="mb-4 flex justify-center"><CheckCircle size={56} className="text-green-500" /></p>
             <h2 className="text-xl font-bold text-[#1A2332] mb-2">Absensi Tersimpan</h2>
             <p className="text-gray-500 text-sm mb-6">{jadwalInfo?.mata_pelajaran?.nama} · {rows.length} siswa</p>
             <div className="grid grid-cols-4 gap-4 mb-8">
@@ -309,7 +314,7 @@ export default function AbsensiGuruPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm text-center overflow-hidden">
             <div className="bg-teal-500 p-5 text-white">
-              <p className="font-bold text-lg">📱 QR Absensi Siswa</p>
+              <p className="font-bold text-lg flex items-center justify-center gap-2"><Smartphone size={18} />QR Absensi Siswa</p>
               <p className="text-sm opacity-80 mt-1">{jadwalInfo?.mata_pelajaran?.nama} · {jadwalInfo?.kelas?.nama}</p>
             </div>
             <div className="p-6">
@@ -319,14 +324,14 @@ export default function AbsensiGuruPage() {
                 <p className="text-xs text-gray-400">Kode manual:</p>
                 <p className="text-3xl font-black tracking-widest text-teal-600 mt-1">{qrModal.code}</p>
               </div>
-              <p className="text-xs text-amber-600 mt-3">⚠️ Tutup QR setelah semua siswa scan</p>
+              <p className="text-xs text-amber-600 mt-3 flex items-center justify-center gap-1"><AlertTriangle size={12} />Tutup QR setelah semua siswa scan</p>
               <div className="flex gap-3 mt-5">
                 <button
                   onClick={() => closeQrMut.mutate(qrModal.sessionId)}
                   disabled={closeQrMut.isPending}
                   className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-sm disabled:opacity-50"
                 >
-                  {closeQrMut.isPending ? 'Menutup...' : '🔒 Tutup QR'}
+                  {closeQrMut.isPending ? 'Menutup...' : <><Lock size={14} className="inline mr-1" />Tutup QR</>}
                 </button>
                 <button
                   onClick={() => setQrModal(null)}

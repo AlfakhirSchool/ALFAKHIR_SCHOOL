@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -145,7 +146,7 @@ export default function NilaiAdminPage() {
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
             <div className="text-center mb-4">
               <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-2xl">🗑️</span>
+                <Trash2 size={22} className="text-red-500" />
               </div>
               <h3 className="font-bold text-gray-800 text-lg">Hapus Data Nilai?</h3>
               <p className="text-sm text-gray-500 mt-1">{hapusInfo}</p>

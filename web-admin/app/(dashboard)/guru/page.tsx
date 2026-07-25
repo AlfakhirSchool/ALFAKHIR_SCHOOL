@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Users, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -154,7 +154,7 @@ export default function GuruPage() {
         {/* Filter bar */}
         <div className="flex flex-wrap gap-3 items-center">
           <input
-            placeholder="🔍 Cari nama guru..."
+            placeholder="Cari nama guru..."
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             className="flex-1 min-w-48 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
@@ -199,20 +199,18 @@ export default function GuruPage() {
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Nama / Email</th>
-                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">NIP</th>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Jenjang</th>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Spesialisasi</th>
-                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">No. Telp</th>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Status</th>
                 <th className="text-right px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
-                <tr><td colSpan={7} className="text-center py-14 text-gray-400">Memuat...</td></tr>
+                <tr><td colSpan={5} className="text-center py-14 text-gray-400">Memuat...</td></tr>
               ) : guruList.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-14 text-gray-400">
-                  <div className="text-4xl mb-2">👨‍🏫</div>
+                <tr><td colSpan={5} className="text-center py-14 text-gray-400">
+                  <div className="mb-2 text-gray-300 flex justify-center"><Users size={40} /></div>
                   <p>Tidak ada data guru ditemukan</p>
                 </td></tr>
               ) : guruList.map((g: any) => (
@@ -228,10 +226,8 @@ export default function GuruPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 text-xs font-mono text-gray-500">{g.nip || '—'}</td>
                   <td className="px-5 py-3.5"><LevelBadges levels={g.school_levels} /></td>
                   <td className="px-5 py-3.5 text-sm text-gray-500">{g.spesialisasi || '—'}</td>
-                  <td className="px-5 py-3.5 text-sm text-gray-500">{g.no_telp || '—'}</td>
                   <td className="px-5 py-3.5">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${g.user?.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       {g.user?.is_active ? '● Aktif' : '● Nonaktif'}
@@ -243,13 +239,13 @@ export default function GuruPage() {
                         onClick={() => openEdit(g)}
                         className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-semibold transition-colors"
                       >
-                        ✏️ Edit
+                        Edit
                       </button>
                       <button
                         onClick={() => { setHapusId(g.id); setHapusNama(g.user?.nama || ''); }}
                         className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors"
                       >
-                        🗑️ Hapus
+                        <Trash2 size={14} className="inline mr-1" />Hapus
                       </button>
                     </div>
                   </td>
@@ -279,7 +275,7 @@ export default function GuruPage() {
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
             <div className="text-center mb-4">
               <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-2xl">🗑️</span>
+                <Trash2 size={22} className="text-red-500" />
               </div>
               <h3 className="font-bold text-gray-800 text-lg">Hapus Guru?</h3>
               <p className="text-sm text-gray-500 mt-1 font-semibold">{hapusNama}</p>
@@ -304,7 +300,7 @@ export default function GuruPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="bg-gradient-to-r from-[#3B7FD1] to-blue-500 rounded-t-2xl p-5 text-white sticky top-0">
-              <h3 className="font-bold text-lg">{modal === 'create' ? '➕ Tambah Guru Baru' : '✏️ Edit Data Guru'}</h3>
+              <h3 className="font-bold text-lg">{modal === 'create' ? 'Tambah Guru Baru' : 'Edit Data Guru'}</h3>
               <p className="text-blue-100 text-sm mt-0.5">
                 {modal === 'create' ? 'Isi data guru dan tentukan jenjang mengajar' : `Edit: ${editTarget?.user?.nama}`}
               </p>
@@ -346,21 +342,6 @@ export default function GuruPage() {
                 </div>
               )}
 
-              {/* NIP & No Telp */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">NIP</label>
-                  <input value={form.nip} onChange={e => setForm(f => ({ ...f, nip: e.target.value }))}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
-                    placeholder="Nomor Induk Pegawai" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">No. Telp</label>
-                  <input value={form.no_telp} onChange={e => setForm(f => ({ ...f, no_telp: e.target.value }))}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
-                    placeholder="08xx-xxxx-xxxx" />
-                </div>
-              </div>
 
               {/* Spesialisasi */}
               <div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { MapPin, ClipboardList, CheckCircle, XCircle, AlertCircle, FileText, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -12,7 +13,7 @@ const STATUS_STYLE: Record<string, string> = {
   alfa:  'bg-red-100 text-red-700',
 };
 const STATUS_LABEL: Record<string, string> = {
-  hadir: '✅ Hadir', sakit: '🤒 Sakit', izin: '📝 Izin', alfa: '❌ Alfa',
+  hadir: 'Hadir', sakit: 'Sakit', izin: 'Izin', alfa: 'Alfa',
 };
 
 function fmtTime(ts: string | null) {
@@ -89,12 +90,12 @@ export default function AbsensiKelasPage() {
 
         {toast && (
           <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-white font-medium text-sm ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}>
-            {toast.type === 'success' ? '✅ ' : '❌ '}{toast.msg}
+            {toast.type === 'success' ? <CheckCircle size={16} className="inline mr-1" /> : <XCircle size={16} className="inline mr-1" />}{toast.msg}
           </div>
         )}
 
         <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 text-sm text-teal-800">
-          <p className="font-semibold">📌 Sistem Absensi Terpadu</p>
+          <p className="font-semibold"><MapPin size={14} className="inline mr-1" />Sistem Absensi Terpadu</p>
           <p className="mt-1">Kehadiran dihitung dari <strong>absensi gerbang</strong> (scan QR masuk). Siswa yang scan = Hadir. Admin jenjang dapat menambah keterangan Sakit / Izin / Alfa.</p>
         </div>
 
@@ -146,7 +147,7 @@ export default function AbsensiKelasPage() {
         {/* Tabel */}
         {!kelas_id ? (
           <div className="bg-white rounded-xl shadow-sm p-12 text-center text-gray-400">
-            <p className="text-4xl mb-3">📋</p>
+            <p className="mb-3 flex justify-center"><ClipboardList size={40} className="text-gray-300" /></p>
             <p className="text-sm">Pilih kelas untuk melihat rekap kehadiran</p>
           </div>
         ) : isLoading ? (
@@ -200,7 +201,7 @@ export default function AbsensiKelasPage() {
                               onClick={() => openEdit(r)}
                               className="px-3 py-1.5 bg-teal-50 text-teal-700 text-xs rounded-lg hover:bg-teal-100 font-medium"
                             >
-                              ✏️ Keterangan
+                              <Pencil size={12} className="inline mr-1" />Keterangan
                             </button>
                             {r.keterangan_status && (
                               <button
@@ -250,7 +251,7 @@ export default function AbsensiKelasPage() {
                           : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
                       }`}
                     >
-                      {s === '' ? '✅ Auto' : STATUS_LABEL[s]}
+                      {s === '' ? <span className="flex items-center justify-center gap-1"><CheckCircle size={12} />Auto</span> : STATUS_LABEL[s]}
                     </button>
                   ))}
                 </div>

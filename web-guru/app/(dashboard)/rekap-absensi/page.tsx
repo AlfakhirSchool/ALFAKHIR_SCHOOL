@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { BookOpen, School, Calendar, Download } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -89,7 +90,7 @@ export default function RekapAbsensiPage() {
           {kelasId && rekap && (
             <button onClick={downloadExcel}
               className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-semibold hover:bg-[#156f6c] flex items-center gap-2">
-              📥 Download Excel
+              <Download size={14} className="inline mr-1" />Download Excel
             </button>
           )}
         </div>
@@ -140,9 +141,9 @@ export default function RekapAbsensiPage() {
                 {mapelData && (
                   <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                     <div className="p-4 border-b border-gray-100 text-sm text-gray-500 flex gap-6">
-                      <span>📚 <strong className="text-gray-700">{mapelData.nama}</strong></span>
-                      <span>🏫 Kelas <strong className="text-gray-700">{rekap.kelas}</strong></span>
-                      <span>📅 <strong className="text-gray-700">{rekap.namaBulan} {rekap.tahun}</strong></span>
+                      <span className="inline-flex items-center gap-1"><BookOpen size={14} /><strong className="text-gray-700">{mapelData.nama}</strong></span>
+                      <span className="inline-flex items-center gap-1"><School size={14} />Kelas <strong className="text-gray-700">{rekap.kelas}</strong></span>
+                      <span className="inline-flex items-center gap-1"><Calendar size={14} /><strong className="text-gray-700">{rekap.namaBulan} {rekap.tahun}</strong></span>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs border-collapse">
