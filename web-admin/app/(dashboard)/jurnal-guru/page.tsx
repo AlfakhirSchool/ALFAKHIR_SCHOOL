@@ -16,6 +16,7 @@ export default function JurnalGuruAdminPage() {
   const qc = useQueryClient();
   const [filter, setFilter] = useState({ kelas_id: '', status: '', tanggal_awal: '' });
   const [page, setPage] = useState(1);
+  const [detail, setDetail] = useState<any>(null);
 
   const { data: kelasList } = useQuery({ queryKey: ['kelas-all'], queryFn: () => api.get('/kelas').then(r => r.data.data || []) });
 
@@ -110,7 +111,7 @@ export default function JurnalGuruAdminPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex gap-2">
-                      <button className="text-[#3B7FD1] hover:underline text-xs">Detail</button>
+                      <button onClick={() => setDetail(j)} className="text-[#3B7FD1] hover:underline text-xs">Detail</button>
                       {j.status === 'submitted' && (
                         <button onClick={() => approveJurnal.mutate(j.id)}
                           className="text-green-600 hover:underline text-xs">
@@ -134,6 +135,45 @@ export default function JurnalGuruAdminPage() {
           )}
         </div>
       </div>
+
+      {detail && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setDetail(null)}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+              <div>
+                <h2 className="font-semibold text-[#1A2332]">{detail.topik_pelajaran}</h2>
+                <span className={`text-xs px-2 py-0.5 rounded font-medium ${STATUS_STYLES[detail.status]}`}>{detail.status}</span>
+              </div>
+              <button onClick={() => setDetail(null)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+            </div>
+            <div className="p-6 space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-3 text-xs text-gray-600">
+                <div><span className="font-medium block text-gray-500">Guru</span>{detail.guru?.user?.nama || '—'}</div>
+                <div><span className="font-medium block text-gray-500">Kelas</span>{detail.kelas?.nama || '—'}</div>
+                <div><span className="font-medium block text-gray-500">Mata Pelajaran</span>{detail.mataPelajaran?.nama || '—'}</div>
+                <div><span className="font-medium block text-gray-500">Tanggal</span>{new Date(detail.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
+              </div>
+              {detail.deskripsi_pembelajaran && (
+                <div><p className="text-xs font-medium text-gray-500 mb-1">Tugas</p><p className="bg-gray-50 rounded-lg p-3 text-gray-700">{detail.deskripsi_pembelajaran}</p></div>
+              )}
+              {detail.hasil_pembelajaran && (
+                <div><p className="text-xs font-medium text-gray-500 mb-1">Catatan Guru</p><p className="bg-gray-50 rounded-lg p-3 text-gray-700">{detail.hasil_pembelajaran}</p></div>
+              )}
+              {detail.rencana_tindak_lanjut && (
+                <div><p className="text-xs font-medium text-gray-500 mb-1">Rencana Tindak Lanjut</p><p className="bg-gray-50 rounded-lg p-3 text-gray-700">{detail.rencana_tindak_lanjut}</p></div>
+              )}
+              {detail.status === 'submitted' && (
+                <button
+                  onClick={() => { approveJurnal.mutate(detail.id); setDetail(null); }}
+                  className="w-full py-2.5 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700"
+                >
+                  Approve Jurnal
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
