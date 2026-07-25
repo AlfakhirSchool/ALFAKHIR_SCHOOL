@@ -3,11 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore, SchoolLevel } from '@/store/authStore';
-import { useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Users, GraduationCap, School, BookOpen, Calendar,
   DoorOpen, CreditCard, ClipboardCheck, FileText, Wallet, BookMarked,
-  BarChart3, UserCog, Search, Settings, LogOut, Bell,
+  BarChart3, UserCog, Search, Settings, Bell,
 } from 'lucide-react';
 
 type MenuItem = { href: string; icon: React.ReactNode; label: string };
@@ -70,19 +69,13 @@ const LEVEL_NAME: Record<string, string> = {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { logout, user } = useAuthStore();
-  const router = useRouter();
+  const { user } = useAuthStore();
   const level = user?.school_level as SchoolLevel;
 
   const menuItems = level ? levelMenu(level) : masterMenu;
   const accentColor = level ? LEVEL_COLOR[level] : '#3B7FD1';
   const logo = level ? (LEVEL_LOGO[level] ?? '/logo-master.png') : '/logo-master.png';
   const schoolName = level ? (LEVEL_NAME[level] ?? 'Al Fakhir School') : 'Al Fakhir School';
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
 
   return (
     <aside className="w-64 bg-[#1A2332] text-white flex flex-col min-h-screen fixed left-0 top-0 z-40">
@@ -129,25 +122,6 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      {/* User + Logout */}
-      <div className="p-3 border-t border-white/10">
-        <div className="flex items-center gap-2 px-3 py-2 mb-1">
-          <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold flex-shrink-0">
-            {user?.nama?.charAt(0)?.toUpperCase()}
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-white truncate">{user?.nama}</p>
-            <p className="text-xs text-gray-500 truncate">{user?.email?.replace(/@.*/, '')}</p>
-          </div>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:bg-red-500/15 hover:text-red-300 transition-all duration-150"
-        >
-          <LogOut size={18} />
-          <span>Keluar</span>
-        </button>
-      </div>
     </aside>
   );
 }
