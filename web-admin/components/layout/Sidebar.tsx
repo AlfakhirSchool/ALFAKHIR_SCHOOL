@@ -78,7 +78,7 @@ export default function Sidebar() {
   const schoolName = level ? (LEVEL_NAME[level] ?? 'Al Fakhir School') : 'Al Fakhir School';
 
   return (
-    <aside className="w-64 bg-[#1A2332] text-white flex flex-col min-h-screen fixed left-0 top-0 z-40">
+    <aside className="w-64 bg-[#1A2332] text-white flex flex-col h-screen fixed left-0 top-0 z-40">
       {/* Header */}
       <div className="p-5 border-b border-white/10">
         <div className="flex items-center gap-3">
