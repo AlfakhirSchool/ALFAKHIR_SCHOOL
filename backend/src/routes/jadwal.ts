@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { JadwalPelajaran, Guru, Kelas, MataPelajaran, User } from '../models';
+import { JadwalPelajaran, Guru, Kelas, MataPelajaran, User, Absensi, QrCodeSession } from '../models';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 import { kelasIdFilter } from '../utils/levelFilter';
@@ -43,6 +43,8 @@ router.put('/:id', authorize('admin'), async (req: AuthRequest, res: Response): 
 router.delete('/:id', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
   const jadwal = await JadwalPelajaran.findByPk(req.params.id as string);
   if (!jadwal) throw createError('Jadwal tidak ditemukan', 404);
+  await QrCodeSession.destroy({ where: { jadwal_pelajaran_id: jadwal.id } });
+  await Absensi.destroy({ where: { jadwal_pelajaran_id: jadwal.id } });
   await jadwal.destroy();
   res.json({ success: true, message: 'Jadwal berhasil dihapus' });
 });
