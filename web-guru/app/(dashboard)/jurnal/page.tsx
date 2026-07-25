@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Download } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -134,12 +134,38 @@ export default function JurnalPage() {
                   {filterTgl && <button onClick={() => setFilterTgl('')} className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1"><X size={12} />Reset</button>}
                 </div>
               </div>
-              <button
-                onClick={() => { setForm(emptyForm); setEditId(null); setView('form'); }}
-                className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-medium hover:bg-[#156f6c]"
-              >
-                + Buat Jurnal Baru
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => {
+                    const XLSX = await import('xlsx');
+                    const rows = (jurnalList || []).map((j: any) => ({
+                      'Tanggal': j.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '',
+                      'Kelas': j.kelas?.nama || '',
+                      'Mata Pelajaran': j.mataPelajaran?.nama || '',
+                      'Topik': j.topik_pelajaran || '',
+                      'Deskripsi': j.deskripsi_pembelajaran || '',
+                      'Hasil': j.hasil_pembelajaran || '',
+                      'Tugas': j.tugas || '',
+                      'Catatan': j.catatan_guru || '',
+                      'Rencana Tindak Lanjut': j.rencana_tindak_lanjut || '',
+                      'Status': j.status || '',
+                    }));
+                    const ws = XLSX.utils.json_to_sheet(rows);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Jurnal');
+                    XLSX.writeFile(wb, `Jurnal_${user?.nama?.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
+                  }}
+                  className="px-4 py-2 border border-[#1B8B87] text-[#1B8B87] rounded-lg text-sm font-medium hover:bg-teal-50 flex items-center gap-1.5"
+                >
+                  <Download size={14} /> Download XLSX
+                </button>
+                <button
+                  onClick={() => { setForm(emptyForm); setEditId(null); setView('form'); }}
+                  className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-medium hover:bg-[#156f6c]"
+                >
+                  + Buat Jurnal Baru
+                </button>
+              </div>
             </div>
 
             {submitError && (
