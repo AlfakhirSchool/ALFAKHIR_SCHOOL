@@ -11,5 +11,6 @@ router.get('/profile', authenticate, authController.getProfile);
 router.post('/change-password', authenticate, authController.changePassword);
 router.post('/upload-photo', authenticate, authController.upload.single('photo'), authController.uploadProfilePhoto);
 router.post('/reset-device/:userId', authenticate, authorize('admin'), authController.resetDevice);
+router.post('/switch-account/:userId', authenticate, authController.switchAccount);
 
 export default router;

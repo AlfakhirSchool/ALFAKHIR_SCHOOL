@@ -107,7 +107,11 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
 };
 
 const SHEET_ID = '1NaxhH1ORhzYGms_o98miCFxqoZCi8xRrciicPt5XHGw';
-const SHEET_TABS = [{ nama: 'SD', gid: '0' }, { nama: 'SMP', gid: '2540234' }];
+const SHEET_TABS = [
+  { nama: 'SD',  gid: '0' },
+  { nama: 'SMP', gid: '2540234' },
+  { nama: 'SMA', gid: process.env.SHEET_SMA_GID || '' },
+].filter(t => t.gid);
 
 async function fetchSheetCsv(gid: string): Promise<string> {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
@@ -124,11 +128,12 @@ function parseCsvRows(csv: string): { nama: string; kelas_nama: string; nis: str
     const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
     const obj: any = {};
     header.forEach((h, i) => { obj[h] = cols[i] || ''; });
-    return { nama: obj['nama'] || '', kelas_nama: obj['kelas'] || '', nis: obj['nis'] || '', status: obj['status'] || 'AKTIF' };
+    const jk = (obj['jk'] || obj['jenis_kelamin'] || '').toUpperCase().trim();
+    return { nama: obj['nama'] || '', kelas_nama: obj['kelas'] || '', nis: obj['nis'] || '', status: obj['status'] || 'AKTIF', jenis_kelamin: jk === 'L' || jk === 'P' ? jk : null };
   }).filter(r => r.nama && r.nis);
 }
 
-async function doImportRows(rows: { nama: string; kelas_nama: string; nis: string; status: string }[]) {
+async function doImportRows(rows: { nama: string; kelas_nama: string; nis: string; status: string; jenis_kelamin?: string | null }[]) {
   const results: { nama: string; nis: string; status: 'created' | 'skipped'; reason?: string }[] = [];
   for (const row of rows) {
     const { nama, nis, kelas_nama } = row;
@@ -142,7 +147,7 @@ async function doImportRows(rows: { nama: string; kelas_nama: string; nis: strin
     const is_active = !row.status || row.status.toUpperCase() !== 'TIDAK AKTIF';
     const password_hash = await bcrypt.hash(autoPassword, 10);
     const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa', password_default: autoPassword, is_active } as any);
-    await Siswa.create({ user_id: user.id, kelas_id: (kelas as any).id, nisn: nis, nis, no_induk: nis });
+    await Siswa.create({ user_id: user.id, kelas_id: (kelas as any).id, nisn: nis, nis, no_induk: nis, jenis_kelamin: row.jenis_kelamin || null });
     results.push({ nama, nis, status: 'created' });
   }
   return results;

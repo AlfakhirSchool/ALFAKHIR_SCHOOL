@@ -267,3 +267,35 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
 
   res.json({ success: true, message: 'Password berhasil diubah' });
 };
+
+export const switchAccount = async (req: AuthRequest, res: Response): Promise<void> => {
+  const current = req.user!;
+  if (current.role !== 'admin') {
+    throw createError('Unauthorized', 403);
+  }
+
+  const target = await User.findByPk(req.params.userId as string);
+  if (!target || target.role !== 'admin' || !target.is_active) {
+    throw createError('Akun admin tidak ditemukan', 404);
+  }
+
+  const targetLevel = target.school_level ?? null;
+  const currentLevel = current.school_level ?? null;
+
+  // level admin cannot switch to master admin
+  if (currentLevel !== null && targetLevel === null) {
+    throw createError('Tidak dapat berpindah ke Admin Master', 403);
+  }
+
+  const { accessToken } = generateTokens({
+    id: target.id, email: target.email, nama: target.nama, role: target.role, school_level: targetLevel,
+  });
+
+  res.json({
+    success: true,
+    data: {
+      accessToken,
+      user: { id: target.id, email: target.email, nama: target.nama, role: target.role, school_level: targetLevel, profile_pic: target.profile_pic },
+    },
+  });
+};

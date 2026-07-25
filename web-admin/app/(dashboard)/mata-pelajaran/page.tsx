@@ -16,7 +16,7 @@ export default function MataPelajaranPage() {
   const qc = useQueryClient();
   const [activeJenjang, setActiveJenjang] = useState<string>('SD');
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ nama: '', kode: '', kkm: '75', jenjang: 'SD' });
+  const [form, setForm] = useState({ nama: '', kode: '', kkm: '75', jenjang: 'SD', jam_pelajaran: '' });
   const [editId, setEditId] = useState<string | null>(null);
   const [hapusId, setHapusId] = useState<string | null>(null);
   const [hapusNama, setHapusNama] = useState<string>('');
@@ -28,7 +28,7 @@ export default function MataPelajaranPage() {
 
   const save = useMutation({
     mutationFn: () => {
-      const payload = { ...form, kkm: parseInt(form.kkm) };
+      const payload = { ...form, kkm: parseInt(form.kkm), jam_pelajaran: form.jam_pelajaran ? parseInt(form.jam_pelajaran) : null };
       return editId
         ? api.put(`/mata-pelajaran/${editId}`, payload)
         : api.post('/mata-pelajaran', payload);
@@ -36,7 +36,7 @@ export default function MataPelajaranPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['mata-pelajaran'] });
       setShowForm(false);
-      setForm({ nama: '', kode: '', kkm: '75', jenjang: activeJenjang });
+      setForm({ nama: '', kode: '', kkm: '75', jenjang: activeJenjang, jam_pelajaran: '' });
       setEditId(null);
     },
   });
@@ -47,13 +47,13 @@ export default function MataPelajaranPage() {
   });
 
   const openEdit = (m: any) => {
-    setForm({ nama: m.nama, kode: m.kode || '', kkm: m.kkm?.toString() || '75', jenjang: m.jenjang || activeJenjang });
+    setForm({ nama: m.nama, kode: m.kode || '', kkm: m.kkm?.toString() || '75', jenjang: m.jenjang || activeJenjang, jam_pelajaran: m.jam_pelajaran?.toString() || '' });
     setEditId(m.id);
     setShowForm(true);
   };
 
   const openAdd = () => {
-    setForm({ nama: '', kode: '', kkm: '75', jenjang: activeJenjang });
+    setForm({ nama: '', kode: '', kkm: '75', jenjang: activeJenjang, jam_pelajaran: '' });
     setEditId(null);
     setShowForm(true);
   };
@@ -88,7 +88,7 @@ export default function MataPelajaranPage() {
         {showForm && (
           <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-[#3B7FD1]/20">
             <h3 className="font-semibold text-[#1A2332] mb-4">{editId ? 'Edit' : 'Tambah'} Mata Pelajaran</h3>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-5 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Nama Mata Pelajaran *</label>
                 <input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })}
@@ -103,6 +103,11 @@ export default function MataPelajaranPage() {
                 <label className="block text-xs font-medium text-gray-600 mb-1">KKM (0-100)</label>
                 <input type="number" min="0" max="100" value={form.kkm} onChange={(e) => setForm({ ...form, kkm: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">JP (Jam/Minggu)</label>
+                <input type="number" min="0" max="40" value={form.jam_pelajaran} onChange={(e) => setForm({ ...form, jam_pelajaran: e.target.value })}
+                  placeholder="2" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Jenjang *</label>
@@ -129,6 +134,7 @@ export default function MataPelajaranPage() {
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Nama</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Kode</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">KKM</th>
+                <th className="text-left px-6 py-4 font-semibold text-gray-700">JP</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Jenjang</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Aksi</th>
               </tr>
@@ -137,7 +143,7 @@ export default function MataPelajaranPage() {
               {isLoading ? (
                 <tr><td colSpan={5} className="text-center py-12 text-gray-400">Memuat...</td></tr>
               ) : (mapelList || []).length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-12 text-gray-400">Belum ada mata pelajaran untuk jenjang {activeJenjang}</td></tr>
+                <tr><td colSpan={6} className="text-center py-12 text-gray-400">Belum ada mata pelajaran untuk jenjang {activeJenjang}</td></tr>
               ) : (mapelList || []).map((m: any) => (
                 <tr key={m.id} className="hover:bg-gray-50/50">
                   <td className="px-6 py-4 font-medium text-gray-800">{m.nama}</td>
@@ -147,6 +153,11 @@ export default function MataPelajaranPage() {
                   <td className="px-6 py-4">
                     <span className="font-medium text-gray-700">{m.kkm}</span>
                     <span className="text-gray-400 text-xs ml-1">(min lulus)</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {m.jam_pelajaran ? (
+                      <span className="font-medium text-gray-700">{m.jam_pelajaran}<span className="text-gray-400 text-xs ml-1">jp</span></span>
+                    ) : <span className="text-gray-300">—</span>}
                   </td>
                   <td className="px-6 py-4">
                     {m.jenjang && (
