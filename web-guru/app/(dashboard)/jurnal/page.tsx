@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Download, X, Loader2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -81,9 +82,11 @@ export default function JurnalPage() {
     },
   });
 
+  const [submitError, setSubmitError] = useState('');
   const submitJurnal = useMutation({
     mutationFn: (id: string) => api.post(`/jurnal-guru/${id}/submit`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['jurnal-guru'] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['jurnal-guru'] }); setSubmitError(''); },
+    onError: (e: any) => setSubmitError(e?.response?.data?.message || 'Gagal submit jurnal'),
   });
 
   const openEdit = (j: any) => {
@@ -111,7 +114,7 @@ export default function JurnalPage() {
             {/* Download Rekap Absensi */}
             <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 mb-5 flex flex-wrap gap-3 items-end">
               <div>
-                <p className="text-xs font-semibold text-teal-800 mb-1.5">📥 Download Rekap Absensi Bulan Ini</p>
+                <p className="text-xs font-semibold text-teal-800 mb-1.5 flex items-center gap-1"><Download size={12} />Download Rekap Absensi Bulan Ini</p>
                 <select value={rekapKelas} onChange={e => setRekapKelas(e.target.value)}
                   className="px-3 py-2 border border-teal-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] bg-white min-w-[180px]">
                   <option value="">-- Pilih Kelas --</option>
@@ -120,7 +123,7 @@ export default function JurnalPage() {
               </div>
               <button onClick={downloadRekap} disabled={!rekapKelas || rekapLoading}
                 className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-semibold hover:bg-[#156f6c] disabled:opacity-40 flex items-center gap-2">
-                {rekapLoading ? '⏳ Mengunduh...' : '📊 Download Excel'}
+                {rekapLoading ? <><Loader2 size={14} className="inline mr-1 animate-spin" />Mengunduh...</> : <><Download size={14} className="inline mr-1" />Download Excel</>}
               </button>
             </div>
 
@@ -130,7 +133,7 @@ export default function JurnalPage() {
                 <div className="flex items-center gap-2">
                   <input type="date" value={filterTgl} onChange={e => setFilterTgl(e.target.value)}
                     className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]" />
-                  {filterTgl && <button onClick={() => setFilterTgl('')} className="text-xs text-gray-400 hover:text-red-500">✕ Reset</button>}
+                  {filterTgl && <button onClick={() => setFilterTgl('')} className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1"><X size={12} />Reset</button>}
                 </div>
               </div>
               <button
@@ -141,6 +144,9 @@ export default function JurnalPage() {
               </button>
             </div>
 
+            {submitError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-sm text-red-700 mb-3">{submitError}</div>
+            )}
             <div className="space-y-3">
               {isLoading && <div className="text-center py-12 text-gray-400">Memuat...</div>}
               {!isLoading && filteredJurnal.length === 0 && (
@@ -200,7 +206,7 @@ export default function JurnalPage() {
                 {editId ? 'Edit Jurnal' : 'Buat Jurnal Baru'}
               </h2>
               <button onClick={() => { setView('list'); setForm(emptyForm); setEditId(null); }} className="text-gray-400 hover:text-gray-600">
-                ✕ Batal
+                <X size={14} className="inline mr-1" />Batal
               </button>
             </div>
 
