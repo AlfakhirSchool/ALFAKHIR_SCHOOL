@@ -37,6 +37,7 @@ const levelMenu = (level: string): MenuItem[] => [
   { href: '/siswa',           icon: <GraduationCap size={18} />,    label: 'Siswa' },
   { href: '/guru',            icon: <Users size={18} />,            label: 'Guru' },
   { href: '/kelas',           icon: <School size={18} />,           label: 'Kelas' },
+  { href: '/mata-pelajaran',  icon: <BookOpen size={18} />,         label: 'Mata Pelajaran' },
   { href: '/jadwal',          icon: <Calendar size={18} />,         label: 'Jadwal' },
   { href: '/absensi-gerbang', icon: <DoorOpen size={18} />,         label: 'Absensi Gerbang' },
   { href: '/rfid-registrasi', icon: <CreditCard size={18} />,       label: 'Registrasi RFID' },
@@ -46,7 +47,6 @@ const levelMenu = (level: string): MenuItem[] => [
   { href: '/nilai',           icon: <FileText size={18} />,         label: 'Nilai' },
   { href: '/laporan',         icon: <BarChart3 size={18} />,        label: 'Laporan' },
   { href: '/users',           icon: <UserCog size={18} />,          label: 'Kelola Akun' },
-  // Settings sengaja tidak ada di level menu — hanya master admin
 ];
 
 const LEVEL_COLOR: Record<string, string> = {
