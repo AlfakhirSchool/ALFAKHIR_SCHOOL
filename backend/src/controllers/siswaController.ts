@@ -145,6 +145,9 @@ async function doImportRows(rows: { nama: string; kelas_nama: string; nis: strin
     let kelas = await Kelas.findOne({ where: { nama: { [Op.iLike]: kelas_nama } } });
     if (!kelas) kelas = await Kelas.findOne({ where: { nama: { [Op.iLike]: `%${kelas_nama}%` } } });
     if (!kelas) { results.push({ nama, nis, status: 'skipped', reason: `Kelas "${kelas_nama}" tidak ditemukan` }); continue; }
+    // Cek duplikat nama di kelas yang sama
+    const existingByNama = await Siswa.findOne({ where: { kelas_id: (kelas as any).id }, include: [{ model: User, as: 'user', where: { nama: { [Op.iLike]: nama } } }] });
+    if (existingByNama) { results.push({ nama, nis, status: 'skipped', reason: `Siswa "${nama}" sudah ada di kelas ${(kelas as any).nama}` }); continue; }
     const autoEmail = `${nis}@siswa.alfakhir.sch.id`;
     if (await User.findOne({ where: { email: autoEmail } })) { results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' }); continue; }
     if (await Siswa.findOne({ where: { nis } })) { results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' }); continue; }
