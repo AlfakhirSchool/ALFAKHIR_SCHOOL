@@ -199,7 +199,7 @@ export default function SettingsPage() {
             <div className="relative group">
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="w-20 h-20 rounded-full overflow-hidden cursor-pointer bg-[#1B8B87] flex items-center justify-center text-white text-2xl font-bold border-2 border-[#1B8B87] hover:opacity-90 transition-opacity"
+                className="w-24 h-24 rounded-full overflow-hidden cursor-pointer bg-gradient-to-br from-[#1B8B87] to-[#0d6b68] flex items-center justify-center text-white text-3xl font-bold ring-4 ring-[#1B8B87] ring-offset-4 ring-offset-white shadow-lg hover:ring-offset-2 transition-all duration-200"
               >
                 {profilePicUrl ? (
                   <img src={profilePicUrl} alt="Foto profil" className="w-full h-full object-cover" />
@@ -210,7 +210,7 @@ export default function SettingsPage() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadPhoto.isPending}
-                className="absolute bottom-0 right-0 bg-[#1B8B87] rounded-full p-1.5 border-2 border-white text-white hover:bg-[#156f6c] transition-colors"
+                className="absolute bottom-1 right-1 bg-[#1B8B87] rounded-full p-1.5 border-2 border-white text-white hover:bg-[#156f6c] shadow-md transition-colors"
               >
                 {uploadPhoto.isPending ? (
                   <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
