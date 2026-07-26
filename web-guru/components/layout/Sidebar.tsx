@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { useRouter } from 'next/navigation';
-import { LayoutDashboard, ClipboardList, BookOpen, FileText, BarChart3, BookMarked, Users, Calendar, Settings, LogOut, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, BookOpen, FileText, BarChart3, BookMarked, Users, Calendar, Settings, MessageSquare } from 'lucide-react';
 
 const menuItems = [
   { href: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
@@ -21,17 +20,11 @@ const menuItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { logout, user } = useAuthStore();
+  const { user } = useAuthStore();
   const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
   const picUrl = user?.profile_pic
     ? user.profile_pic.startsWith('http') ? user.profile_pic : `${apiBase}${user.profile_pic}`
     : null;
-  const router = useRouter();
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
 
   return (
     <aside className="w-64 bg-[#1A2332] text-white flex flex-col min-h-screen fixed left-0 top-0 z-40">
