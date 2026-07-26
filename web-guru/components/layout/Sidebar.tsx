@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import { LayoutDashboard, ClipboardList, BookOpen, FileText, BarChart3, BookMarked, Users, Calendar, Settings, MessageSquare } from 'lucide-react';
 
@@ -18,6 +19,15 @@ const menuItems = [
   { href: '/settings',      icon: Settings,         label: 'Pengaturan' },
 ];
 
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } },
+};
+const item = {
+  hidden: { opacity: 0, x: -16 },
+  show: { opacity: 1, x: 0 },
+};
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuthStore();
@@ -28,7 +38,12 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 bg-[#1A2332] text-white flex flex-col min-h-screen fixed left-0 top-0 z-40">
-      <div className="p-5 border-b border-white/10">
+      <motion.div
+        className="p-5 border-b border-white/10"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center">
             <img src="/logo.png" alt="Logo" className="w-full h-full object-contain p-0.5" />
@@ -38,10 +53,15 @@ export default function Sidebar() {
             <p className="text-xs text-gray-400">Guru Dashboard</p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {user && (
-        <div className="px-5 py-4 border-b border-white/10">
+        <motion.div
+          className="px-5 py-4 border-b border-white/10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15, duration: 0.4 }}
+        >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-bold border-2 border-white/30 shadow bg-[#1B8B87]">
               {picUrl
@@ -53,18 +73,18 @@ export default function Sidebar() {
               <p className="text-xs text-gray-400">Guru</p>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
 
       <nav className="flex-1 p-4 overflow-y-auto">
-        <ul className="space-y-1">
-          {menuItems.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(item.href + '/');
-            const Icon = item.icon;
+        <motion.ul className="space-y-1" variants={container} initial="hidden" animate="show">
+          {menuItems.map((menuItem) => {
+            const active = pathname === menuItem.href || pathname.startsWith(menuItem.href + '/');
+            const Icon = menuItem.icon;
             return (
-              <li key={item.href}>
+              <motion.li key={menuItem.href} variants={item} transition={{ duration: 0.3, ease: 'easeOut' }}>
                 <Link
-                  href={item.href}
+                  href={menuItem.href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                     active
                       ? 'bg-[#1B8B87] text-white font-medium'
@@ -72,14 +92,13 @@ export default function Sidebar() {
                   }`}
                 >
                   <Icon size={18} />
-                  {item.label}
+                  {menuItem.label}
                 </Link>
-              </li>
+              </motion.li>
             );
           })}
-        </ul>
+        </motion.ul>
       </nav>
-
     </aside>
   );
 }

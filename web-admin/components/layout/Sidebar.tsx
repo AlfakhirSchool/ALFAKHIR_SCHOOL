@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { useAuthStore, SchoolLevel } from '@/store/authStore';
 import {
   LayoutDashboard, Users, GraduationCap, School, BookOpen, Calendar,
@@ -102,11 +103,19 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 p-3 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <ul className="space-y-0.5">
+        <motion.ul
+          className="space-y-0.5"
+          initial="hidden"
+          animate="show"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04, delayChildren: 0.1 } } }}
+        >
           {menuItems.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
-              <li key={item.href}>
+              <motion.li key={item.href}
+                variants={{ hidden: { opacity: 0, x: -14 }, show: { opacity: 1, x: 0 } }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+              >
                 <Link
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 ${
@@ -117,10 +126,10 @@ export default function Sidebar() {
                   <span className="flex-shrink-0">{item.icon}</span>
                   <span className="truncate">{item.label}</span>
                 </Link>
-              </li>
+              </motion.li>
             );
           })}
-        </ul>
+        </motion.ul>
       </nav>
 
     </aside>

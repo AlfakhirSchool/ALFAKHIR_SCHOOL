@@ -57,10 +57,16 @@ const StatCard = ({ label, value, icon, color, delay = 0 }: { label: string; val
   );
 };
 
-const LevelRow = ({ label, color, d }: { label: string; color: string; d: any }) => {
+const LevelRow = ({ label, color, d, delay = 0 }: { label: string; color: string; d: any; delay?: number }) => {
   const pct = d.totalSiswa > 0 ? Math.round((d.absensiHariIni / d.totalSiswa) * 100) : 0;
   return (
-    <div className="bg-white rounded-xl p-5 shadow-sm">
+    <motion.div
+      className="bg-white rounded-xl p-5 shadow-sm"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.35 }}
+      whileHover={{ y: -2, boxShadow: '0 6px 20px rgba(0,0,0,0.07)' }}
+    >
       <div className="flex items-center gap-4 mb-3">
         <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-black" style={{ backgroundColor: color }}>
           {label}
@@ -71,7 +77,13 @@ const LevelRow = ({ label, color, d }: { label: string; color: string; d: any })
             <span className="text-gray-400">{d.absensiHariIni}/{d.totalSiswa} hadir ({pct}%)</span>
           </div>
           <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-            <div className="h-3 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+            <motion.div
+              className="h-3 rounded-full"
+              style={{ backgroundColor: color }}
+              initial={{ width: 0 }}
+              animate={{ width: `${pct}%` }}
+              transition={{ delay: delay + 0.3, duration: 0.9, ease: 'easeOut' }}
+            />
           </div>
         </div>
       </div>
@@ -80,7 +92,7 @@ const LevelRow = ({ label, color, d }: { label: string; color: string; d: any })
         <div><span className="font-bold" style={{ color }}>{d.totalKelas}</span><br /><span className="text-gray-400 text-xs">Kelas</span></div>
         <div><span className="font-bold text-green-600">{d.absensiHariIni}</span><br /><span className="text-gray-400 text-xs">Hadir</span></div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -192,9 +204,9 @@ export default function MasterDashboard() {
             {/* Per jenjang */}
             <h2 className="font-bold text-[#1A2332]">Kehadiran Per Jenjang</h2>
             <div className="space-y-4">
-              <LevelRow label="SD"  color="#F97316" d={sd}  />
-              <LevelRow label="SMP" color="#2563EB" d={smp} />
-              <LevelRow label="SMA" color="#7C3AED" d={sma} />
+              <LevelRow label="SD"  color="#F97316" d={sd}  delay={0} />
+              <LevelRow label="SMP" color="#2563EB" d={smp} delay={0.1} />
+              <LevelRow label="SMA" color="#7C3AED" d={sma} delay={0.2} />
             </div>
 
             {(kpi.pendingJurnal ?? 0) > 0 && (

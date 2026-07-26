@@ -147,8 +147,14 @@ export default function DashboardGuruPage() {
                   <p className="text-sm text-gray-400 text-center py-6">Tidak ada jadwal hari ini</p>
                 ) : (
                   <div className="space-y-3">
-                    {jadwalHariIni.map((j: any) => (
-                      <div key={j.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    {jadwalHariIni.map((j: any, i: number) => (
+                      <motion.div key={j.id}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.07, duration: 0.3 }}
+                        whileHover={{ backgroundColor: '#f0fdfa', scale: 1.01 }}
+                      >
                         <div>
                           <p className="font-medium text-sm text-[#1A2332]">{j.mataPelajaran?.nama}</p>
                           <p className="text-xs text-gray-500">{j.kelas?.nama} · {j.ruangan}</p>
@@ -156,7 +162,7 @@ export default function DashboardGuruPage() {
                         <div className="text-right">
                           <p className="text-sm font-medium text-[#1B8B87]">{j.jam_mulai} - {j.jam_selesai}</p>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 )}
