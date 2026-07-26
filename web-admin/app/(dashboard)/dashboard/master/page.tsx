@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Users, GraduationCap, School, CheckCircle, BookOpen, Lock, Trash2, Shield, Smartphone, Globe, Cpu, KeyRound, Plus, Search, Settings, UserCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 
@@ -25,17 +26,36 @@ function timeAgo(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
-const StatCard = ({ label, value, icon, color }: { label: string; value: number | string; icon: import('react').ReactNode; color: string }) => (
-  <div className="bg-white rounded-xl p-5 shadow-sm border-l-4" style={{ borderLeftColor: color }}>
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</p>
-        <p className="text-2xl font-bold text-[#1A2332] mt-1">{value}</p>
+const StatCard = ({ label, value, icon, color, delay = 0 }: { label: string; value: number; icon: import('react').ReactNode; color: string; delay?: number }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const obj = useRef({ val: 0 });
+  useEffect(() => {
+    if (typeof value !== 'number') return;
+    import('animejs').then(({ animate }) => {
+      animate(obj.current, { val: value, duration: 1400, delay, ease: 'outExpo', round: 1,
+        onUpdate: () => { if (ref.current) ref.current.textContent = String(obj.current.val); },
+      });
+    });
+  }, [value, delay]);
+  return (
+    <motion.div
+      className="bg-white rounded-xl p-5 shadow-sm border-l-4"
+      style={{ borderLeftColor: color }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: delay / 1000, ease: 'easeOut' }}
+      whileHover={{ y: -3, boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{label}</p>
+          <p className="text-2xl font-bold text-[#1A2332] mt-1"><span ref={ref}>0</span></p>
+        </div>
+        <span className="text-3xl">{icon}</span>
       </div>
-      <span className="text-3xl">{icon}</span>
-    </div>
-  </div>
-);
+    </motion.div>
+  );
+};
 
 const LevelRow = ({ label, color, d }: { label: string; color: string; d: any }) => {
   const pct = d.totalSiswa > 0 ? Math.round((d.absensiHariIni / d.totalSiswa) * 100) : 0;
@@ -163,10 +183,10 @@ export default function MasterDashboard() {
           <>
             {/* KPI */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Total Siswa"    value={kpi.totalSiswa    ?? 0} icon={<GraduationCap size={28} />} color="#2563EB" />
-              <StatCard label="Total Guru"     value={kpi.totalGuru     ?? 0} icon={<Users size={28} />}        color="#F97316" />
-              <StatCard label="Total Kelas"    value={kpi.totalKelas    ?? 0} icon={<School size={28} />}       color="#7C3AED" />
-              <StatCard label="Hadir Hari Ini" value={kpi.absensiHariIni ?? 0} icon={<CheckCircle size={28} />} color="#16A34A" />
+              <StatCard label="Total Siswa"    value={kpi.totalSiswa    ?? 0} icon={<GraduationCap size={28} />} color="#2563EB" delay={0} />
+              <StatCard label="Total Guru"     value={kpi.totalGuru     ?? 0} icon={<Users size={28} />}        color="#F97316" delay={100} />
+              <StatCard label="Total Kelas"    value={kpi.totalKelas    ?? 0} icon={<School size={28} />}       color="#7C3AED" delay={200} />
+              <StatCard label="Hadir Hari Ini" value={kpi.absensiHariIni ?? 0} icon={<CheckCircle size={28} />} color="#16A34A" delay={300} />
             </div>
 
             {/* Per jenjang */}

@@ -5,7 +5,6 @@ import { createError } from '../middleware/errorHandler';
 import { kelasIdFilter } from '../utils/levelFilter';
 
 const router = Router();
-
 router.use(authenticate);
 
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
@@ -28,21 +27,47 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   res.json({ success: true, data: jadwalList });
 });
 
-router.post('/', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
-  const jadwal = await JadwalPelajaran.create(req.body);
-  res.status(201).json({ success: true, data: jadwal });
+// Guru bisa buat jadwal sendiri, admin bisa buat untuk siapapun
+router.post('/', authorize('admin', 'guru'), async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    let body = { ...req.body };
+    // Guru: paksa guru_id ke diri sendiri
+    if (req.user!.role === 'guru') {
+      const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
+      if (!guru) { res.status(400).json({ success: false, message: 'Data guru tidak ditemukan' }); return; }
+      body.guru_id = (guru as any).id;
+    }
+    const jadwal = await JadwalPelajaran.create(body);
+    res.status(201).json({ success: true, data: jadwal });
+  } catch (e: any) {
+    res.status(500).json({ success: false, message: e.message });
+  }
 });
 
-router.put('/:id', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+// Hanya admin atau guru pemilik yang bisa edit
+router.put('/:id', authorize('admin', 'guru'), async (req: AuthRequest, res: Response): Promise<void> => {
   const jadwal = await JadwalPelajaran.findByPk(req.params.id as string);
   if (!jadwal) throw createError('Jadwal tidak ditemukan', 404);
+  if (req.user!.role === 'guru') {
+    const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
+    if (!guru || (jadwal as any).guru_id !== (guru as any).id) {
+      res.status(403).json({ success: false, message: 'Hanya bisa edit jadwal sendiri' }); return;
+    }
+  }
   await jadwal.update(req.body);
   res.json({ success: true, data: jadwal });
 });
 
-router.delete('/:id', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+// Hanya admin atau guru pemilik yang bisa hapus
+router.delete('/:id', authorize('admin', 'guru'), async (req: AuthRequest, res: Response): Promise<void> => {
   const jadwal = await JadwalPelajaran.findByPk(req.params.id as string);
   if (!jadwal) throw createError('Jadwal tidak ditemukan', 404);
+  if (req.user!.role === 'guru') {
+    const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
+    if (!guru || (jadwal as any).guru_id !== (guru as any).id) {
+      res.status(403).json({ success: false, message: 'Hanya bisa hapus jadwal sendiri' }); return;
+    }
+  }
   await QrCodeSession.destroy({ where: { jadwal_pelajaran_id: jadwal.id } });
   await Absensi.destroy({ where: { jadwal_pelajaran_id: jadwal.id } });
   await jadwal.destroy();

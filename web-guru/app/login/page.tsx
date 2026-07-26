@@ -8,12 +8,6 @@ import api from '@/lib/api';
 
 const DOMAIN = '@alfakhirschool.sch.id';
 
-const floatVariants = {
-  animate: {
-    y: [0, -12, 0],
-    transition: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
-  },
-};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -70,8 +64,8 @@ export default function LoginPage() {
 
         {/* Floating logo */}
         <motion.div
-          variants={floatVariants}
-          animate="animate"
+          animate={{ y: [0, -12, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
           className="relative z-10"
         >
           <div className="w-36 h-36 relative">

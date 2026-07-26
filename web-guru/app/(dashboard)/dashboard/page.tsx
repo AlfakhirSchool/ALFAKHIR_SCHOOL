@@ -1,23 +1,51 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { School, Calendar, BookOpen, ClipboardList, Download, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
-const KpiCard = ({ title, value, icon, color }: { title: string; value: string | number; icon: import('react').ReactNode; color: string }) => (
-  <div className={`bg-white rounded-xl p-6 border-l-4 ${color} shadow-sm`}>
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm text-gray-500">{title}</p>
-        <p className="text-2xl font-bold text-[#1A2332] mt-1">{value}</p>
+const KpiCard = ({ title, value, icon, color, delay = 0 }: { title: string; value: number; icon: import('react').ReactNode; color: string; delay?: number }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const obj = useRef({ val: 0 });
+
+  useEffect(() => {
+    if (typeof value !== 'number') return;
+    import('animejs').then(({ animate }) => {
+      animate(obj.current, {
+        val: value,
+        duration: 1400,
+        delay,
+        ease: 'outExpo',
+        round: 1,
+        onUpdate: () => { if (ref.current) ref.current.textContent = String(obj.current.val); },
+      });
+    });
+  }, [value, delay]);
+
+  return (
+    <motion.div
+      className={`bg-white rounded-xl p-6 border-l-4 ${color} shadow-sm`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: delay / 1000, ease: 'easeOut' }}
+      whileHover={{ y: -3, boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-500">{title}</p>
+          <p className="text-2xl font-bold text-[#1A2332] mt-1">
+            <span ref={ref}>0</span>
+          </p>
+        </div>
+        <span className="text-3xl">{icon}</span>
       </div>
-      <span className="text-3xl">{icon}</span>
-    </div>
-  </div>
-);
+    </motion.div>
+  );
+};
 
 export default function DashboardGuruPage() {
   const { user } = useAuthStore();
@@ -104,10 +132,10 @@ export default function DashboardGuruPage() {
         ) : (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <KpiCard title="Kelas Saya" value={kpi.totalKelas || 0} icon={<School size={28} />} color="border-[#1B8B87]" />
-              <KpiCard title="Jadwal Hari Ini" value={kpi.jadwalHariIni || 0} icon={<Calendar size={28} />} color="border-[#3B7FD1]" />
-              <KpiCard title="Jurnal Pending" value={kpi.jurnalPending || 0} icon={<BookOpen size={28} />} color="border-yellow-500" />
-              <KpiCard title="Nilai Belum Input" value={kpi.nilaiPending || 0} icon={<ClipboardList size={28} />} color="border-[#FF8C42]" />
+              <KpiCard title="Kelas Saya" value={kpi.totalKelas || 0} icon={<School size={28} />} color="border-[#1B8B87]" delay={0} />
+              <KpiCard title="Jadwal Hari Ini" value={kpi.jadwalHariIni || 0} icon={<Calendar size={28} />} color="border-[#3B7FD1]" delay={100} />
+              <KpiCard title="Jurnal Pending" value={kpi.jurnalPending || 0} icon={<BookOpen size={28} />} color="border-yellow-500" delay={200} />
+              <KpiCard title="Nilai Belum Input" value={kpi.nilaiPending || 0} icon={<ClipboardList size={28} />} color="border-[#FF8C42]" delay={300} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
