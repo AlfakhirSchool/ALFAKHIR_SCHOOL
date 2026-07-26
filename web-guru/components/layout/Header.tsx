@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { LogOut } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
@@ -10,7 +12,9 @@ interface HeaderProps {
 }
 
 export default function Header({ title }: HeaderProps) {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const router = useRouter();
+  const handleLogout = () => { logout(); router.push('/login'); };
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -121,6 +125,10 @@ export default function Header({ title }: HeaderProps) {
             <p className="text-xs text-gray-400">Guru</p>
           </div>
         </div>
+        <button onClick={handleLogout}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-gray-200">
+          <LogOut size={13} /> Keluar
+        </button>
       </div>
     </header>
   );
