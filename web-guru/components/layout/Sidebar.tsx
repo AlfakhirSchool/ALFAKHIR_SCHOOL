@@ -52,40 +52,38 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
       <motion.div
-        className="p-3 border-b border-white/10 flex items-center gap-3 min-h-[72px]"
+        className="p-3 border-b border-white/10 flex items-center gap-2 min-h-[64px]"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center">
-          <img src={schoolLogo} alt="Logo" className="w-full h-full object-contain p-0.5" />
+        <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
+          <img src={schoolLogo} alt="Logo" className="w-full h-full object-contain" />
         </div>
         {!collapsed && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex-1 overflow-hidden">
             <p className="font-bold text-sm whitespace-nowrap">Al Fakhir School</p>
             <p className="text-xs text-gray-400 whitespace-nowrap">Guru Dashboard</p>
           </motion.div>
         )}
-      </motion.div>
-
-      {/* Toggle button */}
-      <button
-        onClick={onToggle}
-        className="flex items-center justify-center h-9 mx-2 my-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-        title={collapsed ? 'Buka sidebar' : 'Tutup sidebar'}
-      >
-        <motion.svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18" height="18" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" strokeWidth="2"
-          strokeLinecap="round" strokeLinejoin="round"
-          animate={{ rotate: collapsed ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
+        <button
+          onClick={onToggle}
+          className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          title={collapsed ? 'Buka sidebar' : 'Tutup sidebar'}
         >
-          <path d="M11 19l-7-7 7-7" />
-          <path d="M19 19l-7-7 7-7" />
-        </motion.svg>
-      </button>
+          <motion.svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="15" height="15" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2.5"
+            strokeLinecap="round" strokeLinejoin="round"
+            animate={{ rotate: collapsed ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <path d="M11 19l-7-7 7-7" />
+            <path d="M19 19l-7-7 7-7" />
+          </motion.svg>
+        </button>
+      </motion.div>
 
       {user && (
         <motion.div

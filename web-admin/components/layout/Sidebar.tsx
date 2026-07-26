@@ -76,7 +76,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
 
   const menuItems = level ? levelMenu(level) : masterMenu;
   const accentColor = level ? LEVEL_COLOR[level] : '#3B7FD1';
-  const logo = level ? (LEVEL_LOGO[level] ?? '/logo-master.png') : '/logo-master.png';
+  const logo = level ? (LEVEL_LOGO[level] ?? '/logo.png') : '/logo.png';
   const schoolName = level ? (LEVEL_NAME[level] ?? 'Al Fakhir School') : 'Al Fakhir School';
 
   return (
@@ -86,17 +86,16 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
       {/* Header */}
-      <div className="p-3 border-b border-white/10 flex items-center gap-3 min-h-[72px]">
-        <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center">
-          <img src={logo} alt="Logo" className="w-full h-full object-contain p-0.5" />
+      <div className="p-3 border-b border-white/10 flex items-center gap-2 min-h-[64px]">
+        <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
+          <img src={logo} alt="Logo" className="w-full h-full object-contain" />
         </div>
         {!collapsed && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden"
+            className="flex-1 overflow-hidden"
           >
             <p className="font-bold text-sm leading-tight whitespace-nowrap">{schoolName}</p>
             <p className="text-xs whitespace-nowrap" style={{ color: accentColor }}>
@@ -104,26 +103,24 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
             </p>
           </motion.div>
         )}
-      </div>
-
-      {/* Toggle button */}
-      <button
-        onClick={onToggle}
-        className="flex items-center justify-center h-9 mx-2 my-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-        title={collapsed ? 'Buka sidebar' : 'Tutup sidebar'}
-      >
-        <motion.svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18" height="18" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" strokeWidth="2"
-          strokeLinecap="round" strokeLinejoin="round"
-          animate={{ rotate: collapsed ? 180 : 0 }}
-          transition={{ duration: 0.3 }}
+        <button
+          onClick={onToggle}
+          className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          title={collapsed ? 'Buka sidebar' : 'Tutup sidebar'}
         >
-          <path d="M11 19l-7-7 7-7" />
-          <path d="M19 19l-7-7 7-7" />
-        </motion.svg>
-      </button>
+          <motion.svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="15" height="15" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2.5"
+            strokeLinecap="round" strokeLinejoin="round"
+            animate={{ rotate: collapsed ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <path d="M11 19l-7-7 7-7" />
+            <path d="M19 19l-7-7 7-7" />
+          </motion.svg>
+        </button>
+      </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-2 pb-3 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
