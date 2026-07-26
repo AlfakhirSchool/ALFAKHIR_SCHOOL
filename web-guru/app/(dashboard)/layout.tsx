@@ -14,6 +14,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const [hydrated, setHydrated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     setHydrated(true);
@@ -29,8 +30,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!hydrated) return null;
   if (!isAuthenticated) return null;
-
-  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <>
