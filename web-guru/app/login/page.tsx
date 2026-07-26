@@ -44,6 +44,7 @@ export default function LoginPage() {
         spesialisasi: profile_detail?.spesialisasi || '',
       };
       login(enrichedUser, accessToken, refreshToken);
+      sessionStorage.setItem('just_logged_in', '1');
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login gagal');

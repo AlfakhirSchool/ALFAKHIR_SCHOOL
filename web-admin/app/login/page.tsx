@@ -46,6 +46,7 @@ export default function LoginPage() {
         return;
       }
       login(user, accessToken, refreshToken);
+      sessionStorage.setItem('just_logged_in', '1');
       if (user.school_level === 'SD')  { router.push('/dashboard/sd');  return; }
       if (user.school_level === 'SMP') { router.push('/dashboard/smp'); return; }
       if (user.school_level === 'SMA') { router.push('/dashboard/sma'); return; }

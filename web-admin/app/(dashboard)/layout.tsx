@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import LoadingScreen from '@/components/LoadingScreen';
 import PageTransition from '@/components/PageTransition';
+import WelcomePopup from '@/components/WelcomePopup';
 import { useAuthStore } from '@/store/authStore';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -32,6 +33,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <>
       <LoadingScreen show={loading} />
+      <WelcomePopup nama={user?.nama || 'Admin'} />
       <div className="flex min-h-screen">
         <Sidebar />
         <main className="ml-64 flex-1 bg-gray-50 min-w-0">
