@@ -194,7 +194,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="relative w-full text-white py-4 rounded-xl font-semibold text-sm tracking-wide overflow-hidden disabled:opacity-60"
-              style={{ backgroundColor: jenjang.panelBg }}
+              style={{ backgroundColor: jenjang.accent }}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
             >

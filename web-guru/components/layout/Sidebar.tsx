@@ -28,6 +28,14 @@ const item = {
   show: { opacity: 1, x: 0 },
 };
 
+function getSchoolLogo(levels: string[] = []): string {
+  if (levels.length !== 1) return '/logo.png';
+  if (levels[0] === 'SD')  return '/logo-sd.webp';
+  if (levels[0] === 'SMP') return '/logo-smp.png';
+  if (levels[0] === 'SMA') return '/logo-sma.png';
+  return '/logo.png';
+}
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuthStore();
@@ -35,6 +43,7 @@ export default function Sidebar() {
   const picUrl = user?.profile_pic
     ? user.profile_pic.startsWith('http') ? user.profile_pic : `${apiBase}${user.profile_pic}`
     : null;
+  const schoolLogo = getSchoolLogo(user?.school_levels);
 
   return (
     <aside className="w-64 bg-[#1A2332] text-white flex flex-col min-h-screen fixed left-0 top-0 z-40">
@@ -46,7 +55,7 @@ export default function Sidebar() {
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center">
-            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain p-0.5" />
+            <img src={schoolLogo} alt="Logo" className="w-full h-full object-contain p-0.5" />
           </div>
           <div>
             <p className="font-bold text-sm">Al Fakhir School</p>

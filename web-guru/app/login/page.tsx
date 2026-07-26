@@ -184,7 +184,7 @@ export default function LoginPage() {
             <motion.button
               type="submit"
               disabled={loading}
-              className="relative w-full bg-[#1A2332] text-white py-4 rounded-xl font-semibold text-sm tracking-wide overflow-hidden disabled:opacity-60"
+              className="relative w-full bg-[#1B8B87] text-white py-4 rounded-xl font-semibold text-sm tracking-wide overflow-hidden disabled:opacity-60"
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
             >
