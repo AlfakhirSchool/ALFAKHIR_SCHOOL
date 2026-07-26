@@ -82,7 +82,7 @@ export default function LoginPage() {
               src="/logo.png"
               alt="Al Fakhir School"
               className="w-full h-full object-contain relative z-10"
-              style={{ mixBlendMode: 'screen' }}
+              
               initial={{ scale: 0, rotate: -180, opacity: 0 }}
               animate={{ scale: 1, rotate: 0, opacity: 1 }}
               transition={{ duration: 0.9, ease: [0.34, 1.56, 0.64, 1], delay: 0.3 }}
