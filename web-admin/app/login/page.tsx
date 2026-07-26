@@ -74,12 +74,31 @@ export default function LoginPage() {
 
         <motion.div
           animate={{ y: [0, -12, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1.2 }}
           className="relative z-10"
         >
-          <div className="w-36 h-36 relative">
-            <div className="absolute inset-0 rounded-full animate-ping" style={{ backgroundColor: jenjang.accent, opacity: 0.15, animationDuration: '3s' }} />
-            <img src={jenjang.logo} alt={jenjang.name} className="w-full h-full object-contain relative z-10" style={{ mixBlendMode: 'screen' }} />
+          <div className="w-36 h-36 relative flex items-center justify-center">
+            {/* Ripple rings */}
+            {[0, 1, 2].map(i => (
+              <motion.div
+                key={i}
+                className="absolute inset-0 rounded-full border-2"
+                style={{ borderColor: jenjang.accent }}
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: [0.6, 1.6], opacity: [0.6, 0] }}
+                transition={{ duration: 2, repeat: Infinity, delay: i * 0.65, ease: 'easeOut' }}
+              />
+            ))}
+            {/* Logo bloom entrance */}
+            <motion.img
+              src={jenjang.logo}
+              alt={jenjang.name}
+              className="w-full h-full object-contain relative z-10"
+              style={{ mixBlendMode: 'screen' }}
+              initial={{ scale: 0, rotate: -180, opacity: 0 }}
+              animate={{ scale: 1, rotate: 0, opacity: 1 }}
+              transition={{ duration: 0.9, ease: [0.34, 1.56, 0.64, 1], delay: 0.3 }}
+            />
           </div>
         </motion.div>
 
