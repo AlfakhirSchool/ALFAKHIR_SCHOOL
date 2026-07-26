@@ -25,7 +25,8 @@ export default function LoadingScreen({ show }: { show: boolean }) {
             <img
               src="/logo.png"
               alt="Al Fakhir School"
-              className="w-28 h-28 object-contain relative z-10 drop-shadow-2xl"
+              className="w-28 h-28 object-contain relative z-10"
+              style={{ mixBlendMode: 'screen' }}
             />
           </motion.div>
 

@@ -70,7 +70,7 @@ export default function LoginPage() {
         >
           <div className="w-36 h-36 relative">
             <div className="absolute inset-0 rounded-full bg-[#1B8B87]/20 animate-ping" style={{ animationDuration: '3s' }} />
-            <img src="/logo.png" alt="Al Fakhir School" className="w-full h-full object-contain relative z-10 drop-shadow-2xl" />
+            <img src="/logo.png" alt="Al Fakhir School" className="w-full h-full object-contain relative z-10" style={{ mixBlendMode: 'screen' }} />
           </div>
         </motion.div>
 

@@ -79,7 +79,7 @@ export default function LoginPage() {
         >
           <div className="w-36 h-36 relative">
             <div className="absolute inset-0 rounded-full animate-ping" style={{ backgroundColor: jenjang.accent, opacity: 0.15, animationDuration: '3s' }} />
-            <img src={jenjang.logo} alt={jenjang.name} className="w-full h-full object-contain relative z-10 drop-shadow-2xl" />
+            <img src={jenjang.logo} alt={jenjang.name} className="w-full h-full object-contain relative z-10" style={{ mixBlendMode: 'screen' }} />
           </div>
         </motion.div>
 

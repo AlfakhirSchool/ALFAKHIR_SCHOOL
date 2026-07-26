@@ -58,7 +58,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
         transition={{ duration: 0.4 }}
       >
         <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
-          <img src={schoolLogo} alt="Logo" className="w-full h-full object-contain" />
+          <img src={schoolLogo} alt="Logo" className="w-full h-full object-contain" style={{ mixBlendMode: 'screen' }} />
         </div>
         {!collapsed && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} className="flex-1 overflow-hidden">
