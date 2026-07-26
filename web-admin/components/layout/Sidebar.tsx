@@ -69,7 +69,7 @@ const LEVEL_NAME: Record<string, string> = {
   SMA: 'SMA Islam Modern Al-Fakhir',
 };
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const level = user?.school_level as SchoolLevel;
@@ -80,29 +80,53 @@ export default function Sidebar() {
   const schoolName = level ? (LEVEL_NAME[level] ?? 'Al Fakhir School') : 'Al Fakhir School';
 
   return (
-    <aside className="w-64 bg-[#1A2332] text-white flex flex-col h-screen fixed left-0 top-0 z-40">
+    <motion.aside
+      className="bg-[#1A2332] text-white flex flex-col h-screen fixed left-0 top-0 z-40 overflow-hidden"
+      animate={{ width: collapsed ? 64 : 256 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+    >
       {/* Header */}
-      <div className="p-5 border-b border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex items-center justify-center">
-            <img src={logo} alt="Logo" className="w-full h-full object-contain p-0.5" />
-          </div>
-          <div>
-            <p className="font-bold text-sm leading-tight">{schoolName}</p>
-            <p className="text-xs" style={{ color: accentColor }}>
+      <div className="p-3 border-b border-white/10 flex items-center gap-3 min-h-[72px]">
+        <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-white flex items-center justify-center">
+          <img src={logo} alt="Logo" className="w-full h-full object-contain p-0.5" />
+        </div>
+        {!collapsed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <p className="font-bold text-sm leading-tight whitespace-nowrap">{schoolName}</p>
+            <p className="text-xs whitespace-nowrap" style={{ color: accentColor }}>
               {level ? `Admin ${level}` : 'Admin Control Center'}
             </p>
-          </div>
-        </div>
-        {level && (
-          <div className="mt-3 px-2 py-1 rounded-lg text-xs font-bold text-white text-center" style={{ backgroundColor: accentColor }}>
-            Dashboard {level}
-          </div>
+          </motion.div>
         )}
       </div>
 
+      {/* Toggle button */}
+      <button
+        onClick={onToggle}
+        className="flex items-center justify-center h-9 mx-2 my-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+        title={collapsed ? 'Buka sidebar' : 'Tutup sidebar'}
+      >
+        <motion.svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18" height="18" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round"
+          animate={{ rotate: collapsed ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <path d="M11 19l-7-7 7-7" />
+          <path d="M19 19l-7-7 7-7" />
+        </motion.svg>
+      </button>
+
       {/* Navigation */}
-      <nav className="flex-1 p-3 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <nav className="flex-1 px-2 pb-3 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <motion.ul
           className="space-y-0.5"
           initial="hidden"
@@ -118,13 +142,14 @@ export default function Sidebar() {
               >
                 <Link
                   href={item.href}
+                  title={collapsed ? item.label : undefined}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 ${
-                    active ? 'text-white font-medium shadow-sm' : 'text-gray-400 hover:bg-white/8 hover:text-white'
+                    active ? 'text-white font-medium shadow-sm' : 'text-gray-400 hover:bg-white/10 hover:text-white'
                   }`}
                   style={active ? { backgroundColor: accentColor } : {}}
                 >
                   <span className="flex-shrink-0">{item.icon}</span>
-                  <span className="truncate">{item.label}</span>
+                  {!collapsed && <span className="truncate">{item.label}</span>}
                 </Link>
               </motion.li>
             );
@@ -132,6 +157,6 @@ export default function Sidebar() {
         </motion.ul>
       </nav>
 
-    </aside>
+    </motion.aside>
   );
 }

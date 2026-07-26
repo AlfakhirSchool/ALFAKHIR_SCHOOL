@@ -30,13 +30,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!hydrated) return null;
   if (!isAuthenticated) return null;
 
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
     <>
       <LoadingScreen show={loading} />
       <WelcomePopup nama={user?.nama || 'Guru'} />
       <div className="flex">
-        <Sidebar />
-        <main className="ml-64 flex-1 min-h-screen bg-gray-50">
+        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(v => !v)} />
+        <main
+          className="flex-1 min-h-screen bg-gray-50 transition-all duration-300"
+          style={{ marginLeft: collapsed ? 64 : 256 }}
+        >
           <PageTransition key={pathname}>
             {children}
           </PageTransition>
