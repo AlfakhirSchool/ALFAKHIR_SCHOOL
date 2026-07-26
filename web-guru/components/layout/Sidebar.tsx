@@ -43,7 +43,7 @@ export default function Sidebar() {
       {user && (
         <div className="px-5 py-4 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-bold ring-2 ring-white/30 ring-offset-1 ring-offset-[#1A2332] shadow bg-gradient-to-br from-[#1B8B87] to-[#0d6b68]">
+            <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-white font-bold border-2 border-white/30 shadow bg-[#1B8B87]">
               {picUrl
                 ? <img src={picUrl} alt="" className="w-full h-full object-cover" />
                 : user.nama?.charAt(0)}

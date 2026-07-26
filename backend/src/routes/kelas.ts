@@ -14,7 +14,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
   const where: Record<string, unknown> = {};
   const sekolahWhere: Record<string, unknown> = {};
 
-  if (req.user?.role === 'guru') {
+  if (req.user?.role === 'guru' && !req.query.all) {
     // Guru hanya melihat kelas yang menjadi wali kelas atau mengajar via jadwal
     const guru = await Guru.findOne({ where: { user_id: req.user.id } });
     if (!guru) { res.json({ success: true, data: [] }); return; }

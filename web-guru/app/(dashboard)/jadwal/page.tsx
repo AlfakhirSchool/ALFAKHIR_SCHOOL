@@ -25,7 +25,7 @@ export default function JadwalPage() {
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-list'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas?all=1').then(r => r.data.data || []),
   });
 
   const { data: mapelList = [] } = useQuery({

@@ -199,7 +199,7 @@ export default function SettingsPage() {
             <div className="relative group">
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="w-24 h-24 rounded-full overflow-hidden cursor-pointer bg-gradient-to-br from-[#1B8B87] to-[#0d6b68] flex items-center justify-center text-white text-3xl font-bold ring-4 ring-[#1B8B87] ring-offset-4 ring-offset-white shadow-lg hover:ring-offset-2 transition-all duration-200"
+                className="w-24 h-24 rounded-full overflow-hidden cursor-pointer bg-[#1B8B87] flex items-center justify-center text-white text-3xl font-bold border-4 border-white shadow-lg outline outline-2 outline-[#1B8B87] hover:opacity-90 transition-opacity"
               >
                 {profilePicUrl ? (
                   <img src={profilePicUrl} alt="Foto profil" className="w-full h-full object-cover" />

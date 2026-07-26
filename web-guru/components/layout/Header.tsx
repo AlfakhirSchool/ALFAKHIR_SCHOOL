@@ -115,7 +115,7 @@ export default function Header({ title }: HeaderProps) {
 
         {/* User */}
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold ring-2 ring-[#1B8B87] ring-offset-1 ring-offset-white shadow bg-gradient-to-br from-[#1B8B87] to-[#0d6b68]">
+          <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold border-2 border-white shadow bg-[#1B8B87]">
             {picUrl
               ? <img src={picUrl} alt="" className="w-full h-full object-cover" />
               : user?.nama?.charAt(0) || 'G'}
