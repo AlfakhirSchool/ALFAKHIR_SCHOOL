@@ -1,17 +1,23 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
+import LoadingScreen from '@/components/LoadingScreen';
+import PageTransition from '@/components/PageTransition';
 import { useAuthStore } from '@/store/authStore';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
   const [hydrated, setHydrated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setHydrated(true);
+    const t = setTimeout(() => setLoading(false), 1800);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -24,11 +30,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex">
-      <Sidebar />
-      <main className="ml-64 flex-1 min-h-screen bg-gray-50">
-        {children}
-      </main>
-    </div>
+    <>
+      <LoadingScreen show={loading} />
+      <div className="flex">
+        <Sidebar />
+        <main className="ml-64 flex-1 min-h-screen bg-gray-50">
+          <PageTransition key={pathname}>
+            {children}
+          </PageTransition>
+        </main>
+      </div>
+    </>
   );
 }
