@@ -87,7 +87,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
     >
       {/* Header */}
       <div className="p-3 border-b border-white/10 flex items-center gap-2 min-h-[64px]">
-        <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
+        <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-white/90 flex items-center justify-center">
           <img src={logo} alt="Logo" className="w-full h-full object-contain"  />
         </div>
         {!collapsed && (
