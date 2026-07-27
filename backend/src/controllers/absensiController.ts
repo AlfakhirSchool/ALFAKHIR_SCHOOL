@@ -368,105 +368,110 @@ export const downloadRekap = async (req: AuthRequest, res: Response): Promise<vo
   const b = parseInt(bulan as string) || new Date().getMonth() + 1;
   const y = parseInt(tahun as string) || new Date().getFullYear();
 
-  const kelas = await Kelas.findByPk(kelas_id as string);
+  const kelas = await Kelas.findByPk(kelas_id as string, { include: [{ model: Sekolah, as: 'sekolah' }] });
   if (!kelas) throw createError('Kelas tidak ditemukan', 404);
 
-  const startDate = new Date(y, b - 1, 1);
-  const endDate = new Date(y, b, 0);
-  const daysInMonth = endDate.getDate();
+  const startDate = new Date(y, b - 1, 1).toISOString().split('T')[0];
+  const endDate = new Date(y, b, 0).toISOString().split('T')[0];
+  const daysInMonth = new Date(y, b, 0).getDate();
+  const namaBulan = new Date(y, b - 1, 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+  const DAY_NAMES = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
-  const rows = await sequelize.query<any>(
-    `SELECT s.id AS siswa_id, u.nama AS nama_siswa, s.nis,
-            EXTRACT(DAY FROM ag.tanggal::date)::int AS tgl,
-            COALESCE(ag.keterangan_status,
-              CASE WHEN ag.waktu_masuk IS NOT NULL THEN 'hadir' ELSE 'alfa' END
-            ) AS status
-     FROM siswa s
-     JOIN users u ON s.user_id = u.id
-     LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id
-       AND ag.tanggal BETWEEN :start AND :end
-     WHERE s.kelas_id = :kelas_id
-     ORDER BY u.nama, tgl`,
-    { replacements: { kelas_id, start: startDate.toISOString().split('T')[0], end: endDate.toISOString().split('T')[0] }, type: QueryTypes.SELECT }
+  const siswaList = await sequelize.query<any>(
+    `SELECT s.id, u.nama, s.nis FROM siswa s JOIN users u ON s.user_id = u.id WHERE s.kelas_id = :kelas_id ORDER BY u.nama`,
+    { replacements: { kelas_id }, type: QueryTypes.SELECT }
   );
 
-  // Grup per siswa
-  const siswaMap: Record<string, any> = {};
+  const mapelList = await sequelize.query<any>(
+    `SELECT DISTINCT mp.id, mp.nama FROM mata_pelajaran mp
+     JOIN jadwal_pelajaran jp ON jp.mata_pelajaran_id = mp.id
+     WHERE jp.kelas_id = :kelas_id ORDER BY mp.nama`,
+    { replacements: { kelas_id }, type: QueryTypes.SELECT }
+  );
+
+  const rows = await sequelize.query<any>(
+    `SELECT a.siswa_id, mp.id AS mapel_id,
+            EXTRACT(DAY FROM a.tanggal::date)::int AS tgl, a.status
+     FROM absensi a
+     JOIN jadwal_pelajaran jp ON a.jadwal_pelajaran_id = jp.id
+     JOIN mata_pelajaran mp ON jp.mata_pelajaran_id = mp.id
+     WHERE jp.kelas_id = :kelas_id AND a.tanggal BETWEEN :start AND :end`,
+    { replacements: { kelas_id, start: startDate, end: endDate }, type: QueryTypes.SELECT }
+  );
+
+  // byMapel[mapel_id][siswa_id][tgl] = status
+  const byMapel: Record<string, Record<string, Record<number, string>>> = {};
   for (const r of rows) {
-    if (!siswaMap[r.siswa_id]) {
-      siswaMap[r.siswa_id] = { nama: r.nama_siswa, nis: r.nis, days: {} };
-    }
-    if (r.tgl) siswaMap[r.siswa_id].days[r.tgl] = r.status;
+    if (!byMapel[r.mapel_id]) byMapel[r.mapel_id] = {};
+    if (!byMapel[r.mapel_id][r.siswa_id]) byMapel[r.mapel_id][r.siswa_id] = {};
+    byMapel[r.mapel_id][r.siswa_id][r.tgl] = r.status;
   }
 
-  const namaBulan = new Date(y, b - 1, 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
-  const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  // Row 1: Title
-  const titleRow = [`STUDENT ATTENDANCE LIST - ${kelas.nama} - ${namaBulan}`];
-
-  // Row 2: Header numbers — No | Student Name | M/F | 1..31 | H | S | I | A
-  const headerRow: any[] = ['No', 'STUDENT NAME', 'M/F'];
-  for (let d = 1; d <= daysInMonth; d++) headerRow.push(d);
-  headerRow.push('H', 'S', 'I', 'A');
-
-  // Row 3: Day-of-week names
-  const dayRow: any[] = ['', 'DAY →', ''];
-  for (let d = 1; d <= daysInMonth; d++) {
-    dayRow.push(DAY_NAMES[new Date(y, b - 1, d).getDay()]);
-  }
-  dayRow.push('', 'SUMMARY', '', '');
-
-  const dataRows = [titleRow, headerRow, dayRow];
-  const siswaValues = Object.values(siswaMap);
-  const totalPerDay: Record<number, number> = {};
-  let no = 1;
-
-  for (const s of siswaValues) {
-    const row: any[] = [no++, s.nama, '-'];
-    let H = 0, S = 0, I = 0, A = 0;
-    for (let d = 1; d <= daysInMonth; d++) {
-      const st = s.days[d];
-      const dayOfWeek = new Date(y, b - 1, d).getDay();
-      if (dayOfWeek === 0) { row.push('—'); } // Sunday
-      else if (!st) { row.push(''); }
-      else if (st === 'hadir') { row.push('H'); H++; totalPerDay[d] = (totalPerDay[d] || 0) + 1; }
-      else if (st === 'sakit') { row.push('S'); S++; }
-      else if (st === 'izin') { row.push('I'); I++; }
-      else { row.push('A'); A++; }
-    }
-    row.push(H, S, I, A);
-    dataRows.push(row);
-  }
-
-  // Total Present row
-  const totalRow: any[] = ['', 'TOTAL PRESENT', ''];
-  let totH = 0, totS = 0, totI = 0, totA = 0;
-  for (const s of siswaValues) {
-    for (const st of Object.values(s.days)) {
-      if (st === 'hadir') totH++;
-      else if (st === 'sakit') totS++;
-      else if (st === 'izin') totI++;
-      else totA++;
-    }
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dayOfWeek = new Date(y, b - 1, d).getDay();
-    totalRow.push(dayOfWeek === 0 ? '—' : (totalPerDay[d] || '-'));
-  }
-  totalRow.push(totH, totS, totI, totA);
-  dataRows.push(totalRow);
-
+  const namaSekolah = (kelas as any).sekolah?.nama || 'Al Fakhir School';
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(dataRows);
-  ws['!cols'] = [{ wch: 4 }, { wch: 28 }, { wch: 5 }, ...Array(daysInMonth).fill({ wch: 5 }), { wch: 5 }, { wch: 5 }, { wch: 5 }, { wch: 5 }];
-  // Merge title row across all columns
   const totalCols = 3 + daysInMonth + 4;
-  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } }];
-  XLSX.utils.book_append_sheet(wb, ws, `Rekap ${namaBulan}`);
+
+  const buildSheet = (mapelNama: string, dayMap: Record<string, Record<number, string>>) => {
+    const titleRow = [`STUDENT ATTENDANCE LIST - ${namaSekolah} - ${kelas.nama} - ${mapelNama} - ${namaBulan}`];
+    const headerRow: any[] = ['No', 'STUDENT NAME', 'M/F'];
+    for (let d = 1; d <= daysInMonth; d++) headerRow.push(d);
+    headerRow.push('H', 'S', 'I', 'A');
+
+    const dayRow: any[] = ['', 'DAY →', ''];
+    for (let d = 1; d <= daysInMonth; d++) dayRow.push(DAY_NAMES[new Date(y, b - 1, d).getDay()]);
+    dayRow.push('', 'SUMMARY', '', '');
+
+    const dataRows: any[][] = [titleRow, headerRow, dayRow];
+    const totalPerDay: Record<number, number> = {};
+    let no = 1, totH = 0, totS = 0, totI = 0, totA = 0;
+
+    for (const s of siswaList) {
+      const sdays = dayMap[s.id] || {};
+      const row: any[] = [no++, s.nama, '-'];
+      let H = 0, S = 0, I = 0, A = 0;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dow = new Date(y, b - 1, d).getDay();
+        if (dow === 0) { row.push('—'); continue; }
+        const st = sdays[d];
+        if (!st) { row.push(''); }
+        else if (st === 'hadir') { row.push('H'); H++; totalPerDay[d] = (totalPerDay[d] || 0) + 1; }
+        else if (st === 'sakit') { row.push('S'); S++; }
+        else if (st === 'izin') { row.push('I'); I++; }
+        else { row.push('A'); A++; }
+      }
+      row.push(H, S, I, A);
+      totH += H; totS += S; totI += I; totA += A;
+      dataRows.push(row);
+    }
+
+    const totalRow: any[] = ['', 'TOTAL PRESENT', ''];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dow = new Date(y, b - 1, d).getDay();
+      totalRow.push(dow === 0 ? '—' : (totalPerDay[d] || 0));
+    }
+    totalRow.push(totH, totS, totI, totA);
+    dataRows.push(totalRow);
+
+    const ws = XLSX.utils.aoa_to_sheet(dataRows);
+    ws['!cols'] = [{ wch: 4 }, { wch: 30 }, { wch: 5 }, ...Array(daysInMonth).fill({ wch: 4 }), { wch: 5 }, { wch: 5 }, { wch: 5 }, { wch: 5 }];
+    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } }];
+    return ws;
+  };
+
+  if (mapelList.length === 0) {
+    // Fallback: single sheet no mapel data
+    const ws = buildSheet('SEMUA', {});
+    XLSX.utils.book_append_sheet(wb, ws, `Rekap ${namaBulan}`);
+  } else {
+    for (const mp of mapelList) {
+      const ws = buildSheet(mp.nama, byMapel[mp.id] || {});
+      const sheetName = mp.nama.substring(0, 31); // Excel max 31 chars
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    }
+  }
 
   const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-  const filename = `Rekap_Absensi_${kelas.nama.replace(/\s+/g, '_')}_${namaBulan.replace(/\s+/g, '_')}.xlsx`;
+  const filename = `Absensi_${kelas.nama.replace(/\s+/g, '_')}_${namaBulan.replace(/\s+/g, '_')}.xlsx`;
 
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
