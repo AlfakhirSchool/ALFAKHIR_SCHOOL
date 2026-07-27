@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
 const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-const emptyForm = { kelas_id: '', mata_pelajaran_id: '', hari: 'Senin', jam_mulai: '', jam_selesai: '', ruangan: '' };
+const emptyForm = { kelas_id: '', mata_pelajaran_id: '', hari: 'Senin', jam_mulai: '', jam_selesai: '' };
 
 export default function JadwalPage() {
   const qc = useQueryClient();
@@ -60,7 +60,7 @@ export default function JadwalPage() {
   });
 
   const openEdit = (j: any) => {
-    setForm({ kelas_id: j.kelas_id, mata_pelajaran_id: j.mata_pelajaran_id, hari: j.hari, jam_mulai: j.jam_mulai, jam_selesai: j.jam_selesai, ruangan: j.ruangan || '' });
+    setForm({ kelas_id: j.kelas_id, mata_pelajaran_id: j.mata_pelajaran_id, hari: j.hari, jam_mulai: j.jam_mulai, jam_selesai: j.jam_selesai });
     setEditId(j.id); setShowForm(true); setErr('');
   };
 
@@ -118,11 +118,6 @@ export default function JadwalPage() {
                   <option value="">-- Pilih Mapel --</option>
                   {(mapelList as any[]).map((m: any) => <option key={m.id} value={m.id}>{m.nama}</option>)}
                 </select>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-600 block mb-1">Ruangan</label>
-                <input value={form.ruangan} onChange={e => setForm(f => ({ ...f, ruangan: e.target.value }))}
-                  placeholder="Kelas 1A" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]" />
               </div>
             </div>
             {err && <p className="mt-3 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{err}</p>}
