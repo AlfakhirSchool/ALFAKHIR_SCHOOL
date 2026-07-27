@@ -74,7 +74,7 @@ export default function LoginPage() {
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* Dark overlay so text stays readable over photo */}
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/65" />
         <div className="absolute top-[-80px] left-[-80px] w-64 h-64 rounded-full opacity-10" style={{ backgroundColor: jenjang.accent }} />
         <div className="absolute bottom-[-60px] right-[-60px] w-80 h-80 rounded-full opacity-10" style={{ backgroundColor: jenjang.accent }} />
 
@@ -116,8 +116,8 @@ export default function LoginPage() {
           transition={{ delay: 0.4, duration: 0.6 }}
         >
           <h2 className="text-white text-2xl font-bold tracking-wide">{jenjang.name}</h2>
-          <p className="text-sm mt-2 tracking-widest uppercase" style={{ color: jenjang.accent }}>{jenjang.sub}</p>
-          <p className="text-gray-400 text-sm mt-6 leading-relaxed max-w-xs">
+          <p className="text-sm mt-2 tracking-widest uppercase text-white/80">{jenjang.sub}</p>
+          <p className="text-white/60 text-sm mt-6 leading-relaxed max-w-xs">
             Sistem Informasi Manajemen Sekolah — Al Fakhir School
           </p>
         </motion.div>

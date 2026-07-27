@@ -53,15 +53,13 @@ export default function LoginPage() {
 
       {/* Left panel */}
       <motion.div
-        className="hidden lg:flex w-[45%] flex-col items-center justify-center relative overflow-hidden p-12" style={{ background: 'linear-gradient(135deg, #0d6e6a 0%, #1B8B87 50%, #134E4A 100%)' }}
+        className="hidden lg:flex w-[45%] flex-col items-center justify-center relative overflow-hidden p-12"
+        style={{ backgroundImage: 'url(/school-bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
         initial={{ x: -60, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
-        {/* Background circles */}
-        <div className="absolute top-[-80px] left-[-80px] w-64 h-64 rounded-full bg-[#1B8B87]/10" />
-        <div className="absolute bottom-[-60px] right-[-60px] w-80 h-80 rounded-full bg-[#1B8B87]/10" />
-        <div className="absolute top-1/2 left-[-40px] w-32 h-32 rounded-full bg-[#1B8B87]/5" />
+        <div className="absolute inset-0 bg-black/65" />
 
         {/* Floating logo */}
         <motion.div
@@ -99,8 +97,8 @@ export default function LoginPage() {
           transition={{ delay: 0.4, duration: 0.6 }}
         >
           <h2 className="text-white text-2xl font-bold tracking-wide">Al Fakhir School</h2>
-          <p className="text-[#1B8B87] text-sm mt-2 tracking-widest uppercase">Portal Guru</p>
-          <p className="text-gray-400 text-sm mt-6 leading-relaxed max-w-xs">
+          <p className="text-white/80 text-sm mt-2 tracking-widest uppercase">Portal Guru</p>
+          <p className="text-white/60 text-sm mt-6 leading-relaxed max-w-xs">
             SD/SMP/SMA Islam Modern Al Fakhir — Membentuk generasi berakhlak dan berprestasi
           </p>
         </motion.div>
