@@ -52,9 +52,9 @@ const levelMenu = (level: string): MenuItem[] => [
 ];
 
 const LEVEL_COLOR: Record<string, string> = {
-  SD:  '#F97316',
-  SMP: '#1B8B87',
-  SMA: '#3B82F6',
+  SD:  '#FB923C',
+  SMP: '#2DD4BF',
+  SMA: '#60A5FA',
 };
 
 const LEVEL_LOGO: Record<string, string> = {
@@ -75,7 +75,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
   const level = user?.school_level as SchoolLevel;
 
   const menuItems = level ? levelMenu(level) : masterMenu;
-  const accentColor = level ? LEVEL_COLOR[level] : '#3B7FD1';
+  const accentColor = level ? LEVEL_COLOR[level] : '#60A5FA';
   const logo = level ? (LEVEL_LOGO[level] ?? '/logo.png') : '/logo.png';
   const schoolName = level ? (LEVEL_NAME[level] ?? 'Al Fakhir School') : 'Al Fakhir School';
 
