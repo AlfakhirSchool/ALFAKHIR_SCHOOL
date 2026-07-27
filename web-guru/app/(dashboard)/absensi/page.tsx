@@ -40,12 +40,17 @@ export default function AbsensiGuruPage() {
     setTimeout(() => setToast(null), 3500);
   };
 
-  const { data: kelasList = [] } = useQuery({
-    queryKey: ['my-kelas', user?.id],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+  const { data: myJadwal = [] } = useQuery({
+    queryKey: ['my-jadwal-all', user?.id],
+    queryFn: () => api.get('/jadwal-pelajaran').then(r => r.data.data || []),
     enabled: !!user,
     staleTime: 0,
   });
+
+  // Kelas unik dari jadwal guru ini
+  const kelasMap = new Map<string, any>();
+  (myJadwal as any[]).forEach(j => { if (j.kelas && !kelasMap.has(j.kelas_id)) kelasMap.set(j.kelas_id, j.kelas); });
+  const kelasList = Array.from(kelasMap.entries()).map(([id, k]) => ({ id, ...k }));
 
   const { data: jadwalList = [] } = useQuery({
     queryKey: ['jadwal-kelas', kelasId],
