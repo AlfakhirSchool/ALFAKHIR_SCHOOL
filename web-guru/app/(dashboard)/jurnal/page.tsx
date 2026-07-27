@@ -71,10 +71,7 @@ export default function JurnalPage() {
       return results.flat();
     },
   });
-  // Filter by spesialisasi if set, otherwise show all from school_levels
-  const mapelList = (mapelListRaw || []).filter((m: any) =>
-    spesSet.size === 0 || spesSet.has(m.nama.toLowerCase())
-  );
+  const mapelList = mapelListRaw || [];
 
   const saveJurnal = useMutation({
     mutationFn: () => editId

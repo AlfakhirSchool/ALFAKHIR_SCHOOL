@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Lock } from 'lucide-react';
 import { CheckCircle, AlertCircle, FileText, XCircle, Download, QrCode, MapPin, AlertTriangle, Smartphone } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -48,6 +48,14 @@ export default function AbsensiGuruPage() {
     queryFn: () => api.get('/jadwal-pelajaran', { params: { kelas_id: kelasId } }).then(r => r.data.data || []),
     enabled: !!kelasId,
   });
+
+  const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  useEffect(() => {
+    if (!jadwalList.length) return;
+    const hariIni = HARI[new Date().getDay()];
+    const jadwalHariIni = (jadwalList as any[]).find(j => j.hari === hariIni);
+    if (jadwalHariIni) setJadwalId(jadwalHariIni.id);
+  }, [jadwalList]);
 
   const loadPersiapan = useMutation({
     mutationFn: () => api.get('/absensi/persiapan-guru', { params: { jadwal_pelajaran_id: jadwalId, tanggal } }),
