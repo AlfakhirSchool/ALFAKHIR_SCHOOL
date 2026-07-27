@@ -19,6 +19,8 @@ const getStatsForLevel = async (level: string): Promise<{ sekolahId?: string; na
     Absensi.count({
       where: { tanggal: new Date().toISOString().split('T')[0], status: 'hadir' },
       include: [{ model: Siswa, as: 'siswa', where: { kelas_id: { [Op.in]: kelasIds } }, attributes: [] }],
+      distinct: true,
+      col: 'siswa_id',
     }) as Promise<number>,
   ]);
 
