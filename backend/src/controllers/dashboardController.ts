@@ -17,7 +17,7 @@ const getStatsForLevel = async (level: string): Promise<{ sekolahId?: string; na
   const [totalSiswa, absensiHariIni] = await Promise.all([
     Siswa.count({ where: { kelas_id: { [Op.in]: kelasIds } } }) as Promise<number>,
     Absensi.count({
-      where: { tanggal: new Date().toISOString().split('T')[0] },
+      where: { tanggal: new Date().toISOString().split('T')[0], status: 'hadir' },
       include: [{ model: Siswa, as: 'siswa', where: { kelas_id: { [Op.in]: kelasIds } }, attributes: [] }],
     }) as Promise<number>,
   ]);
