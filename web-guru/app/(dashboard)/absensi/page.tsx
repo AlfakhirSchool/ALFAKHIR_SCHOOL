@@ -5,6 +5,7 @@ import { Lock } from 'lucide-react';
 import { CheckCircle, AlertCircle, FileText, XCircle, Download, QrCode, MapPin, AlertTriangle, Smartphone } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
+import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
 const STATUS_STYLE: Record<string, string> = {
@@ -23,6 +24,7 @@ const STATUS_ICON: Record<string, import('react').ReactNode> = {
 type AbsensiRow = { siswa_id: string; nama_siswa: string; nis: string; status_gate: string; ket_gate: string; absensi_id: string | null; status_guru: string | null; catatan: string | null };
 
 export default function AbsensiGuruPage() {
+  const { user } = useAuthStore();
   const today = new Date().toISOString().split('T')[0];
   const [step, setStep] = useState<'select' | 'input' | 'done'>('select');
   const [jadwalId, setJadwalId] = useState('');
@@ -39,8 +41,10 @@ export default function AbsensiGuruPage() {
   };
 
   const { data: kelasList = [] } = useQuery({
-    queryKey: ['my-kelas'],
+    queryKey: ['my-kelas', user?.id],
     queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    enabled: !!user,
+    staleTime: 0,
   });
 
   const { data: jadwalList = [] } = useQuery({
