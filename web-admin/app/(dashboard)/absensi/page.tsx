@@ -120,7 +120,7 @@ export default function AbsensiKelasPage() {
               >
                 <option value="">— Pilih Kelas —</option>
                 {kelasList.map((k: any) => (
-                  <option key={k.id} value={k.id}>{k.nama} ({k.sekolah?.nama || k.jenjang})</option>
+                  <option key={k.id} value={k.id}>{k.nama}{k.tingkat ? ` Kelas ${k.tingkat}` : ''} ({k.sekolah?.nama || k.jenjang})</option>
                 ))}
               </select>
             </div>

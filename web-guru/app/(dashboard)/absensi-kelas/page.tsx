@@ -48,10 +48,11 @@ export default function AbsensiKelasGuruPage() {
   });
 
   useEffect(() => {
+    if (!(siswaList as any[]).length) return;
     const init: Record<string, string> = {};
     (siswaList as any[]).forEach((s: any) => { init[s.id] = 'hadir'; });
     setStatusMap(init);
-  }, [siswaList]);
+  }, [kelasId, (siswaList as any[]).length]);
 
   const simpanMut = useMutation({
     mutationFn: () => api.post('/absensi/bulk-kelas', {
