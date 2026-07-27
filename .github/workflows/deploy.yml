@@ -29,7 +29,7 @@ jobs:
       - name: Rebuild & restart services
         run: |
           cd /root/alfakhir
-          docker compose -f docker-compose.prod.yml up -d --build backend web-admin web-guru
+          docker compose -f docker-compose.prod.yml up -d --build --remove-orphans backend web-admin web-guru
           docker image prune -f
 
       - name: Cek status container
