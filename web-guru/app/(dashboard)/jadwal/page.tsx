@@ -24,8 +24,13 @@ export default function JadwalPage() {
   });
 
   const { data: kelasList = [] } = useQuery({
-    queryKey: ['kelas-list'],
-    queryFn: () => api.get('/kelas?all=1').then(r => r.data.data || []),
+    queryKey: ['kelas-list', user?.school_levels],
+    queryFn: async () => {
+      const all: any[] = await api.get('/kelas?all=1').then(r => r.data.data || []);
+      const levels = user?.school_levels || [];
+      if (levels.length === 0) return all;
+      return all.filter((k: any) => levels.includes(k.sekolah?.level));
+    },
   });
 
   const { data: mapelList = [] } = useQuery({
