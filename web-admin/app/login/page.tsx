@@ -115,9 +115,9 @@ export default function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.6 }}
         >
-          <h2 className="text-white text-2xl font-bold tracking-wide">{jenjang.name}</h2>
-          <p className="text-sm mt-2 tracking-widest uppercase text-white">{jenjang.sub}</p>
-          <p className="text-white text-sm mt-6 leading-relaxed max-w-xs">
+          <h2 className="text-white text-2xl font-bold tracking-wide drop-shadow-lg">{jenjang.name}</h2>
+          <p className="text-sm mt-2 tracking-widest uppercase text-white drop-shadow">{jenjang.sub}</p>
+          <p className="text-white text-sm mt-6 leading-relaxed max-w-xs drop-shadow">
             Sistem Informasi Manajemen Sekolah — Al Fakhir School
           </p>
         </motion.div>
