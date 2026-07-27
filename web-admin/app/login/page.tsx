@@ -11,12 +11,12 @@ const DOMAIN = '@alfakhirschool.sch.id';
 type JenjangInfo = { logo: string; name: string; sub: string; accent: string; panelBg: string };
 
 const getJenjangFromHostname = (): JenjangInfo => {
-  if (typeof window === 'undefined') return { logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1A2332' };
+  if (typeof window === 'undefined') return { logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1B4F72' };
   const h = window.location.hostname;
-  if (h.startsWith('admin-sd.'))  return { logo: '/logo.png', name: 'SD Islam Al-Fakhir',  sub: 'Admin SD',  accent: '#F97316', panelBg: '#7C2D12' };
-  if (h.startsWith('admin-smp.')) return { logo: '/logo.png', name: 'SMP Islam Al-Fakhir', sub: 'Admin SMP', accent: '#1B8B87', panelBg: '#134E4A' };
-  if (h.startsWith('admin-sma.')) return { logo: '/logo.png', name: 'SMA Islam Al-Fakhir', sub: 'Admin SMA', accent: '#3B82F6', panelBg: '#1E3A8A' };
-  return { logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1A2332' };
+  if (h.startsWith('admin-sd.'))  return { logo: '/logo.png', name: 'SD Islam Al-Fakhir',  sub: 'Admin SD',  accent: '#F97316', panelBg: '#C2440E' };
+  if (h.startsWith('admin-smp.')) return { logo: '/logo.png', name: 'SMP Islam Al-Fakhir', sub: 'Admin SMP', accent: '#1B8B87', panelBg: '#0D9488' };
+  if (h.startsWith('admin-sma.')) return { logo: '/logo.png', name: 'SMA Islam Al-Fakhir', sub: 'Admin SMA', accent: '#3B82F6', panelBg: '#2563EB' };
+  return { logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1B4F72' };
 };
 
 export default function LoginPage() {
@@ -28,7 +28,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
-  const [jenjang, setJenjang] = useState<JenjangInfo>({ logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1A2332' });
+  const [jenjang, setJenjang] = useState<JenjangInfo>({ logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1B4F72' });
 
   useEffect(() => { setJenjang(getJenjangFromHostname()); }, []);
 
