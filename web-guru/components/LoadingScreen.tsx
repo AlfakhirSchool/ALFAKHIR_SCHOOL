@@ -7,7 +7,7 @@ export default function LoadingScreen({ show }: { show: boolean }) {
     <AnimatePresence>
       {show && (
         <motion.div
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#1A2332]"
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.5, ease: 'easeInOut' } }}
         >
@@ -40,7 +40,7 @@ export default function LoadingScreen({ show }: { show: boolean }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            <p className="text-white font-bold text-xl tracking-wide">Al Fakhir School</p>
+            <p className="text-[#1A2332] font-bold text-xl tracking-wide">Al Fakhir School</p>
             <p className="text-[#1B8B87] text-sm mt-1 tracking-widest uppercase">Guru Dashboard</p>
           </motion.div>
 

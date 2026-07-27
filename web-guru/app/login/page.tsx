@@ -53,7 +53,7 @@ export default function LoginPage() {
 
       {/* Left panel */}
       <motion.div
-        className="hidden lg:flex w-[45%] bg-[#1A2332] flex-col items-center justify-center relative overflow-hidden p-12"
+        className="hidden lg:flex w-[45%] flex-col items-center justify-center relative overflow-hidden p-12" style={{ background: 'linear-gradient(135deg, #0d6e6a 0%, #1B8B87 50%, #134E4A 100%)' }}
         initial={{ x: -60, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
