@@ -8,6 +8,7 @@ import {
   LayoutDashboard, Users, GraduationCap, School, BookOpen, Calendar,
   DoorOpen, CreditCard, ClipboardCheck, FileText, Wallet, BookMarked,
   BarChart3, UserCog, Search, Settings, Bell, MessageSquare,
+  PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
 
 type MenuItem = { href: string; icon: React.ReactNode; label: string };
@@ -86,40 +87,45 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
       {/* Header */}
-      <div className="p-3 border-b border-white/10 flex items-center gap-2 min-h-[64px]">
-        <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-white/90 flex items-center justify-center">
-          <img src={logo} alt="Logo" className="w-full h-full object-contain"  />
-        </div>
-        {!collapsed && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-            className="flex-1 overflow-hidden"
-          >
-            <p className="font-bold text-sm leading-tight whitespace-nowrap">{schoolName}</p>
-            <p className="text-xs whitespace-nowrap" style={{ color: accentColor }}>
-              {level ? `Admin ${level}` : 'Admin Control Center'}
-            </p>
-          </motion.div>
+      <div className="border-b border-white/10 min-h-[64px] flex items-center">
+        {collapsed ? (
+          <div className="w-full flex flex-col items-center gap-2 py-3">
+            <div className="w-9 h-9 rounded-lg overflow-hidden bg-white/90 flex items-center justify-center">
+              <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+            </div>
+            <button
+              onClick={onToggle}
+              className="flex items-center justify-center w-8 h-8 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              title="Buka sidebar"
+            >
+              <PanelLeftOpen size={17} />
+            </button>
+          </div>
+        ) : (
+          <div className="px-3 w-full flex items-center gap-2">
+            <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-white/90 flex items-center justify-center">
+              <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1 overflow-hidden"
+            >
+              <p className="font-bold text-sm leading-tight whitespace-nowrap">{schoolName}</p>
+              <p className="text-xs whitespace-nowrap" style={{ color: accentColor }}>
+                {level ? `Admin ${level}` : 'Admin Control Center'}
+              </p>
+            </motion.div>
+            <button
+              onClick={onToggle}
+              className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              title="Tutup sidebar"
+            >
+              <PanelLeftClose size={17} />
+            </button>
+          </div>
         )}
-        <button
-          onClick={onToggle}
-          className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-          title={collapsed ? 'Buka sidebar' : 'Tutup sidebar'}
-        >
-          <motion.svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="15" height="15" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" strokeWidth="2.5"
-            strokeLinecap="round" strokeLinejoin="round"
-            animate={{ rotate: collapsed ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <path d="M11 19l-7-7 7-7" />
-            <path d="M19 19l-7-7 7-7" />
-          </motion.svg>
-        </button>
       </div>
 
       {/* Navigation */}
