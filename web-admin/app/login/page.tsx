@@ -64,11 +64,17 @@ export default function LoginPage() {
       {/* Left panel */}
       <motion.div
         className="hidden lg:flex w-[45%] flex-col items-center justify-center relative overflow-hidden p-12"
-        style={{ backgroundColor: jenjang.panelBg }}
+        style={{
+          backgroundImage: 'url(/school-bg.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
         initial={{ x: -60, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
+        {/* Dark overlay so text stays readable over photo */}
+        <div className="absolute inset-0 bg-black/50" />
         <div className="absolute top-[-80px] left-[-80px] w-64 h-64 rounded-full opacity-10" style={{ backgroundColor: jenjang.accent }} />
         <div className="absolute bottom-[-60px] right-[-60px] w-80 h-80 rounded-full opacity-10" style={{ backgroundColor: jenjang.accent }} />
 
