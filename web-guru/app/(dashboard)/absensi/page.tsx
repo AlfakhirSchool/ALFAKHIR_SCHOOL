@@ -54,12 +54,13 @@ export default function AbsensiGuruPage() {
   });
 
   const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const hariTanggal = HARI[new Date(tanggal + 'T00:00:00').getDay()];
+  const jadwalHariIni = (jadwalList as any[]).filter(j => j.hari === hariTanggal);
+
   useEffect(() => {
-    if (!jadwalList.length) return;
-    const hariIni = HARI[new Date().getDay()];
-    const jadwalHariIni = (jadwalList as any[]).find(j => j.hari === hariIni);
-    if (jadwalHariIni) setJadwalId(jadwalHariIni.id);
-  }, [jadwalList]);
+    if (!jadwalHariIni.length) return;
+    setJadwalId(jadwalHariIni[0].id);
+  }, [jadwalList, tanggal]);
 
   const loadPersiapan = useMutation({
     mutationFn: () => api.get('/absensi/persiapan-guru', { params: { jadwal_pelajaran_id: jadwalId, tanggal } }),
@@ -168,9 +169,9 @@ export default function AbsensiGuruPage() {
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 disabled:opacity-50"
                 >
                   <option value="">— Pilih Jadwal —</option>
-                  {jadwalList.map((j: any) => (
+                  {jadwalHariIni.map((j: any) => (
                     <option key={j.id} value={j.id}>
-                      {j.mata_pelajaran?.nama || j.mataPelajaran?.nama} · {j.hari} {j.jam_mulai}–{j.jam_selesai}
+                      {j.mata_pelajaran?.nama || j.mataPelajaran?.nama} · {j.jam_mulai}–{j.jam_selesai}
                     </option>
                   ))}
                 </select>
