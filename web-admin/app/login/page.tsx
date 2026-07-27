@@ -134,14 +134,17 @@ export default function LoginPage() {
 
       {/* Right panel */}
       <motion.div
-        className="flex-1 flex items-center justify-center p-8"
+        className="flex-1 flex items-center justify-center p-6 bg-gradient-to-br from-[#f0f4f8] to-[#e8eef8]"
         initial={{ opacity: 0, x: 40 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="w-full max-w-md">
-          <div className="lg:hidden flex justify-center mb-8">
-            <img src={jenjang.logo} alt="Logo" className="w-20 h-20 object-contain" />
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+          <div className="lg:hidden flex flex-col items-center mb-6">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: `${jenjang.accent}18` }}>
+              <img src={jenjang.logo} alt="Logo" className="w-12 h-12 object-contain" />
+            </div>
+            <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: jenjang.accent }}>{jenjang.name}</p>
           </div>
 
           <motion.div
@@ -149,7 +152,7 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <h1 className="text-3xl font-bold text-[#1A2332]">Selamat datang</h1>
+            <h1 className="text-2xl font-bold text-[#1A2332]">Selamat datang</h1>
             <p className="text-gray-500 mt-1 text-sm">Masuk ke {jenjang.sub}</p>
           </motion.div>
 
@@ -242,7 +245,7 @@ export default function LoginPage() {
           </motion.form>
 
           <motion.p
-            className="mt-8 text-center text-xs text-gray-400"
+            className="mt-6 text-center text-xs text-gray-400"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
