@@ -11,12 +11,12 @@ const DOMAIN = '@alfakhirschool.sch.id';
 type JenjangInfo = { logo: string; name: string; sub: string; accent: string; panelBg: string };
 
 const getJenjangFromHostname = (): JenjangInfo => {
-  if (typeof window === 'undefined') return { logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1B4F72' };
+  if (typeof window === 'undefined') return { logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1565C0' };
   const h = window.location.hostname;
   if (h.startsWith('admin-sd.'))  return { logo: '/logo.png', name: 'SD Islam Al-Fakhir',  sub: 'Admin SD',  accent: '#F97316', panelBg: '#C2440E' };
   if (h.startsWith('admin-smp.')) return { logo: '/logo.png', name: 'SMP Islam Al-Fakhir', sub: 'Admin SMP', accent: '#1B8B87', panelBg: '#0D9488' };
   if (h.startsWith('admin-sma.')) return { logo: '/logo.png', name: 'SMA Islam Al-Fakhir', sub: 'Admin SMA', accent: '#3B82F6', panelBg: '#2563EB' };
-  return { logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1B4F72' };
+  return { logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1565C0' };
 };
 
 export default function LoginPage() {
@@ -28,7 +28,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
-  const [jenjang, setJenjang] = useState<JenjangInfo>({ logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1B4F72' });
+  const [jenjang, setJenjang] = useState<JenjangInfo>({ logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1565C0' });
 
   useEffect(() => { setJenjang(getJenjangFromHostname()); }, []);
 
@@ -77,7 +77,7 @@ export default function LoginPage() {
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1.2 }}
           className="relative z-10"
         >
-          <div className="w-36 h-36 relative flex items-center justify-center">
+          <div className="w-44 h-44 relative flex items-center justify-center">
             {/* Ripple rings */}
             {[0, 1, 2].map(i => (
               <motion.div
@@ -89,16 +89,17 @@ export default function LoginPage() {
                 transition={{ duration: 2, repeat: Infinity, delay: i * 0.65, ease: 'easeOut' }}
               />
             ))}
-            {/* Logo bloom entrance */}
-            <motion.img
-              src={jenjang.logo}
-              alt={jenjang.name}
-              className="w-full h-full object-contain relative z-10"
-              
-              initial={{ scale: 0, rotate: -180, opacity: 0 }}
-              animate={{ scale: 1, rotate: 0, opacity: 1 }}
-              transition={{ duration: 0.9, ease: [0.34, 1.56, 0.64, 1], delay: 0.3 }}
-            />
+            {/* White circle container so logo bg blends */}
+            <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center relative z-10 shadow-lg">
+              <motion.img
+                src={jenjang.logo}
+                alt={jenjang.name}
+                className="w-24 h-24 object-contain"
+                initial={{ scale: 0, rotate: -180, opacity: 0 }}
+                animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                transition={{ duration: 0.9, ease: [0.34, 1.56, 0.64, 1], delay: 0.3 }}
+              />
+            </div>
           </div>
         </motion.div>
 

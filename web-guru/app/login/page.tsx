@@ -69,7 +69,7 @@ export default function LoginPage() {
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1.2 }}
           className="relative z-10"
         >
-          <div className="w-36 h-36 relative flex items-center justify-center">
+          <div className="w-44 h-44 relative flex items-center justify-center">
             {[0, 1, 2].map(i => (
               <motion.div
                 key={i}
@@ -79,15 +79,16 @@ export default function LoginPage() {
                 transition={{ duration: 2, repeat: Infinity, delay: i * 0.65, ease: 'easeOut' }}
               />
             ))}
-            <motion.img
-              src="/logo.png"
-              alt="Al Fakhir School"
-              className="w-full h-full object-contain relative z-10"
-              
-              initial={{ scale: 0, rotate: -180, opacity: 0 }}
-              animate={{ scale: 1, rotate: 0, opacity: 1 }}
-              transition={{ duration: 0.9, ease: [0.34, 1.56, 0.64, 1], delay: 0.3 }}
-            />
+            <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center relative z-10 shadow-lg">
+              <motion.img
+                src="/logo.png"
+                alt="Al Fakhir School"
+                className="w-24 h-24 object-contain"
+                initial={{ scale: 0, rotate: -180, opacity: 0 }}
+                animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                transition={{ duration: 0.9, ease: [0.34, 1.56, 0.64, 1], delay: 0.3 }}
+              />
+            </div>
           </div>
         </motion.div>
 
