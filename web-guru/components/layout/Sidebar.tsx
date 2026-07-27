@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
-import { LayoutDashboard, ClipboardList, BookOpen, FileText, BarChart3, BookMarked, Users, Calendar, Settings, MessageSquare, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, ClipboardCheck, BookOpen, FileText, BarChart3, BookMarked, Users, Calendar, Settings, MessageSquare, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 const menuItems = [
-  { href: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/absensi',       icon: ClipboardList,   label: 'Absensi' },
+  { href: '/dashboard',      icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/absensi',        icon: ClipboardList,   label: 'Absensi' },
+  { href: '/absensi-kelas',  icon: ClipboardCheck,  label: 'Absensi Kelas' },
   { href: '/nilai',         icon: BookOpen,         label: 'Input Nilai' },
   { href: '/rapor',         icon: FileText,         label: 'Rapor Kelas' },
   { href: '/rekap-absensi', icon: BarChart3,        label: 'Rekap Absensi' },
