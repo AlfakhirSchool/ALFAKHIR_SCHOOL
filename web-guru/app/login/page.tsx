@@ -229,7 +229,7 @@ export default function LoginPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
           >
-            SD/SMP/SMA Islam Modern Al Fakhir © 2025–2026 · Developed by Feri
+            SD/SMP/SMA Islam Modern Al Fakhir © 2026 · Developed by Feri
           </motion.p>
         </div>
       </motion.div>
