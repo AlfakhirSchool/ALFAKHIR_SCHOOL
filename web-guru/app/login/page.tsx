@@ -26,16 +26,17 @@ export default function LoginPage() {
     const email = username.includes('@') ? username : `${username}${DOMAIN}`;
     try {
       const res = await api.post('/auth/login', { email, password });
-      const { user, accessToken, refreshToken, profile_detail } = res.data.data;
+      const { user, accessToken, refreshToken } = res.data.data;
       if (!['guru', 'admin'].includes(user.role)) {
         setError('Akses hanya untuk Guru');
         setLoading(false);
         return;
       }
+      const pd = user.profile_detail;
       const enrichedUser = {
         ...user,
-        school_levels: profile_detail?.school_levels || [],
-        spesialisasi: profile_detail?.spesialisasi || '',
+        school_levels: pd?.school_levels || [],
+        spesialisasi: pd?.spesialisasi || '',
       };
       login(enrichedUser, accessToken, refreshToken);
       sessionStorage.setItem('just_logged_in', '1');
