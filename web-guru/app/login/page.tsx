@@ -97,8 +97,8 @@ export default function LoginPage() {
           transition={{ delay: 0.4, duration: 0.6 }}
         >
           <h2 className="text-white text-2xl font-bold tracking-wide">Al Fakhir School</h2>
-          <p className="text-white/80 text-sm mt-2 tracking-widest uppercase">Portal Guru</p>
-          <p className="text-white/60 text-sm mt-6 leading-relaxed max-w-xs">
+          <p className="text-white text-sm mt-2 tracking-widest uppercase">Portal Guru</p>
+          <p className="text-white text-sm mt-6 leading-relaxed max-w-xs">
             SD/SMP/SMA Islam Modern Al Fakhir — Membentuk generasi berakhlak dan berprestasi
           </p>
         </motion.div>
