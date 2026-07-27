@@ -327,6 +327,40 @@ export const bulkGuru = async (req: AuthRequest, res: Response): Promise<void> =
   res.json({ success: true, message: `${listAbsensi.length} absensi berhasil disimpan` });
 };
 
+// Admin: bulk absensi seluruh kelas → propagate ke semua jadwal hari itu
+export const bulkKelas = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { kelas_id, tanggal, absensi: listAbsensi } = req.body as {
+    kelas_id: string;
+    tanggal: string;
+    absensi: Array<{ siswa_id: string; status: string; catatan?: string }>;
+  };
+  if (!kelas_id || !tanggal || !listAbsensi?.length) throw createError('Data tidak lengkap', 400);
+
+  const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const hariIni = HARI[new Date(tanggal).getDay()];
+
+  const jadwalList = await JadwalPelajaran.findAll({ where: { kelas_id, hari: hariIni } });
+  if (!jadwalList.length) throw createError(`Tidak ada jadwal untuk hari ${hariIni}`, 400);
+
+  let count = 0;
+  for (const jadwal of jadwalList) {
+    for (const item of listAbsensi) {
+      await Absensi.upsert({
+        siswa_id: item.siswa_id,
+        jadwal_pelajaran_id: (jadwal as any).id,
+        tanggal: new Date(tanggal),
+        status: item.status as any,
+        catatan: item.catatan || null,
+        waktu_hadir: item.status === 'hadir' ? new Date() : undefined,
+        created_by: req.user!.id,
+      } as any);
+      count++;
+    }
+  }
+
+  res.json({ success: true, message: `${listAbsensi.length} siswa × ${jadwalList.length} jadwal = ${count} absensi disimpan` });
+};
+
 // Wali kelas: rekap kelas yang diampu untuk tanggal tertentu
 export const rekapWaliKelas = async (req: AuthRequest, res: Response): Promise<void> => {
   const { tanggal } = req.query;

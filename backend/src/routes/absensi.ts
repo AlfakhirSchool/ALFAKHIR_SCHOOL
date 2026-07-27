@@ -17,6 +17,7 @@ router.get('/laporan', authorize('admin', 'guru'), absensiController.getLaporan)
 // Guru: persiapan absensi per jadwal (auto-fill dari gate), bulk submit
 router.get('/persiapan-guru', authorize('guru', 'admin'), absensiController.persiapanGuru);
 router.post('/bulk-guru', authorize('guru', 'admin'), absensiController.bulkGuru);
+router.post('/bulk-kelas', authorize('admin'), absensiController.bulkKelas);
 // Wali kelas: rekap kelas yang diampu
 router.get('/wali-kelas', authorize('guru', 'admin'), absensiController.rekapWaliKelas);
 // Download rekap bulanan Excel

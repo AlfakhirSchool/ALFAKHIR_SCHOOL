@@ -30,6 +30,7 @@ export default function AbsensiKelasPage() {
   const [editStatus, setEditStatus] = useState<string>('');
   const [editKet, setEditKet] = useState('');
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [statusOverride, setStatusOverride] = useState<Record<string, string>>({});
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-all'],
@@ -57,6 +58,13 @@ export default function AbsensiKelasPage() {
       qc.invalidateQueries({ queryKey: ['rekap-kelas'] });
     },
     onError: (e: any) => showToast(e.response?.data?.message || 'Gagal menyimpan', 'error'),
+  });
+
+  const bulkKelasMut = useMutation({
+    mutationFn: (absensi: Array<{ siswa_id: string; status: string }>) =>
+      api.post('/absensi/bulk-kelas', { kelas_id, tanggal, absensi }),
+    onSuccess: (res) => { showToast(res.data.message || 'Berhasil diterapkan ke semua mata pelajaran'); setStatusOverride({}); },
+    onError: (e: any) => showToast(e.response?.data?.message || 'Gagal menerapkan', 'error'),
   });
 
   const hapusKetMut = useMutation({
@@ -154,11 +162,28 @@ export default function AbsensiKelasPage() {
           <div className="bg-white rounded-xl shadow-sm p-12 text-center text-gray-400 text-sm">Memuat data...</div>
         ) : (
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-bold text-[#1A2332]">
-                Rekap — {new Date(tanggal + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
-              </h3>
-              <span className="text-xs text-gray-400">{rows.length} siswa</span>
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <h3 className="font-bold text-[#1A2332]">
+                  Rekap — {new Date(tanggal + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">{rows.length} siswa</p>
+              </div>
+              {rows.length > 0 && (
+                <button
+                  onClick={() => {
+                    const absensi = rows.map((r: any) => ({
+                      siswa_id: r.siswa_id,
+                      status: statusOverride[r.siswa_id] || r.keterangan_status || r.status || 'alfa',
+                    }));
+                    bulkKelasMut.mutate(absensi);
+                  }}
+                  disabled={bulkKelasMut.isPending}
+                  className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold rounded-xl disabled:opacity-50"
+                >
+                  {bulkKelasMut.isPending ? 'Menerapkan...' : '✓ Terapkan ke Semua Mata Pelajaran'}
+                </button>
+              )}
             </div>
             {rows.length === 0 ? (
               <div className="p-12 text-center text-gray-400 text-sm">Tidak ada siswa di kelas ini</div>
@@ -172,6 +197,7 @@ export default function AbsensiKelasPage() {
                       <th className="text-center px-4 py-3 font-semibold text-gray-600">Status</th>
                       <th className="text-center px-4 py-3 font-semibold text-gray-600">Waktu Scan</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-600">Keterangan</th>
+                      <th className="text-center px-4 py-3 font-semibold text-gray-600">Set Status</th>
                       <th className="text-center px-4 py-3 font-semibold text-gray-600">Aksi</th>
                     </tr>
                   </thead>
@@ -196,12 +222,30 @@ export default function AbsensiKelasPage() {
                             : <span className="text-gray-300">-</span>}
                         </td>
                         <td className="px-4 py-3 text-center">
+                          <div className="flex gap-1 justify-center">
+                            {(['hadir', 'sakit', 'izin', 'alfa'] as const).map(s => {
+                              const cur = statusOverride[r.siswa_id] || r.keterangan_status || r.status || 'alfa';
+                              return (
+                                <button key={s} onClick={() => setStatusOverride(prev => ({ ...prev, [r.siswa_id]: s }))}
+                                  className={`px-2 py-1 text-xs rounded-lg font-semibold border transition-colors ${cur === s
+                                    ? s === 'hadir' ? 'bg-green-100 text-green-700 border-green-300'
+                                    : s === 'sakit' ? 'bg-blue-100 text-blue-700 border-blue-300'
+                                    : s === 'izin'  ? 'bg-yellow-100 text-yellow-700 border-yellow-300'
+                                                    : 'bg-red-100 text-red-700 border-red-300'
+                                    : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100'}`}>
+                                  {s[0].toUpperCase()}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-center">
                           <div className="flex gap-1.5 justify-center">
                             <button
                               onClick={() => openEdit(r)}
                               className="px-3 py-1.5 bg-teal-50 text-teal-700 text-xs rounded-lg hover:bg-teal-100 font-medium"
                             >
-                              <Pencil size={12} className="inline mr-1" />Keterangan
+                              <Pencil size={12} className="inline mr-1" />Ket
                             </button>
                             {r.keterangan_status && (
                               <button
