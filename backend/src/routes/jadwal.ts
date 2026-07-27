@@ -37,6 +37,14 @@ router.post('/', authorize('admin', 'guru'), async (req: AuthRequest, res: Respo
       if (!guru) { res.status(400).json({ success: false, message: 'Data guru tidak ditemukan' }); return; }
       body.guru_id = (guru as any).id;
     }
+    // Cegah duplikat: cek jadwal sama sudah ada
+    const existing = await JadwalPelajaran.findOne({
+      where: { guru_id: body.guru_id, kelas_id: body.kelas_id, hari: body.hari, jam_mulai: body.jam_mulai },
+    });
+    if (existing) {
+      res.status(409).json({ success: false, message: 'Jadwal dengan guru, kelas, hari, dan jam yang sama sudah ada' });
+      return;
+    }
     const jadwal = await JadwalPelajaran.create(body);
     res.status(201).json({ success: true, data: jadwal });
   } catch (e: any) {

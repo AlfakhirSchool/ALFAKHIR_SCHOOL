@@ -16,7 +16,18 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
     }
   }
 
-  const jurnal = await JurnalGuru.create({ ...req.body, guru_id: guru.id, status: 'draft' });
+  // Cegah duplikat jurnal untuk guru+kelas+mapel+tanggal yang sama
+  if (req.body.kelas_id && req.body.mata_pelajaran_id && req.body.tanggal) {
+    const existing = await JurnalGuru.findOne({
+      where: { guru_id: (guru as any).id, kelas_id: req.body.kelas_id, mata_pelajaran_id: req.body.mata_pelajaran_id, tanggal: req.body.tanggal },
+    });
+    if (existing) {
+      res.status(409).json({ success: false, message: 'Jurnal untuk kelas, mata pelajaran, dan tanggal ini sudah ada', data: existing });
+      return;
+    }
+  }
+
+  const jurnal = await JurnalGuru.create({ ...req.body, guru_id: (guru as any).id, status: 'draft' });
   res.status(201).json({ success: true, message: 'Jurnal berhasil dibuat', data: jurnal });
 };
 
