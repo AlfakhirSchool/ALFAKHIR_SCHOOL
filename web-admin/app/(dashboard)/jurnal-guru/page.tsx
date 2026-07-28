@@ -131,7 +131,7 @@ export default function JurnalGuruAdminPage() {
                 <tr key={j.id} className="hover:bg-gray-50/50">
                   <td className="px-6 py-4 font-medium text-gray-800">{j.guru?.user?.nama}</td>
                   <td className="px-6 py-4 text-gray-500">{j.kelas?.nama}</td>
-                  <td className="px-6 py-4 text-gray-500">{j.mataPelajaran?.nama}</td>
+                  <td className="px-6 py-4 text-gray-500">{j.mata_pelajaran?.nama}</td>
                   <td className="px-6 py-4 text-gray-700 max-w-xs truncate">{j.topik_pelajaran}</td>
                   <td className="px-6 py-4 text-gray-500">{new Date(j.tanggal).toLocaleDateString('id-ID')}</td>
                   <td className="px-6 py-4">
@@ -178,7 +178,7 @@ export default function JurnalGuruAdminPage() {
               <div className="grid grid-cols-2 gap-3 text-xs text-gray-600">
                 <div><span className="font-medium block text-gray-500">Guru</span>{detail.guru?.user?.nama || '—'}</div>
                 <div><span className="font-medium block text-gray-500">Kelas</span>{detail.kelas?.nama || '—'}</div>
-                <div><span className="font-medium block text-gray-500">Mata Pelajaran</span>{detail.mataPelajaran?.nama || '—'}</div>
+                <div><span className="font-medium block text-gray-500">Mata Pelajaran</span>{detail.mata_pelajaran?.nama || '—'}</div>
                 <div><span className="font-medium block text-gray-500">Tanggal</span>{new Date(detail.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
               </div>
               {detail.deskripsi_pembelajaran && (

@@ -186,7 +186,7 @@ export const downloadExcel = async (req: AuthRequest, res: Response): Promise<vo
     include: [
       { model: Guru, as: 'guru', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
       { model: Kelas, as: 'kelas', where: Object.keys(kelasWhere).length ? kelasWhere : undefined, required: !!kelas_id },
-      { model: MataPelajaran, as: 'mataPelajaran' },
+      { model: MataPelajaran, as: 'mata_pelajaran' },
     ],
     order: [['tanggal', 'DESC']],
   });
@@ -195,7 +195,7 @@ export const downloadExcel = async (req: AuthRequest, res: Response): Promise<vo
     'Tanggal': j.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID') : '',
     'Guru': j.guru?.user?.nama || '',
     'Kelas': j.kelas?.nama || '',
-    'Mata Pelajaran': j.mataPelajaran?.nama || '',
+    'Mata Pelajaran': j.mata_pelajaran?.nama || '',
     'Topik': j.topik_pelajaran || '',
     'Tugas': j.deskripsi_pembelajaran || '',
     'Catatan Guru': j.hasil_pembelajaran || '',

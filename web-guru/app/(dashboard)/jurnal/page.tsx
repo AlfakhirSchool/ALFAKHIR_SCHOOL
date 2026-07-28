@@ -277,7 +277,7 @@ export default function JurnalPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => saveJurnal.mutate()}
-                  disabled={!form.topik_pelajaran || !form.kelas_id || saveJurnal.isPending}
+                  disabled={!form.topik_pelajaran || !form.kelas_id || !form.mata_pelajaran_id || saveJurnal.isPending}
                   className="flex-1 py-3 bg-[#1B8B87] text-white rounded-lg font-semibold hover:bg-[#156f6c] disabled:opacity-50"
                 >
                   {saveJurnal.isPending ? 'Menyimpan...' : 'Simpan sebagai Draft'}
