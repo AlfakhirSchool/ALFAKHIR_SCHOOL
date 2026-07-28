@@ -46,6 +46,12 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   const siswa = await Siswa.findByPk(siswa_id);
   if (!siswa) throw createError('Siswa tidak ditemukan', 404);
 
+  const duplikat = await Pembayaran.findOne({ where: { siswa_id, tahun_ajaran, jenis_biaya } });
+  if (duplikat) {
+    res.status(409).json({ success: false, message: `Tagihan ${jenis_biaya} tahun ${tahun_ajaran} untuk siswa ini sudah ada` });
+    return;
+  }
+
   // Generate Virtual Account (placeholder - di-replace oleh N8N workflow)
   const virtual_account = va_bank === 'bca'
     ? `${process.env.BCA_VA_PREFIX}${siswa.nisn}`

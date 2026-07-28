@@ -32,9 +32,11 @@ SERVICES="${1:-web-guru web-admin}"
 echo "Build service: $SERVICES"
 $COMPOSE build $SERVICES
 
-# 5. Restart HANYA service yang di-build (bukan semua)
+# 5. Stop dulu untuk hindari container name conflict, lalu up
 echo "Restart service..."
-$COMPOSE up -d --no-deps --force-recreate $SERVICES
+$COMPOSE stop $SERVICES
+$COMPOSE rm -f $SERVICES 2>/dev/null || true
+$COMPOSE up -d --no-deps $SERVICES
 
 # 6. Pastikan semua service lain masih running
 $COMPOSE up -d postgres redis backend 2>/dev/null || true

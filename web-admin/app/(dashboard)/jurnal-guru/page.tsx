@@ -142,7 +142,8 @@ export default function JurnalGuruAdminPage() {
                       <button onClick={() => setDetail(j)} className="text-[#3B7FD1] hover:underline text-xs">Detail</button>
                       {j.status === 'submitted' && (
                         <button onClick={() => approveJurnal.mutate(j.id)}
-                          className="text-green-600 hover:underline text-xs">
+                          disabled={approveJurnal.isPending}
+                          className="text-green-600 hover:underline text-xs disabled:opacity-50">
                           Approve
                         </button>
                       )}
