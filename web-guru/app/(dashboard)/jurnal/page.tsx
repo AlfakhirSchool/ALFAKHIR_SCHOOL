@@ -188,10 +188,10 @@ export default function JurnalPage() {
                       </p>
                     </div>
                     <div className="flex gap-2" onClick={e => e.stopPropagation()}>
-                      {j.status === 'draft' && (
+                      {j.status !== 'approved' && (
                         <>
                           <button onClick={() => openEdit(j)} className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50">Edit</button>
-                          <button onClick={() => submitJurnal.mutate(j.id)} disabled={submitJurnal.isPending} className="text-xs px-3 py-1.5 bg-[#1B8B87] text-white rounded-lg hover:bg-[#156f6c] disabled:opacity-50">Submit</button>
+                          {j.status === 'draft' && <button onClick={() => submitJurnal.mutate(j.id)} disabled={submitJurnal.isPending} className="text-xs px-3 py-1.5 bg-[#1B8B87] text-white rounded-lg hover:bg-[#156f6c] disabled:opacity-50">Submit</button>}
                         </>
                       )}
                       <button
@@ -315,10 +315,10 @@ export default function JurnalPage() {
                 <div><p className="text-xs font-medium text-gray-600 mb-1">Rencana Tindak Lanjut</p><p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{detailJurnal.rencana_tindak_lanjut}</p></div>
               )}
               <div className="flex gap-2 pt-2">
-                {detailJurnal.status === 'draft' && (
+                {detailJurnal.status !== 'approved' && (
                   <>
                     <button onClick={() => { openEdit(detailJurnal); setDetailJurnal(null); }} className="px-4 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Edit</button>
-                    <button onClick={() => { submitJurnal.mutate(detailJurnal.id); setDetailJurnal(null); }} className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm hover:bg-[#156f6c]">Submit</button>
+                    {detailJurnal.status === 'draft' && <button onClick={() => { submitJurnal.mutate(detailJurnal.id); setDetailJurnal(null); }} className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm hover:bg-[#156f6c]">Submit</button>}
                   </>
                 )}
                 <button onClick={() => { if (confirm('Hapus jurnal ini?')) { deleteJurnal.mutate(detailJurnal.id); setDetailJurnal(null); } }} className="px-4 py-2 border border-red-200 text-red-500 rounded-lg text-sm hover:bg-red-50 ml-auto">Hapus</button>
