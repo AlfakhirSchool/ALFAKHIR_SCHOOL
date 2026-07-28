@@ -306,15 +306,13 @@ export const bulkGuru = async (req: AuthRequest, res: Response): Promise<void> =
   if (!jadwal_pelajaran_id || !tanggal || !listAbsensi?.length) throw createError('Data tidak lengkap', 400);
 
   for (const item of listAbsensi) {
-    await Absensi.upsert({
-      siswa_id: item.siswa_id,
-      jadwal_pelajaran_id,
-      tanggal: new Date(tanggal),
-      status: item.status as any,
-      catatan: item.catatan || null,
-      waktu_hadir: item.status === 'hadir' ? new Date() : undefined,
-      created_by: req.user!.id,
-    } as any);
+    await sequelize.query(
+      `INSERT INTO absensi (id, siswa_id, jadwal_pelajaran_id, tanggal, status, catatan, waktu_hadir, qr_code_scanned, created_by, created_at)
+       VALUES (gen_random_uuid(), :siswa_id, :jid, :tgl, :status, :catatan, :waktu, false, :uid, NOW())
+       ON CONFLICT (siswa_id, jadwal_pelajaran_id, tanggal) DO UPDATE SET
+         status = EXCLUDED.status, catatan = EXCLUDED.catatan, waktu_hadir = EXCLUDED.waktu_hadir`,
+      { replacements: { siswa_id: item.siswa_id, jid: jadwal_pelajaran_id, tgl: tanggal, status: item.status, catatan: item.catatan || null, waktu: item.status === 'hadir' ? new Date() : null, uid: req.user!.id }, type: QueryTypes.INSERT }
+    );
   }
 
   try {
@@ -345,15 +343,13 @@ export const bulkKelas = async (req: AuthRequest, res: Response): Promise<void> 
   let count = 0;
   for (const jadwal of jadwalList) {
     for (const item of listAbsensi) {
-      await Absensi.upsert({
-        siswa_id: item.siswa_id,
-        jadwal_pelajaran_id: (jadwal as any).id,
-        tanggal: new Date(tanggal),
-        status: item.status as any,
-        catatan: item.catatan || null,
-        waktu_hadir: item.status === 'hadir' ? new Date() : undefined,
-        created_by: req.user!.id,
-      } as any);
+      await sequelize.query(
+        `INSERT INTO absensi (id, siswa_id, jadwal_pelajaran_id, tanggal, status, catatan, waktu_hadir, qr_code_scanned, created_by, created_at)
+         VALUES (gen_random_uuid(), :siswa_id, :jid, :tgl, :status, :catatan, :waktu, false, :uid, NOW())
+         ON CONFLICT (siswa_id, jadwal_pelajaran_id, tanggal) DO UPDATE SET
+           status = EXCLUDED.status, catatan = EXCLUDED.catatan, waktu_hadir = EXCLUDED.waktu_hadir`,
+        { replacements: { siswa_id: item.siswa_id, jid: (jadwal as any).id, tgl: tanggal, status: item.status, catatan: item.catatan || null, waktu: item.status === 'hadir' ? new Date() : null, uid: req.user!.id }, type: QueryTypes.INSERT }
+      );
       count++;
     }
   }
