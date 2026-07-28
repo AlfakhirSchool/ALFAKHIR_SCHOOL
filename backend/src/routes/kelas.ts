@@ -51,10 +51,14 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
 });
 
 router.post('/', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
-  // Level admin hanya bisa tambah kelas di sekolahnya
   if (req.user?.school_level) {
     const sid = await getSekolahIdForLevel(req.user.school_level);
     req.body.sekolah_id = sid;
+  }
+  const existing = await Kelas.findOne({ where: { nama: req.body.nama, sekolah_id: req.body.sekolah_id, tahun_ajaran: req.body.tahun_ajaran } });
+  if (existing) {
+    res.status(409).json({ success: false, message: `Kelas "${req.body.nama}" sudah ada di sekolah ini untuk tahun ajaran ${req.body.tahun_ajaran}` });
+    return;
   }
   const kelas = await Kelas.create(req.body);
   res.status(201).json({ success: true, data: kelas });
