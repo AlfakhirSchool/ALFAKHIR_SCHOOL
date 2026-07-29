@@ -59,17 +59,18 @@ export const getById = async (req: AuthRequest, res: Response): Promise<void> =>
 };
 
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { email, password, nama, nip, spesialisasi, no_telp, school_levels } = req.body;
+  const { password, nama, nip, spesialisasi, no_telp, school_levels } = req.body;
 
-  const existing = await User.findOne({ where: { email } });
-  if (existing) {
-    res.status(400).json({ success: false, message: 'Email sudah terdaftar' });
-    return;
+  // Generate unique email from nama (used as identifier, not real email)
+  let autoEmail = nama;
+  let suffix = 2;
+  while (await User.findOne({ where: { email: autoEmail } })) {
+    autoEmail = `${nama} ${suffix++}`;
   }
 
   const autoPassword = password || '12345678';
   const password_hash = await bcrypt.hash(autoPassword, 10);
-  const user = await User.create({ email, password_hash, nama, role: 'guru' });
+  const user = await User.create({ email: autoEmail, password_hash, nama, role: 'guru' });
   const guru = await Guru.create({
     user_id: user.id,
     nip: nip || null,
@@ -86,8 +87,8 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nama,
-        email,
-        login: email,
+        email: req.body.email || null,
+        login: req.body.email || nama,
         password_default: autoPassword,
         nip: nip || '',
         spesialisasi: spesialisasi || '',
@@ -104,8 +105,9 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
   const guru = await Guru.findByPk(req.params.id as string, { include: [{ model: User, as: 'user' }] });
   if (!guru) throw createError('Guru tidak ditemukan', 404);
 
-  const { nama, email, nip, spesialisasi, no_telp, is_active, school_levels } = req.body;
-  await (guru as any).user.update({ nama, email, is_active });
+  const { nama, nip, spesialisasi, no_telp, is_active, school_levels } = req.body;
+  // email field = nama (identifier), update when nama changes
+  await (guru as any).user.update({ nama, email: nama, is_active });
   await guru.update({
     nip: nip || null,
     spesialisasi: spesialisasi || null,
