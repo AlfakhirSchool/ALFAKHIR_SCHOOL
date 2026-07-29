@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import User from '../models/User';
 import JurnalGuru from '../models/JurnalGuru';
 import Siswa from '../models/Siswa';
 import Pembayaran from '../models/Pembayaran';
 import Guru from '../models/Guru';
 import Kelas from '../models/Kelas';
+import sequelize from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 
 export const registerFcmToken = async (req: Request, res: Response): Promise<void> => {
@@ -83,6 +84,59 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
           id: 'pembayaran-masuk',
           type: 'pembayaran',
           message: `${pembayaranHariIni} pembayaran masuk hari ini`,
+          created_at: new Date(),
+          read: false,
+        });
+      }
+
+      // Absensi gerbang hari ini
+      const todayStr = new Date().toISOString().split('T')[0];
+      const gerbangFilter = schoolLevel
+        ? `AND sch.level = '${schoolLevel}'`
+        : '';
+      const [gerbangRow] = await sequelize.query<any>(
+        `SELECT
+           COUNT(*) FILTER (WHERE ag.waktu_masuk IS NOT NULL) AS hadir,
+           COUNT(s.id) AS total
+         FROM siswa s
+         JOIN kelas k ON s.kelas_id = k.id
+         JOIN sekolah sch ON k.sekolah_id = sch.id
+         LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id AND ag.tanggal = :tgl
+         JOIN users u ON s.user_id = u.id AND u.is_active = true
+         WHERE 1=1 ${gerbangFilter}`,
+        { replacements: { tgl: todayStr }, type: QueryTypes.SELECT },
+      );
+      if (gerbangRow && parseInt(gerbangRow.total) > 0) {
+        const hadir = parseInt(gerbangRow.hadir);
+        const total = parseInt(gerbangRow.total);
+        const alfa = total - hadir;
+        notifications.push({
+          id: 'absensi-gerbang',
+          type: 'absensi',
+          message: `${hadir}/${total} siswa sudah hadir hari ini`,
+          created_at: new Date(),
+          read: false,
+        });
+        if (alfa > 0) {
+          notifications.push({
+            id: 'absensi-alfa',
+            type: 'alfa',
+            message: `${alfa} siswa belum hadir / tidak ada keterangan`,
+            created_at: new Date(),
+            read: false,
+          });
+        }
+      }
+
+      // Pembayaran tunggakan (belum lunas, jatuh tempo lewat)
+      const tunggakan = await Pembayaran.count({
+        where: { status: { [Op.in]: ['pending', 'belum_bayar'] } },
+      });
+      if (tunggakan > 0) {
+        notifications.push({
+          id: 'pembayaran-tunggakan',
+          type: 'tagihan',
+          message: `${tunggakan} tagihan pembayaran belum lunas`,
           created_at: new Date(),
           read: false,
         });

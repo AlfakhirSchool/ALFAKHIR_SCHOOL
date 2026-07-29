@@ -1,9 +1,21 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
+
+type Notif = { id: string; type: string; message: string; created_at: string; read: boolean };
+
+const NOTIF_META: Record<string, { icon: string; color: string; bg: string }> = {
+  jurnal:    { icon: '📝', color: '#2563EB', bg: '#EFF6FF' },
+  siswa:     { icon: '👨‍🎓', color: '#16A34A', bg: '#F0FDF4' },
+  pembayaran:{ icon: '💳', color: '#9333EA', bg: '#FAF5FF' },
+  absensi:   { icon: '✅', color: '#1B8B87', bg: '#F0FDFA' },
+  alfa:      { icon: '⚠️', color: '#DC2626', bg: '#FEF2F2' },
+  tagihan:   { icon: '🔔', color: '#D97706', bg: '#FFFBEB' },
+  default:   { icon: '📌', color: '#6B7280', bg: '#F9FAFB' },
+};
 
 interface HeaderProps {
   title: string;
@@ -22,8 +34,34 @@ export default function Header({ title }: HeaderProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [adminList, setAdminList] = useState<any[]>([]);
   const [switching, setSwitching] = useState<string | null>(null);
+  const [notifs, setNotifs] = useState<Notif[]>([]);
+  const [notifLoading, setNotifLoading] = useState(false);
   const userRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  const fetchNotifs = useCallback(async () => {
+    setNotifLoading(true);
+    try {
+      const res = await api.get('/notifikasi');
+      setNotifs(res.data.data || []);
+    } catch {
+      // silently fail
+    } finally {
+      setNotifLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!notifOpen) return;
+    fetchNotifs();
+  }, [notifOpen, fetchNotifs]);
+
+  // Auto-refresh setiap 2 menit
+  useEffect(() => {
+    fetchNotifs();
+    const interval = setInterval(fetchNotifs, 120_000);
+    return () => clearInterval(interval);
+  }, [fetchNotifs]);
 
   const isMaster = !user?.school_level;
   const isAdmin = user?.role === 'admin';
@@ -104,19 +142,64 @@ export default function Header({ title }: HeaderProps) {
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+            {notifs.filter(n => !n.read).length > 0 && (
+              <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center px-0.5">
+                {notifs.filter(n => !n.read).length > 9 ? '9+' : notifs.filter(n => !n.read).length}
+              </span>
+            )}
           </button>
           {notifOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 z-50">
-              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                <span className="font-semibold text-sm text-[#1A2332]">Notifikasi</span>
-                <span className="text-xs text-gray-400">Hari ini</span>
-              </div>
-              <div className="py-2 max-h-64 overflow-y-auto">
-                <div className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
-                  <p className="text-sm font-medium text-gray-800">Sistem aktif</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Selamat datang di Admin Panel Al-Fakhir</p>
+            <div className="absolute right-0 mt-2 w-84 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden" style={{ width: 340 }}>
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-sm text-[#1A2332]">Notifikasi</span>
+                  {notifs.length > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{notifs.length}</span>
+                  )}
                 </div>
+                <button onClick={fetchNotifs} className="text-xs text-[#1B8B87] hover:underline">
+                  {notifLoading ? 'Memuat...' : 'Perbarui'}
+                </button>
+              </div>
+              <div className="py-1 max-h-80 overflow-y-auto">
+                {notifLoading && notifs.length === 0 ? (
+                  <div className="px-4 py-8 text-center">
+                    <div className="w-5 h-5 border-2 border-[#1B8B87] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-xs text-gray-400">Memuat notifikasi...</p>
+                  </div>
+                ) : notifs.length === 0 ? (
+                  <div className="px-4 py-8 text-center">
+                    <span className="text-3xl">🔔</span>
+                    <p className="text-sm text-gray-500 mt-2">Tidak ada notifikasi</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Semua aktivitas terkini akan muncul di sini</p>
+                  </div>
+                ) : (
+                  notifs.map((n) => {
+                    const meta = NOTIF_META[n.type] || NOTIF_META.default;
+                    return (
+                      <div key={n.id} className="px-4 py-3 hover:bg-gray-50 flex items-start gap-3 border-b border-gray-50 last:border-0 cursor-pointer">
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base" style={{ backgroundColor: meta.bg }}>
+                          {meta.icon}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-800 leading-snug">{n.message}</p>
+                          <p className="text-xs mt-0.5 font-medium" style={{ color: meta.color }}>
+                            {n.type === 'jurnal' ? 'Jurnal Guru' :
+                             n.type === 'siswa' ? 'Data Siswa' :
+                             n.type === 'pembayaran' ? 'Pembayaran' :
+                             n.type === 'absensi' ? 'Absensi Gerbang' :
+                             n.type === 'alfa' ? 'Perhatian' :
+                             n.type === 'tagihan' ? 'Tagihan' : 'Sistem'}
+                          </p>
+                        </div>
+                        {!n.read && <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: meta.color }} />}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50">
+                <p className="text-xs text-gray-400 text-center">Diperbarui otomatis setiap 2 menit</p>
               </div>
             </div>
           )}
