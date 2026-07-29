@@ -10,6 +10,7 @@ import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 import { kelasIdFilter } from '../utils/levelFilter';
 import { sendWAMessage, buildMasukMessage, buildPulangMessage } from '../utils/waNotification';
+import { propagateKelasToGerbang, setIzin } from '../utils/absensiSync';
 import logger from '../config/logger';
 
 const generateUniqueCode = (): string => {
@@ -105,6 +106,12 @@ export const scanQr = async (req: AuthRequest, res: Response): Promise<void> => 
       ? buildMasukMessage(siswaRow.nama_siswa, siswaRow.nama_sekolah, now)
       : buildPulangMessage(siswaRow.nama_siswa, siswaRow.nama_sekolah, now);
     for (const p of phones) if (p) sendWAMessage(p, msg).catch(e => logger.error({ event: 'wa_gate_compat', error: e.message }));
+    if (gateMode === 'masuk') {
+      const { propagateGerbangToKelas } = await import('../utils/absensiSync');
+      propagateGerbangToKelas(siswa_id, today, req.user!.id).catch(e =>
+        logger.error({ event: 'propagate_gate_compat_error', error: e.message })
+      );
+    }
     res.status(201).json({ success: true, message: `${siswaRow.nama_siswa} berhasil absensi ${gateMode} sekolah!`, data: { nama_siswa: siswaRow.nama_siswa, mode: gateMode, waktu: now } });
     return;
   }
@@ -315,6 +322,14 @@ export const bulkGuru = async (req: AuthRequest, res: Response): Promise<void> =
     );
   }
 
+  // Propagate siswa yang hadir ke absensi_gerbang (waktu_masuk) jika belum ada
+  const hadirIds = listAbsensi.filter(i => i.status === 'hadir').map(i => i.siswa_id);
+  if (hadirIds.length) {
+    propagateKelasToGerbang(hadirIds, tanggal, req.user!.id).catch(e =>
+      logger.error({ event: 'propagate_kelas_to_gerbang_error', error: e.message })
+    );
+  }
+
   try {
     await sequelize.query(
       `INSERT INTO activity_log (user_id, action, table_name, new_value) VALUES (:uid, 'bulk_absensi_guru', 'absensi', :val::jsonb)`,
@@ -323,6 +338,39 @@ export const bulkGuru = async (req: AuthRequest, res: Response): Promise<void> =
   } catch (_) {}
 
   res.json({ success: true, message: `${listAbsensi.length} absensi berhasil disimpan` });
+};
+
+// Guru/Admin: set izin untuk satu siswa — bisa ke semua jadwal hari itu atau satu jadwal saja
+export const izinBulk = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { siswa_id, tanggal, catatan, semua_jadwal, jadwal_pelajaran_id } = req.body as {
+    siswa_id: string;
+    tanggal: string;
+    catatan?: string;
+    semua_jadwal: boolean;
+    jadwal_pelajaran_id?: string;
+  };
+
+  if (!siswa_id || !tanggal || semua_jadwal === undefined) {
+    throw createError('siswa_id, tanggal, dan semua_jadwal wajib diisi', 400);
+  }
+  if (!semua_jadwal && !jadwal_pelajaran_id) {
+    throw createError('jadwal_pelajaran_id wajib jika semua_jadwal=false', 400);
+  }
+
+  const result = await setIzin({
+    siswa_id,
+    tanggal,
+    catatan: catatan || null,
+    semua_jadwal,
+    jadwal_pelajaran_id: jadwal_pelajaran_id || null,
+    created_by: req.user!.id,
+  });
+
+  const msg = semua_jadwal
+    ? `Izin dicatat untuk ${result.jadwal_count} jadwal pelajaran`
+    : 'Izin dicatat untuk 1 jadwal pelajaran';
+
+  res.json({ success: true, message: msg, data: result });
 };
 
 // Admin: bulk absensi seluruh kelas → propagate ke semua jadwal hari itu

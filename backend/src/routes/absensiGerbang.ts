@@ -5,6 +5,7 @@ import sequelize from '../config/database';
 import redis from '../config/redis';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
 import { sendWAMessage, buildMasukMessage, buildPulangMessage } from '../utils/waNotification';
+import { propagateGerbangToKelas } from '../utils/absensiSync';
 import logger from '../config/logger';
 
 const router = Router();
@@ -96,6 +97,11 @@ router.post('/masuk', authorize('admin'), async (req: AuthRequest, res: Response
     `UPDATE absensi_gerbang SET notif_masuk_sent = TRUE
      WHERE siswa_id = :sid AND tanggal = :today`,
     { replacements: { sid: siswa_id, today }, type: QueryTypes.UPDATE }
+  );
+
+  // Propagate hadir ke semua jadwal hari ini
+  propagateGerbangToKelas(siswa_id, today, req.user!.id).catch(e =>
+    logger.error({ event: 'propagate_gate_to_kelas_error', error: e.message })
   );
 
   res.json({
@@ -417,6 +423,13 @@ router.post('/scan', authenticate, async (req: AuthRequest, res: Response): Prom
     if (phone) {
       sendWAMessage(phone, message).catch((e) => logger.error({ event: 'wa_gate_scan_error', error: e.message }));
     }
+  }
+
+  // Propagate hadir ke semua jadwal hari ini (hanya untuk masuk)
+  if (mode === 'masuk') {
+    propagateGerbangToKelas(siswa_id, today, req.user!.id).catch(e =>
+      logger.error({ event: 'propagate_scan_to_kelas_error', error: e.message })
+    );
   }
 
   const lokasiMsg = lokasiValid === false
