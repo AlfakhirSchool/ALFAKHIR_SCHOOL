@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
-const DOMAIN = '@alfakhirschool.sch.id';
+const DOMAIN = '';
 
 
 export default function LoginPage() {
