@@ -38,7 +38,7 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
     today.setHours(0, 0, 0, 0);
 
     // Jurnal submitted - perlu approval (admin only)
-    if (role === 'admin' || role === 'superadmin') {
+    if (role === 'admin') {
       const jurnalWhere: any = { status: 'submitted' };
       if (schoolLevel) {
         // Filter by school level via guru association
