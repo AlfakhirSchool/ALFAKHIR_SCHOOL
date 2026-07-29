@@ -211,7 +211,7 @@ export default function SiswaPage() {
                       {siswa.kelas?.nama}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-600">{siswa.nis}</td>
+                  <td className="px-6 py-4 text-gray-600">{siswa.nis || <span className="text-gray-400 italic text-xs">Belum ada NIS</span>}</td>
                   <td className="px-6 py-4">
                     <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded text-gray-700">
                       {siswa.user?.password_default || (siswa.nis ? siswa.nis.slice(-4) : '—')}

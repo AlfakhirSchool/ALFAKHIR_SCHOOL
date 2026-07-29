@@ -139,23 +139,24 @@ async function doImportRows(rows: { nama: string; kelas_nama: string; nis: strin
     const { nama, kelas_nama } = row;
     let { nis } = row;
     if (!nama || !kelas_nama) { results.push({ nama: nama || '?', nis: nis || '?', status: 'skipped', reason: 'Data tidak lengkap' }); continue; }
-    // Auto-generate NIS sementara jika kosong
-    if (!nis) nis = `TMP${Date.now()}${idx}`;
     // Coba exact match dulu, fallback ke contains search
     let kelas = await Kelas.findOne({ where: { nama: { [Op.iLike]: kelas_nama } } });
     if (!kelas) kelas = await Kelas.findOne({ where: { nama: { [Op.iLike]: `%${kelas_nama}%` } } });
-    if (!kelas) { results.push({ nama, nis, status: 'skipped', reason: `Kelas "${kelas_nama}" tidak ditemukan` }); continue; }
+    if (!kelas) { results.push({ nama, nis: nis || '', status: 'skipped', reason: `Kelas "${kelas_nama}" tidak ditemukan` }); continue; }
     // Cek duplikat nama di kelas yang sama
     const existingByNama = await Siswa.findOne({ where: { kelas_id: (kelas as any).id }, include: [{ model: User, as: 'user', where: { nama: { [Op.iLike]: nama } } }] });
-    if (existingByNama) { results.push({ nama, nis, status: 'skipped', reason: `Siswa "${nama}" sudah ada di kelas ${(kelas as any).nama}` }); continue; }
-    const autoEmail = `${nis}@siswa.alfakhir.sch.id`;
-    if (await User.findOne({ where: { email: autoEmail } })) { results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' }); continue; }
-    if (await Siswa.findOne({ where: { nis } })) { results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' }); continue; }
-    const autoPassword = nis.slice(-4);
+    if (existingByNama) { results.push({ nama, nis: nis || '', status: 'skipped', reason: `Siswa "${nama}" sudah ada di kelas ${(kelas as any).nama}` }); continue; }
+    if (nis) {
+      if (await User.findOne({ where: { email: `${nis}@siswa.alfakhir.sch.id` } })) { results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' }); continue; }
+      if (await Siswa.findOne({ where: { nis } })) { results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' }); continue; }
+    }
+    const namaSlug = nama.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z.]/g, '');
+    const autoEmail = nis ? `${nis}@siswa.alfakhir.sch.id` : `${namaSlug}.${Date.now()}@siswa.alfakhir.sch.id`;
+    const autoPassword = nis ? nis.slice(-4) : Math.random().toString(36).slice(-4);
     const is_active = !row.status || row.status.toUpperCase() !== 'TIDAK AKTIF';
     const password_hash = await bcrypt.hash(autoPassword, 10);
-    const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa', password_default: autoPassword, is_active } as any);
-    await Siswa.create({ user_id: user.id, kelas_id: (kelas as any).id, nisn: nis, nis, no_induk: nis, jenis_kelamin: row.jenis_kelamin || null });
+    const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa', password_default: nis ? autoPassword : null, is_active } as any);
+    await Siswa.create({ user_id: user.id, kelas_id: (kelas as any).id, nisn: nis || null, nis: nis || null, no_induk: nis || null, jenis_kelamin: row.jenis_kelamin || null });
     results.push({ nama, nis, status: 'created' });
   }
   return results;
