@@ -84,10 +84,9 @@ function detectAppSource(req: AuthRequest): string {
 
 // Global auto-logger — mount BEFORE routes in app.ts
 export const globalAuditLogger = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  const shouldLog = (
-    ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) ||
-    (req.method === 'POST' && req.path.includes('/auth/login'))
-  );
+  // /auth/login & /auth/logout use logAction manually (have user context there)
+  const isManualLogged = req.path.includes('/auth/login') || req.path.includes('/auth/logout');
+  const shouldLog = !isManualLogged && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
 
   if (shouldLog) {
     const originalJson = res.json.bind(res);
