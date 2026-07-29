@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-const BANNER_KEY = 'alfakhir_banner_feedback_v1';
+const BANNER_KEY = 'alfakhir_banner_feedback_v2';
 
 export default function AnnouncementBanner({ feedbackPath = '/feedback' }: { feedbackPath?: string }) {
   const [show, setShow] = useState(false);
