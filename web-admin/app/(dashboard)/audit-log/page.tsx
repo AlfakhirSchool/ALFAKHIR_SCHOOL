@@ -180,10 +180,15 @@ export default function AuditLogPage() {
                   {expanded === log.id && log.new_value && (
                     <tr key={`${log.id}-detail`} className="bg-gray-50">
                       <td colSpan={7} className="px-5 py-3">
-                        <p className="text-xs font-semibold text-gray-500 mb-1">Data yang diubah:</p>
-                        <pre className="text-xs text-gray-700 bg-white p-3 rounded-lg border border-gray-100 overflow-x-auto">
-                          {JSON.stringify(log.new_value, null, 2)}
-                        </pre>
+                        <p className="text-xs font-semibold text-gray-500 mb-2">Data yang diinput:</p>
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                          {Object.entries(log.new_value as Record<string, unknown>).map(([k, v]) => (
+                            <div key={k} className="flex gap-2 text-xs">
+                              <span className="text-gray-400 capitalize min-w-[100px]">{k.replace(/_/g, ' ')}:</span>
+                              <span className="text-gray-700 font-medium">{String(v ?? '-')}</span>
+                            </div>
+                          ))}
+                        </div>
                       </td>
                     </tr>
                   )}
