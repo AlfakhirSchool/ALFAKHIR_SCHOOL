@@ -86,7 +86,7 @@ export default function DashboardSelectPage() {
                 className="bg-white rounded-3xl shadow-sm overflow-hidden text-left group"
               >
                 {/* Banner */}
-                <div className={`bg-gradient-to-br ${s.gradient} p-8 flex flex-col items-center text-white relative overflow-hidden`}>
+                <div className={`bg-gradient-to-br ${s.gradient} p-8 flex flex-col items-center justify-center text-white relative overflow-hidden min-h-[220px]`}>
                   {/* Decorative circles */}
                   <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10" />
                   <div className="absolute -bottom-8 -left-4 w-20 h-20 rounded-full bg-white/10" />
