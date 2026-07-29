@@ -4,6 +4,7 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { Op } from 'sequelize';
 import { User, Guru, Siswa, OrangTua, Kelas, Sekolah } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
@@ -76,11 +77,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       user = (siswa as any).user ?? null;
     }
   } else {
-    // Auto-append school domain if user typed username without @
-    const lookupEmail = email && !String(email).includes('@')
-      ? `${email}@alfakhirschool.sch.id`
-      : email;
-    user = await User.findOne({ where: { email: lookupEmail, is_active: true } });
+    // Lookup by email exact, or by nama (case-insensitive) for username-style login
+    user = await User.findOne({ where: { email, is_active: true } });
+    if (!user) {
+      user = await User.findOne({ where: { nama: { [Op.iLike]: email }, is_active: true } });
+    }
   }
 
   if (!user || !(user as any).is_active) {
