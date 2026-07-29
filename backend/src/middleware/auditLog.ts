@@ -112,7 +112,7 @@ export const globalAuditLogger = (req: AuthRequest, res: Response, next: NextFun
           new_value: Object.keys(safeBody).length ? safeBody : null,
           ip_address: req.ip || null,
           user_agent: req.headers['user-agent'] || null,
-        }).catch(() => {});
+        }).catch((e: Error) => console.error('[AUDIT_LOG_ERROR]', e.message));
       }
       return originalJson(body);
     };
@@ -139,5 +139,5 @@ export const logAction = async (opts: {
     new_value: opts.new_value || null,
     ip_address: opts.ip || null,
     user_agent: opts.user_agent || null,
-  }).catch(() => {});
+  }).catch((e: Error) => console.error('[AUDIT_LOG_ERROR]', e.message));
 };
