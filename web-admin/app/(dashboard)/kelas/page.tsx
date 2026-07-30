@@ -42,9 +42,14 @@ export default function KelasPage() {
     enabled: !!selectedKelas,
   });
 
+  const { data: sekolahList } = useQuery({
+    queryKey: ['sekolah-list'],
+    queryFn: () => api.get('/siswa/sekolah-list').then(r => r.data.data || []),
+  });
+
   const { data: guruList } = useQuery({
-    queryKey: ['guru-list'],
-    queryFn: () => api.get('/guru').then(r => r.data.data || []),
+    queryKey: ['guru-list', activeJenjang],
+    queryFn: () => api.get('/guru', { params: { jenjang: activeJenjang, limit: 100 } }).then(r => r.data.data || []),
     enabled: showForm || !!editTarget,
   });
 
@@ -119,7 +124,7 @@ export default function KelasPage() {
             {JENJANG_LIST.map(j => {
               const c = JENJANG_COLOR[j];
               return (
-                <button key={j} onClick={() => { setActiveJenjang(j); setShowForm(false); setEditTarget(null); setSelectedKelas(null); }}
+                <button key={j} onClick={() => { setActiveJenjang(j); setShowForm(false); setEditTarget(null); setSelectedKelas(null); setForm({ ...BLANK_FORM }); }}
                   className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${activeJenjang === j ? c.active : c.passive}`}>
                   {j}
                 </button>
@@ -129,7 +134,12 @@ export default function KelasPage() {
         )}
 
         <div className="flex justify-end mb-4">
-          <button onClick={() => { setShowForm(!showForm); setEditTarget(null); setForm({ ...BLANK_FORM }); }}
+          <button onClick={() => {
+            const sekolah = (sekolahList || []).find((s: any) => s.jenjang === activeJenjang);
+            setShowForm(!showForm);
+            setEditTarget(null);
+            setForm({ ...BLANK_FORM, sekolah_id: sekolah?.id || '' });
+          }}
             className="px-4 py-2.5 bg-[#3B7FD1] text-white rounded-lg hover:bg-[#2d6ab5] font-medium text-sm">
             + Tambah Kelas {activeJenjang}
           </button>
@@ -179,8 +189,9 @@ export default function KelasPage() {
               <button className="w-full p-5 text-left" onClick={() => setSelectedKelas(selectedKelas?.id === k.id ? null : k)}>
                 <div className="flex items-center gap-3 mb-3">
                   {k.tingkat > 0 && (
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg ${jc.badge}`}>
-                      {k.tingkat}
+                    <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center ${jc.badge}`}>
+                      <span className="font-bold text-sm leading-none">{k.tingkat}</span>
+                      <span className="text-[9px] leading-none opacity-70 mt-0.5">Tingkat</span>
                     </div>
                   )}
                   <div>
