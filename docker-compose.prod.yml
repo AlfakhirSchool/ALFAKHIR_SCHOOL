@@ -128,6 +128,8 @@ services:
       DB_USER: ${POSTGRES_USER:-alfakhir}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_SSL: "false"
+      OBSERVASI_API_URL: https://dashboard-alfakhir-seven.vercel.app
+      OBSERVASI_API_KEY: alfakhir_obs_int_2026
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER}
