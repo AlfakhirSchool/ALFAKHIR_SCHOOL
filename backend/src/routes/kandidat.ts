@@ -1,11 +1,14 @@
 import { Router } from 'express';
-import { authorize } from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
 import * as kandidatController from '../controllers/kandidatController';
 
 const router = Router();
 
 // Public route (form pendaftaran online)
 router.post('/daftar-publik', kandidatController.daftarPublik);
+
+// All routes below require auth
+router.use(authenticate);
 
 // Admin routes
 router.get('/', authorize('admin'), kandidatController.getAll);
