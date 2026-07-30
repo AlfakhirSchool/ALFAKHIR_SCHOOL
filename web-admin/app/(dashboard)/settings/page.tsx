@@ -28,7 +28,7 @@ function AccountRow({ u, onReset }: { u: any; onReset: (id: string, nama: string
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800">{u.nama}</p>
-            <p className="text-xs text-gray-400">{u.email?.replace('@alfakhirschool.sch.id', '')}</p>
+            <p className="text-xs text-gray-400">{u.email}</p>
           </div>
         </div>
       </td>

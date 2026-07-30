@@ -6,9 +6,9 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get('/kandidat/:kandidat_id', authorize('admin', 'guru'), ctrl.getByKandidat);
-router.post('/kandidat/:kandidat_id', authorize('admin', 'guru'), ctrl.create);
-router.put('/:id', authorize('admin', 'guru'), ctrl.update);
+router.get('/kandidat/:kandidat_id', authorize('admin', 'guru', 'pewawancara'), ctrl.getByKandidat);
+router.post('/kandidat/:kandidat_id', authorize('admin', 'guru', 'pewawancara'), ctrl.create);
+router.put('/:id', authorize('admin', 'guru', 'pewawancara'), ctrl.update);
 router.delete('/:id', authorize('admin'), ctrl.remove);
 
 export default router;

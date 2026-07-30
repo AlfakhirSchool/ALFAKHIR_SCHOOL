@@ -62,14 +62,14 @@ export default function DashboardSelectPage() {
   const { data } = useQuery({
     queryKey: ['admin-dashboard-v2'],
     queryFn: () => api.get('/dashboard/admin').then(r => r.data.data),
-    enabled: user?.role !== 'guru',
+    enabled: user?.role !== 'guru' && user?.role !== 'pewawancara',
   });
 
   useEffect(() => {
-    if (user?.role === 'guru') router.replace('/dashboard/pewawancara');
+    if (user?.role === 'guru' || user?.role === 'pewawancara') router.replace('/dashboard/pewawancara');
   }, [user, router]);
 
-  if (user?.role === 'guru') return null;
+  if (user?.role === 'guru' || user?.role === 'pewawancara') return null;
 
   const sekolah = data?.sekolah || {};
 

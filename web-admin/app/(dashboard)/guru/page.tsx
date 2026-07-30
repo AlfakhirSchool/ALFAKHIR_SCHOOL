@@ -12,7 +12,6 @@ const LEVEL_COLOR: Record<string, string> = {
 };
 
 const LEVELS = ['SD', 'SMP', 'SMA'] as const;
-const DOMAIN = '@alfakhirschool.sch.id';
 
 function LevelBadges({ levels }: { levels: string[] | null }) {
   if (!levels || levels.length === 0) {
@@ -84,7 +83,7 @@ export default function GuruPage() {
   });
 
   const buildEmail = (username: string) =>
-    username.includes('@') ? username : `${username}${DOMAIN}`;
+    username;
 
   const createMut = useMutation({
     mutationFn: (f: GuruForm) => api.post('/guru', { ...f, email: buildEmail(f.email) }).then(r => r.data),
@@ -132,7 +131,7 @@ export default function GuruPage() {
     setEditTarget(g);
     setForm({
       nama: g.user?.nama || '',
-      email: (g.user?.email || '').replace(/@alfakhirschool(\.sch)?\.id$/, ''),
+      email: g.user?.email || '',
       password: '',
       nip: g.nip || '',
       spesialisasi: g.spesialisasi || '',
@@ -228,7 +227,7 @@ export default function GuruPage() {
                       </div>
                       <div>
                         <p className="font-semibold text-[#1A2332] text-sm">{g.user?.nama}</p>
-                        <p className="text-xs text-gray-400">{(g.user?.email || '').replace(DOMAIN, '')}</p>
+                        <p className="text-xs text-gray-400">{g.user?.email || ''}</p>
                       </div>
                     </div>
                   </td>

@@ -13,11 +13,11 @@ router.get('/publik/:id', kandidatController.infoPublik);
 router.use(authenticate);
 
 // Admin routes
-router.get('/', authorize('admin'), kandidatController.getAll);
+router.get('/', authorize('admin', 'guru', 'pewawancara'), kandidatController.getAll);
 router.post('/', authorize('admin'), kandidatController.create);
 router.get('/monitor-pewawancara', authorize('admin'), kandidatController.monitorPewawancara);
 router.get('/export', authorize('admin'), kandidatController.exportExcel);
-router.get('/:id', authorize('admin', 'guru'), kandidatController.getOne);
+router.get('/:id', authorize('admin', 'guru', 'pewawancara'), kandidatController.getOne);
 router.put('/:id', authorize('admin'), kandidatController.update);
 router.delete('/:id', authorize('admin'), kandidatController.remove);
 router.post('/:id/daftarkan', authorize('admin'), kandidatController.daftarkan);

@@ -90,12 +90,12 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
   const { user } = useAuthStore();
   const level = user?.school_level as SchoolLevel;
 
-  const isGuru = user?.role === 'guru';
-  const menuItems = isGuru ? pewawancaraMenu : level ? levelMenu(level) : masterMenu;
-  const accentColor = isGuru ? '#1B8B87' : level ? LEVEL_COLOR[level] : '#60A5FA';
+  const isPewawancara = user?.role === 'pewawancara' || user?.role === 'guru';
+  const menuItems = isPewawancara ? pewawancaraMenu : level ? levelMenu(level) : masterMenu;
+  const accentColor = isPewawancara ? '#1B8B87' : level ? LEVEL_COLOR[level] : '#60A5FA';
   const logo = level ? (LEVEL_LOGO[level] ?? '/logo.png') : '/logo.png';
   const schoolName = level ? (LEVEL_NAME[level] ?? 'Al Fakhir School') : 'Al Fakhir School';
-  const subtitle = isGuru ? 'Pewawancara PPDB' : level ? `Admin ${level}` : 'Admin Control Center';
+  const subtitle = isPewawancara ? 'Pewawancara PPDB' : level ? `Admin ${level}` : 'Admin Control Center';
 
   return (
     <motion.aside

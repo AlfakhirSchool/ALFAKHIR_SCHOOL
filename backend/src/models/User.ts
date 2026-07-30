@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
-export type UserRole = 'admin' | 'guru' | 'siswa' | 'ortu';
+export type UserRole = 'admin' | 'guru' | 'pewawancara' | 'siswa' | 'ortu';
 export type SchoolLevel = 'SD' | 'SMP' | 'SMA' | null;
 
 interface UserAttributes {
@@ -40,7 +40,7 @@ User.init(
     email: { type: DataTypes.STRING(255), allowNull: false, unique: true },
     password_hash: { type: DataTypes.STRING(255), allowNull: false },
     nama: { type: DataTypes.STRING(255), allowNull: false },
-    role: { type: DataTypes.ENUM('admin', 'guru', 'siswa', 'ortu'), allowNull: false },
+    role: { type: DataTypes.ENUM('admin', 'guru', 'pewawancara', 'siswa', 'ortu'), allowNull: false },
     school_level: { type: DataTypes.ENUM('SD', 'SMP', 'SMA'), allowNull: true },
     is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
     profile_pic: { type: DataTypes.STRING(500), allowNull: true },
