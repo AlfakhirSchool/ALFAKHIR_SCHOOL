@@ -14,13 +14,19 @@ export default function JadwalPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     kelas_id: '', guru_id: '', mata_pelajaran_id: '',
-    hari: 'Senin', jam_mulai: '07:00', jam_selesai: '08:30', ruangan: ''
+    hari: 'Senin', jam_mulai: '07:00', jam_selesai: '08:30'
   });
   const [hapusId, setHapusId] = useState<string | null>(null);
   const [hapusInfo, setHapusInfo] = useState<string>('');
 
   const { data: kelasList } = useQuery({ queryKey: ['kelas-all'], queryFn: () => api.get('/kelas').then(r => r.data.data || []) });
-  const { data: guruList } = useQuery({ queryKey: ['guru-all'], queryFn: () => api.get('/guru').then(r => r.data.data || []) });
+  const selectedKelasData = (kelasList || []).find((k: any) => k.id === form.kelas_id);
+  const kelasJenjang = selectedKelasData?.sekolah?.level || '';
+  const { data: guruList } = useQuery({
+    queryKey: ['guru-all', kelasJenjang],
+    queryFn: () => api.get('/guru', { params: { jenjang: kelasJenjang || undefined, limit: 100 } }).then(r => r.data.data || []),
+    enabled: showForm,
+  });
   const { data: mapelList } = useQuery({ queryKey: ['mapel-all'], queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []) });
 
   const { data: jadwalList, isLoading } = useQuery({
@@ -94,11 +100,6 @@ export default function JadwalPage() {
                 <input type="time" value={form.jam_selesai} onChange={(e) => setForm({ ...form, jam_selesai: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Ruangan</label>
-                <input value={form.ruangan} onChange={(e) => setForm({ ...form, ruangan: e.target.value })}
-                  placeholder="Contoh: R.01" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
-              </div>
             </div>
             <div className="flex gap-3 mt-4">
               <button onClick={() => addJadwal.mutate()} disabled={!form.kelas_id || addJadwal.isPending}
@@ -130,7 +131,6 @@ export default function JadwalPage() {
                           <td className="px-6 py-3 font-medium text-gray-800">{j.mata_pelajaran?.nama}</td>
                           <td className="px-6 py-3 text-gray-500">{j.kelas?.nama}</td>
                           <td className="px-6 py-3 text-gray-500">{j.guru?.user?.nama}</td>
-                          <td className="px-6 py-3 text-gray-400">Ruang {j.ruangan}</td>
                           <td className="px-6 py-3">
                             <div className="flex gap-2">
                               <button className="text-[#3B7FD1] hover:underline text-xs">Edit</button>
