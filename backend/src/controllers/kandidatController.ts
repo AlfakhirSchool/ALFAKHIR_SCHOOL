@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
 import bcrypt from 'bcrypt';
-import { Kandidat, Guru, User, Siswa, Kelas, Sekolah, CatatanPewawancara, HasilTesAkademik, RingkasanAI, SoalAkademik } from '../models';
+import { Kandidat, Guru, User, Siswa, Kelas, Sekolah, CatatanPewawancara, HasilTesAkademik, RingkasanAI, SoalAkademik, JawabanForm } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { kelasIdFilter } from '../utils/levelFilter';
 
@@ -80,6 +80,7 @@ export const getOne = async (req: AuthRequest, res: Response): Promise<void> => 
       { model: CatatanPewawancara, as: 'catatan_list', order: [['created_at', 'ASC']] as any },
       { model: HasilTesAkademik, as: 'hasil_tes' },
       { model: RingkasanAI, as: 'ringkasan_ai' },
+      { model: JawabanForm, as: 'jawaban_form_list' },
     ],
   });
   if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
