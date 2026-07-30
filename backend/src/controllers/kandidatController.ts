@@ -200,7 +200,7 @@ ${catatan.length === 0 ? 'Belum ada catatan.' : catatan.map((c: any, i: number) 
 Tuliskan ringkasan dalam Bahasa Indonesia yang profesional.`;
 
   const geminiRes = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
