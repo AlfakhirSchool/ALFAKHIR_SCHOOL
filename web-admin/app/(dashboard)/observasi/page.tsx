@@ -61,7 +61,7 @@ export default function ObservasiPage() {
   const { user } = useAuthStore();
   const levelFromUser = user?.school_level || '';
 
-  const [tab, setTab] = useState<'kandidat' | 'soal'>('kandidat');
+  const [tab, setTab] = useState<'kandidat' | 'soal' | 'monitor'>('kandidat');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterLevel, setFilterLevel] = useState(levelFromUser);
   const [showForm, setShowForm] = useState(false);
@@ -111,8 +111,8 @@ export default function ObservasiPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-white border border-gray-200 rounded-xl p-1 w-fit">
-          {([['kandidat', '👤 Kandidat'], ['soal', '📝 Soal Akademik']] as const).map(([k, label]) => (
-            <button key={k} onClick={() => setTab(k)}
+          {([['kandidat', '👤 Kandidat'], ['monitor', '📊 Monitor Pewawancara'], ['soal', '📝 Soal Akademik']] as const).map(([k, label]) => (
+            <button key={k} onClick={() => setTab(k as any)}
               className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${tab === k ? 'bg-[#1B8B87] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
               {label}
             </button>
@@ -136,6 +136,8 @@ export default function ObservasiPage() {
             createMut={createMut} updateMut={updateMut} deleteMut={deleteMut} daftarkanMut={daftarkanMut}
             qc={qc}
           />
+        ) : tab === 'monitor' ? (
+          <MonitorPewawancaraTab levelFromUser={levelFromUser} />
         ) : (
           <SoalTab levelFromUser={levelFromUser} />
         )}
@@ -186,10 +188,20 @@ function KandidatTab({ kandidatList, stats, isLoading, filterStatus, setFilterSt
               </select>
             )}
           </div>
-          <button onClick={() => { setShowForm(true); setEditTarget(null); setDetail(null); }}
-            className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-medium hover:bg-teal-700">
-            + Tambah
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => {
+              const params = new URLSearchParams();
+              if (filterStatus) params.set('status', filterStatus);
+              if (filterLevel) params.set('level', filterLevel);
+              window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/kandidat/export?${params}`, '_blank');
+            }} className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-1.5">
+              📥 Export Excel
+            </button>
+            <button onClick={() => { setShowForm(true); setEditTarget(null); setDetail(null); }}
+              className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-medium hover:bg-teal-700">
+              + Tambah
+            </button>
+          </div>
         </div>
 
         {/* Form tambah */}
@@ -370,6 +382,7 @@ function KandidatTab({ kandidatList, stats, isLoading, filterStatus, setFilterSt
 // ─── Kandidat Detail Panel ────────────────────────────────────────────────────
 function KandidatDetail({ kandidat, onClose, onDaftarkan, qc }: { kandidat: Kandidat; onClose: () => void; onDaftarkan: () => void; qc: any }) {
   const [detailTab, setDetailTab] = useState<'info' | 'catatan' | 'tes' | 'ai'>('info');
+  const [showQr, setShowQr] = useState(false);
 
   const { data: catatanData, isLoading: loadCatatan } = useQuery({
     queryKey: ['catatan-pewawancara', kandidat.id],
@@ -405,8 +418,29 @@ function KandidatDetail({ kandidat, onClose, onDaftarkan, qc }: { kandidat: Kand
           {kandidat.nama_diperbaiki && <p className="text-xs text-gray-400 mt-0.5">({kandidat.nama})</p>}
           <p className="text-xs text-gray-500 mt-1">{kandidat.tahun_ajaran} {kandidat.ruangan && `· Ruang: ${kandidat.ruangan}`}</p>
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowQr(v => !v)} title="QR Code Tes" className="text-gray-400 hover:text-teal-600 text-sm px-2 py-1 rounded border border-gray-200 hover:border-teal-300">
+            QR
+          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+        </div>
       </div>
+
+      {/* QR Modal */}
+      {showQr && (
+        <div className="p-4 border-b border-gray-100 bg-gray-50 flex flex-col items-center gap-3">
+          <img
+            src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/kandidat/${kandidat.id}/qrcode`}
+            alt="QR Code" className="w-40 h-40 rounded-xl border border-gray-200 bg-white"
+          />
+          <p className="text-xs text-gray-500 text-center">Link tes untuk <strong>{kandidat.nama_diperbaiki || kandidat.nama}</strong></p>
+          <a href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/kandidat/${kandidat.id}/qrcode`}
+            download={`qr-${kandidat.nama}.png`}
+            className="text-xs text-teal-600 hover:underline font-bold">
+            ↓ Download QR
+          </a>
+        </div>
+      )}
 
       {/* Sub-tabs */}
       <div className="flex border-b border-gray-100 bg-gray-50 text-xs">
@@ -427,7 +461,7 @@ function KandidatDetail({ kandidat, onClose, onDaftarkan, qc }: { kandidat: Kand
         {detailTab === 'info' && <InfoTab kandidat={kandidat} onDaftarkan={onDaftarkan} />}
         {detailTab === 'catatan' && <CatatanTab kandidat={kandidat} catatan={catatan} loading={loadCatatan} qc={qc} />}
         {detailTab === 'tes' && <TesTab kandidat={kandidat} hasil={hasil} />}
-        {detailTab === 'ai' && <AITab ringkasan={ringkasan} />}
+        {detailTab === 'ai' && <AITab ringkasan={ringkasan} kandidatId={kandidat.id} qc={qc} />}
       </div>
     </div>
   );
@@ -670,24 +704,117 @@ function TesTab({ kandidat, hasil }: { kandidat: Kandidat; hasil: HasilTes | nul
   );
 }
 
-// ─── Ringkasan AI Tab ─────────────────────────────────────────────────────────
-function AITab({ ringkasan }: { ringkasan: RingkasanAI | null }) {
-  if (!ringkasan) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-3xl mb-2">🤖</p>
-        <p className="text-sm text-gray-500">Belum ada ringkasan AI</p>
+// ─── Monitor Pewawancara Tab ──────────────────────────────────────────────────
+function MonitorPewawancaraTab({ levelFromUser }: { levelFromUser: string }) {
+  const [filterLevel, setFilterLevel] = useState(levelFromUser);
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['monitor-pewawancara', filterLevel],
+    queryFn: () => api.get('/kandidat/monitor-pewawancara', { params: { level: filterLevel || undefined } }).then(r => r.data.data || []),
+  });
+  const rows: any[] = data || [];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="font-semibold text-gray-700">Progress per Pewawancara</h3>
+        <div className="flex items-center gap-2">
+          {!levelFromUser && (
+            <select value={filterLevel} onChange={e => setFilterLevel(e.target.value)}
+              className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none">
+              <option value="">Semua Jenjang</option>
+              <option value="SD">SD</option>
+              <option value="SMP">SMP</option>
+              <option value="SMA">SMA</option>
+            </select>
+          )}
+          <button onClick={() => refetch()} className="text-xs text-teal-600 border border-teal-200 px-3 py-1.5 rounded-lg hover:bg-teal-50">
+            Refresh
+          </button>
+        </div>
       </div>
-    );
-  }
+
+      {isLoading ? (
+        <div className="text-center py-10 text-gray-400 text-sm">Memuat...</div>
+      ) : rows.length === 0 ? (
+        <div className="text-center py-10 text-gray-400 text-sm">Belum ada data.</div>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((row: any) => {
+            const pct = row.total > 0 ? Math.round(((row.diterima + row.ditolak) / row.total) * 100) : 0;
+            return (
+              <div key={row.pewawancara_id || 'unassigned'} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="font-semibold text-gray-800 text-sm">{row.pewawancara_nama}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{row.sudah_catatan} dari {row.total} sudah dicatat</p>
+                  </div>
+                  <span className="text-lg font-bold text-teal-600">{row.total}</span>
+                </div>
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {[
+                    { label: 'Menunggu', value: row.pending, color: '#D97706' },
+                    { label: 'Wawancara', value: row.review, color: '#2563EB' },
+                    { label: 'Diterima', value: row.diterima, color: '#16A34A' },
+                    { label: 'Ditolak', value: row.ditolak, color: '#DC2626' },
+                  ].map(s => (
+                    <div key={s.label} className="text-center p-2 rounded-lg bg-gray-50">
+                      <p className="font-bold text-base" style={{ color: s.color }}>{s.value}</p>
+                      <p className="text-xs text-gray-400">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-teal-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                </div>
+                <p className="text-xs text-gray-400 mt-1 text-right">{pct}% selesai</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Ringkasan AI Tab ─────────────────────────────────────────────────────────
+function AITab({ ringkasan, kandidatId, qc }: { ringkasan: RingkasanAI | null; kandidatId: string; qc: any }) {
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState('');
+
+  const handleGenerate = async () => {
+    setGenerating(true); setGenError('');
+    try {
+      await api.post(`/kandidat/${kandidatId}/generate-ai`);
+      qc.invalidateQueries({ queryKey: ['ringkasan-ai', kandidatId] });
+      qc.invalidateQueries({ queryKey: ['kandidat'] });
+    } catch (e: any) {
+      setGenError(e.response?.data?.message || 'Gagal generate');
+    }
+    setGenerating(false);
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-3">
-        <p className="text-xs text-gray-400">Dibuat: {new Date(ringkasan.created_at).toLocaleDateString('id-ID')}</p>
+        {ringkasan
+          ? <p className="text-xs text-gray-400">Dibuat: {new Date(ringkasan.created_at).toLocaleDateString('id-ID')}</p>
+          : <p className="text-xs text-gray-400">Belum ada ringkasan</p>}
+        <button onClick={handleGenerate} disabled={generating}
+          className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-lg text-xs font-bold hover:opacity-90 disabled:opacity-50">
+          {generating ? '⏳ Generating...' : ringkasan ? '🔄 Regenerate AI' : '✨ Generate AI'}
+        </button>
       </div>
-      <div className="bg-gradient-to-br from-blue-50 to-teal-50 border border-blue-100 rounded-xl p-4">
-        <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{ringkasan.ringkasan}</p>
-      </div>
+      {genError && <p className="text-xs text-red-500 mb-2">{genError}</p>}
+      {ringkasan ? (
+        <div className="bg-gradient-to-br from-blue-50 to-teal-50 border border-blue-100 rounded-xl p-4">
+          <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{ringkasan.ringkasan}</p>
+        </div>
+      ) : (
+        <div className="py-8 text-center">
+          <p className="text-3xl mb-2">🤖</p>
+          <p className="text-sm text-gray-500">Klik Generate AI untuk membuat ringkasan otomatis dari data wawancara.</p>
+        </div>
+      )}
     </div>
   );
 }

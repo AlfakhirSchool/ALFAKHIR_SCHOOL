@@ -170,6 +170,148 @@ export const infoPublik = async (req: any, res: Response): Promise<void> => {
   res.json({ success: true, data: k });
 };
 
+export const generateRingkasanAI = async (req: any, res: Response): Promise<void> => {
+  const k = await Kandidat.findByPk(req.params.id as string, {
+    include: [
+      { model: CatatanPewawancara, as: 'catatan_list' },
+      { model: HasilTesAkademik, as: 'hasil_tes' },
+    ],
+  });
+  if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) { res.status(500).json({ success: false, message: 'GEMINI_API_KEY tidak dikonfigurasi' }); return; }
+
+  const catatan = (k as any).catatan_list || [];
+  const hasil = (k as any).hasil_tes;
+
+  const prompt = `Kamu adalah asisten penerimaan siswa baru di SMP Islam Al Fakhir. Buat ringkasan singkat (maksimal 200 kata) tentang kandidat berikut berdasarkan data wawancara. Ringkasan harus profesional dan membantu tim untuk mengambil keputusan.
+
+Nama: ${k.nama_diperbaiki || k.nama}
+Jenjang: ${k.level}
+Status: ${k.status}
+Asal Sekolah: ${k.asal_sekolah || 'tidak diketahui'}
+Jenis Kelamin: ${k.jenis_kelamin === 'L' ? 'Laki-laki' : k.jenis_kelamin === 'P' ? 'Perempuan' : 'tidak diketahui'}
+Skor Akademik: ${hasil ? hasil.total_skor : 'belum tes'}
+
+Catatan Pewawancara:
+${catatan.length === 0 ? 'Belum ada catatan.' : catatan.map((c: any, i: number) => `\nCatatan ${i + 1} (oleh ${c.pewawancara_nama || 'tidak diketahui'}):\n- Observasi: ${c.observasi || '-'}\n- Penilaian Akademik: ${c.penilaian_akademik || '-'}\n- Dukungan Keluarga: ${c.dukungan_keluarga || '-'}\n- Karakter: ${c.catatan_karakter || '-'}\n- Lain-lain: ${c.catatan_lain || '-'}\n- Rekomendasi: ${c.rekomendasi || '-'}`).join('\n')}
+
+Tuliskan ringkasan dalam Bahasa Indonesia yang profesional.`;
+
+  const geminiRes = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+    }
+  );
+  if (!geminiRes.ok) {
+    const err = await geminiRes.text();
+    res.status(502).json({ success: false, message: 'Gemini API error: ' + err }); return;
+  }
+  const geminiData: any = await geminiRes.json();
+  const ringkasanText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  if (!ringkasanText) { res.status(502).json({ success: false, message: 'Gemini tidak menghasilkan teks' }); return; }
+
+  const [ringkasan] = await RingkasanAI.upsert({ kandidat_id: k.id, ringkasan: ringkasanText });
+  res.json({ success: true, data: ringkasan });
+};
+
+export const monitorPewawancara = async (req: any, res: Response): Promise<void> => {
+  const { level, tahun_ajaran } = req.query;
+  const where: any = {};
+  if (level) where.level = level;
+  if (tahun_ajaran) where.tahun_ajaran = tahun_ajaran;
+
+  const kandidat = await Kandidat.findAll({
+    where,
+    attributes: ['id', 'status', 'pewawancara_id', 'pewawancara_nama', 'level'],
+    include: [
+      { model: Guru, as: 'pewawancara', include: [{ model: User, as: 'user', attributes: ['nama', 'email'] }] },
+      { model: CatatanPewawancara, as: 'catatan_list', attributes: ['id', 'is_locked'] },
+    ],
+  });
+
+  const map: Record<string, any> = {};
+  for (const k of kandidat) {
+    const kAny = k as any;
+    const key = kAny.pewawancara_id || '__unassigned__';
+    if (!map[key]) {
+      map[key] = {
+        pewawancara_id: kAny.pewawancara_id,
+        pewawancara_nama: kAny.pewawancara_nama || kAny.pewawancara?.user?.nama || 'Belum ditugaskan',
+        total: 0, pending: 0, review: 0, diterima: 0, ditolak: 0, sudah_catatan: 0,
+      };
+    }
+    map[key].total++;
+    map[key][k.status.toLowerCase()]++;
+    if (kAny.catatan_list?.length > 0) map[key].sudah_catatan++;
+  }
+
+  res.json({ success: true, data: Object.values(map).sort((a: any, b: any) => b.total - a.total) });
+};
+
+export const exportExcel = async (req: any, res: Response): Promise<void> => {
+  const XLSX = require('xlsx');
+  const { level, status, tahun_ajaran } = req.query;
+  const where: any = {};
+  if (level) where.level = level;
+  if (status) where.status = status;
+  if (tahun_ajaran) where.tahun_ajaran = tahun_ajaran;
+
+  const kandidat = await Kandidat.findAll({
+    where,
+    include: [
+      { model: HasilTesAkademik, as: 'hasil_tes', attributes: ['total_skor'] },
+      { model: RingkasanAI, as: 'ringkasan_ai', attributes: ['ringkasan'] },
+      { model: CatatanPewawancara, as: 'catatan_list' },
+    ],
+    order: [['created_at', 'DESC']],
+  });
+
+  const rows = kandidat.map((k: any) => ({
+    'Nama': k.nama,
+    'Nama (Diperbaiki)': k.nama_diperbaiki || '',
+    'Jenjang': k.level,
+    'Status': k.status,
+    'Tahun Ajaran': k.tahun_ajaran,
+    'Jenis Kelamin': k.jenis_kelamin === 'L' ? 'Laki-laki' : k.jenis_kelamin === 'P' ? 'Perempuan' : '',
+    'Asal Sekolah': k.asal_sekolah || '',
+    'Nama Ortu': k.nama_ortu || '',
+    'No. HP Ortu': k.no_telp_ortu || '',
+    'Email Ortu': k.email_ortu || '',
+    'Ruangan': k.ruangan || '',
+    'Pewawancara': k.pewawancara_nama || '',
+    'Skor Akademik': k.hasil_tes?.total_skor ?? '',
+    'Jumlah Catatan': k.catatan_list?.length ?? 0,
+    'Rekomendasi Terakhir': k.catatan_list?.slice(-1)[0]?.rekomendasi || '',
+    'Ringkasan AI': k.ringkasan_ai?.ringkasan || '',
+    'Tanggal Daftar': k.created_at ? new Date(k.created_at).toLocaleDateString('id-ID') : '',
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Kandidat');
+  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="kandidat-${Date.now()}.xlsx"`);
+  res.send(buf);
+};
+
+export const getQrCode = async (req: any, res: Response): Promise<void> => {
+  const QRCode = require('qrcode');
+  const k = await Kandidat.findByPk(req.params.id as string, { attributes: ['id', 'nama', 'nama_diperbaiki'] });
+  if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
+  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'https://admin.smpialfakhir.sch.id'}/tes/${k.id}`;
+  const png = await QRCode.toBuffer(url, { type: 'png', width: 300, margin: 2 });
+  res.setHeader('Content-Type', 'image/png');
+  res.setHeader('Content-Disposition', `inline; filename="qr-${k.id}.png"`);
+  res.send(png);
+};
+
 export const daftarPublik = async (req: any, res: Response): Promise<void> => {
   const { nama, level, nama_ortu, no_telp_ortu, email_ortu, asal_sekolah, jenis_kelamin, tanggal_lahir } = req.body;
   if (!nama || !level) {
