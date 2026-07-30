@@ -1,0 +1,17 @@
+import { Router } from 'express';
+import { authorize } from '../middleware/auth';
+import * as kandidatController from '../controllers/kandidatController';
+
+const router = Router();
+
+// Public route (form pendaftaran online)
+router.post('/daftar-publik', kandidatController.daftarPublik);
+
+// Admin routes
+router.get('/', authorize('admin'), kandidatController.getAll);
+router.post('/', authorize('admin'), kandidatController.create);
+router.put('/:id', authorize('admin'), kandidatController.update);
+router.delete('/:id', authorize('admin'), kandidatController.remove);
+router.post('/:id/daftarkan', authorize('admin'), kandidatController.daftarkan);
+
+export default router;

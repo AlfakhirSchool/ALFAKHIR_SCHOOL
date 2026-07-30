@@ -26,6 +26,7 @@ import rfidRoutes from './routes/rfid';
 import feedbackRoutes from './routes/feedback';
 import pendingChangesRoutes from './routes/pendingChanges';
 import observasiRoutes from './routes/observasi';
+import kandidatRoutes from './routes/kandidat';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { globalAuditLogger } from './middleware/auditLog';
 import logger from './config/logger';
@@ -94,6 +95,7 @@ app.use(`${PREFIX}/rfid`, rfidRoutes);
 app.use(`${PREFIX}/pending-changes`, pendingChangesRoutes);
 app.use(`${PREFIX}/feedback`, feedbackRoutes);
 app.use(`${PREFIX}/observasi`, observasiRoutes);
+app.use(`${PREFIX}/kandidat`, kandidatRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
