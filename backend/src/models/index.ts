@@ -17,6 +17,11 @@ import ActivityLog from './ActivityLog';
 import PendingChange from './PendingChange';
 import { Feedback } from './Feedback';
 import Kandidat from './Kandidat';
+import CatatanPewawancara from './CatatanPewawancara';
+import SoalAkademik from './SoalAkademik';
+import HasilTesAkademik from './HasilTesAkademik';
+import JawabanAkademik from './JawabanAkademik';
+import RingkasanAI from './RingkasanAI';
 
 // User <-> Guru / Siswa / OrangTua
 User.hasOne(Guru, { foreignKey: 'user_id', as: 'guru_detail' });
@@ -112,11 +117,27 @@ User.hasMany(Feedback, { foreignKey: 'user_id', as: 'feedback_list' });
 Guru.hasMany(Kandidat, { foreignKey: 'pewawancara_id', as: 'kandidat_list' });
 Kandidat.belongsTo(Guru, { foreignKey: 'pewawancara_id', as: 'pewawancara' });
 
+// Kandidat sub-data
+Kandidat.hasMany(CatatanPewawancara, { foreignKey: 'kandidat_id', as: 'catatan_list' });
+CatatanPewawancara.belongsTo(Kandidat, { foreignKey: 'kandidat_id', as: 'kandidat' });
+
+Kandidat.hasOne(HasilTesAkademik, { foreignKey: 'kandidat_id', as: 'hasil_tes' });
+HasilTesAkademik.belongsTo(Kandidat, { foreignKey: 'kandidat_id', as: 'kandidat' });
+
+Kandidat.hasMany(JawabanAkademik, { foreignKey: 'kandidat_id', as: 'jawaban_list' });
+JawabanAkademik.belongsTo(Kandidat, { foreignKey: 'kandidat_id', as: 'kandidat' });
+
+SoalAkademik.hasMany(JawabanAkademik, { foreignKey: 'soal_id', as: 'jawaban_list' });
+JawabanAkademik.belongsTo(SoalAkademik, { foreignKey: 'soal_id', as: 'soal' });
+
+Kandidat.hasOne(RingkasanAI, { foreignKey: 'kandidat_id', as: 'ringkasan_ai' });
+RingkasanAI.belongsTo(Kandidat, { foreignKey: 'kandidat_id', as: 'kandidat' });
+
 export {
   User, Sekolah, Kelas, MataPelajaran,
   Siswa, Guru, OrangTua,
   JadwalPelajaran, Absensi, QrCodeSession,
   Nilai, Pembayaran, PembayaranDetail,
   Rapor, JurnalGuru, ActivityLog, PendingChange, Feedback,
-  Kandidat,
+  Kandidat, CatatanPewawancara, SoalAkademik, HasilTesAkademik, JawabanAkademik, RingkasanAI,
 };

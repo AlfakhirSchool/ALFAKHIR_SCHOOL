@@ -10,6 +10,7 @@ router.post('/daftar-publik', kandidatController.daftarPublik);
 // Admin routes
 router.get('/', authorize('admin'), kandidatController.getAll);
 router.post('/', authorize('admin'), kandidatController.create);
+router.get('/:id', authorize('admin'), kandidatController.getOne);
 router.put('/:id', authorize('admin'), kandidatController.update);
 router.delete('/:id', authorize('admin'), kandidatController.remove);
 router.post('/:id/daftarkan', authorize('admin'), kandidatController.daftarkan);

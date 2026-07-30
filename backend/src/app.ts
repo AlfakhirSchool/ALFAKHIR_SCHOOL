@@ -27,6 +27,8 @@ import feedbackRoutes from './routes/feedback';
 import pendingChangesRoutes from './routes/pendingChanges';
 import observasiRoutes from './routes/observasi';
 import kandidatRoutes from './routes/kandidat';
+import catatanPewawancaraRoutes from './routes/catatanPewawancara';
+import soalAkademikRoutes from './routes/soalAkademik';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { globalAuditLogger } from './middleware/auditLog';
 import logger from './config/logger';
@@ -96,6 +98,8 @@ app.use(`${PREFIX}/pending-changes`, pendingChangesRoutes);
 app.use(`${PREFIX}/feedback`, feedbackRoutes);
 app.use(`${PREFIX}/observasi`, observasiRoutes);
 app.use(`${PREFIX}/kandidat`, kandidatRoutes);
+app.use(`${PREFIX}/catatan-pewawancara`, catatanPewawancaraRoutes);
+app.use(`${PREFIX}/soal-akademik`, soalAkademikRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

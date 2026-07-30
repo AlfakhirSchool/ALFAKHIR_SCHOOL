@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
 import bcrypt from 'bcrypt';
-import { Kandidat, Guru, User, Siswa, Kelas, Sekolah } from '../models';
+import { Kandidat, Guru, User, Siswa, Kelas, Sekolah, CatatanPewawancara, HasilTesAkademik, RingkasanAI } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { kelasIdFilter } from '../utils/levelFilter';
 
@@ -24,7 +24,11 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
 
   const { count, rows } = await Kandidat.findAndCountAll({
     where,
-    include: [{ model: Guru, as: 'pewawancara', include: [{ model: User, as: 'user', attributes: ['nama'] }] }],
+    include: [
+      { model: Guru, as: 'pewawancara', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
+      { model: HasilTesAkademik, as: 'hasil_tes', attributes: ['total_skor'] },
+      { model: RingkasanAI, as: 'ringkasan_ai', attributes: ['ringkasan'] },
+    ],
     limit: parseInt(limit as string),
     offset,
     order: [['created_at', 'DESC']],
@@ -69,11 +73,25 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   res.status(201).json({ success: true, data: kandidat });
 };
 
+export const getOne = async (req: AuthRequest, res: Response): Promise<void> => {
+  const k = await Kandidat.findByPk(req.params.id as string, {
+    include: [
+      { model: Guru, as: 'pewawancara', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
+      { model: CatatanPewawancara, as: 'catatan_list', order: [['created_at', 'ASC']] as any },
+      { model: HasilTesAkademik, as: 'hasil_tes' },
+      { model: RingkasanAI, as: 'ringkasan_ai' },
+    ],
+  });
+  if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
+  res.json({ success: true, data: k });
+};
+
 export const update = async (req: AuthRequest, res: Response): Promise<void> => {
   const k = await Kandidat.findByPk(req.params.id as string);
   if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
-  const allowed = ['nama', 'level', 'status', 'nama_ortu', 'no_telp_ortu', 'email_ortu',
-    'asal_sekolah', 'jenis_kelamin', 'tanggal_lahir', 'catatan', 'pewawancara_id', 'skor_akademik', 'rekomendasi'];
+  const allowed = ['nama', 'nama_diperbaiki', 'level', 'status', 'nama_ortu', 'no_telp_ortu', 'email_ortu',
+    'email_siswa', 'asal_sekolah', 'jenis_kelamin', 'tanggal_lahir', 'catatan', 'ruangan',
+    'pewawancara_id', 'pewawancara_nama', 'skor_akademik', 'rekomendasi'];
   const updates: any = {};
   for (const key of allowed) {
     if (req.body[key] !== undefined) updates[key] = req.body[key];
