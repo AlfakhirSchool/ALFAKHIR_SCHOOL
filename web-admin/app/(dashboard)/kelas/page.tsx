@@ -188,12 +188,6 @@ export default function KelasPage() {
             <div key={k.id} className={`bg-white rounded-xl shadow-sm border-2 transition-all ${selectedKelas?.id === k.id ? jc.card : 'border-transparent hover:border-gray-200'}`}>
               <button className="w-full p-5 text-left" onClick={() => setSelectedKelas(selectedKelas?.id === k.id ? null : k)}>
                 <div className="flex items-center gap-3 mb-3">
-                  {k.tingkat > 0 && (
-                    <div className={`w-10 h-10 rounded-lg flex flex-col items-center justify-center ${jc.badge}`}>
-                      <span className="font-bold text-sm leading-none">{k.tingkat}</span>
-                      <span className="text-[9px] leading-none opacity-70 mt-0.5">Tingkat</span>
-                    </div>
-                  )}
                   <div>
                     <p className="font-semibold text-[#1A2332]">{k.nama}</p>
                     <p className="text-xs text-gray-400">{k.sekolah?.nama || '-'}</p>
