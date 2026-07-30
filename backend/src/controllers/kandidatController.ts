@@ -70,7 +70,7 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
 };
 
 export const update = async (req: AuthRequest, res: Response): Promise<void> => {
-  const k = await Kandidat.findByPk(req.params.id);
+  const k = await Kandidat.findByPk(req.params.id as string);
   if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
   const allowed = ['nama', 'level', 'status', 'nama_ortu', 'no_telp_ortu', 'email_ortu',
     'asal_sekolah', 'jenis_kelamin', 'tanggal_lahir', 'catatan', 'pewawancara_id', 'skor_akademik', 'rekomendasi'];
@@ -83,14 +83,14 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
 };
 
 export const remove = async (req: AuthRequest, res: Response): Promise<void> => {
-  const k = await Kandidat.findByPk(req.params.id);
+  const k = await Kandidat.findByPk(req.params.id as string);
   if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
   await k.destroy();
   res.json({ success: true, message: 'Kandidat dihapus' });
 };
 
 export const daftarkan = async (req: AuthRequest, res: Response): Promise<void> => {
-  const k = await Kandidat.findByPk(req.params.id);
+  const k = await Kandidat.findByPk(req.params.id as string);
   if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
   if (k.siswa_id) { res.status(409).json({ success: false, message: 'Kandidat sudah terdaftar sebagai siswa' }); return; }
 
