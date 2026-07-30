@@ -150,6 +150,64 @@ export default function ObservasiPage() {
 
 // ─── Kandidat Tab ─────────────────────────────────────────────────────────────
 function KandidatTab({ kandidatList, stats, isLoading, filterStatus, setFilterStatus, filterLevel, setFilterLevel, levelFromUser, showForm, setShowForm, form, setForm, editTarget, setEditTarget, detail, setDetail, daftarModal, setDaftarModal, selectedKelas, setSelectedKelas, daftarResult, setDaftarResult, kelasList, createMut, updateMut, deleteMut, daftarkanMut, qc }: any) {
+  const [showImport, setShowImport] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<any[]>([]);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ ok: number; fail: number } | null>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportFile(file);
+    setImportResult(null);
+    const XLSX = await import('xlsx');
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    setImportPreview(rows.slice(1, 4).map(r => ({
+      nama: r[0], level: r[1], nama_ortu: r[2], no_telp_ortu: r[3], email_ortu: r[4], asal_sekolah: r[5],
+    })));
+  };
+
+  const handleImport = async () => {
+    if (!importFile) return;
+    setImporting(true);
+    setImportResult(null);
+    const XLSX = await import('xlsx');
+    const buf = await importFile.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    const data = rows.slice(1).filter(r => r[0]);
+    let ok = 0, fail = 0;
+    for (const r of data) {
+      try {
+        await import('@/lib/api').then(m => m.default.post('/kandidat', {
+          nama: r[0], level: r[1] || 'SMP', nama_ortu: r[2] || '', no_telp_ortu: r[3] || '',
+          email_ortu: r[4] || '', asal_sekolah: r[5] || '', tahun_ajaran: r[6] || '2025/2026',
+        }));
+        ok++;
+      } catch { fail++; }
+    }
+    setImportResult({ ok, fail });
+    setImporting(false);
+    if (ok > 0) qc.invalidateQueries({ queryKey: ['kandidat'] });
+  };
+
+  const downloadTemplate = async () => {
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['nama', 'level', 'nama_ortu', 'no_telp_ortu', 'email_ortu', 'asal_sekolah', 'tahun_ajaran'],
+      ['Ahmad Fauzi', 'SMP', 'Bapak Fauzi', '08123456789', 'fauzi@email.com', 'SD Islam Al Fakhir', '2025/2026'],
+      ['Siti Aisyah', 'SD', 'Ibu Aisyah', '08987654321', 'aisyah@email.com', 'TK Al Fakhir', '2025/2026'],
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Kandidat');
+    XLSX.writeFile(wb, 'template_import_kandidat.xlsx');
+  };
+
   return (
     <div className={detail ? 'grid grid-cols-5 gap-6' : ''}>
       <div className={detail ? 'col-span-2' : ''}>
@@ -199,12 +257,53 @@ function KandidatTab({ kandidatList, stats, isLoading, filterStatus, setFilterSt
             }} className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-1.5">
               📥 Export Excel
             </button>
+            <button onClick={() => { setShowImport(true); setImportFile(null); setImportPreview([]); setImportResult(null); }}
+              className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-1.5">
+              📤 Import Excel
+            </button>
             <button onClick={() => { setShowForm(true); setEditTarget(null); setDetail(null); }}
               className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-medium hover:bg-teal-700">
               + Tambah
             </button>
           </div>
         </div>
+
+        {/* Import modal */}
+        {showImport && (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg">
+              <h3 className="font-bold text-gray-800 mb-1">Import Kandidat dari Excel</h3>
+              <p className="text-xs text-gray-400 mb-4">Format kolom: nama, level, nama_ortu, no_telp_ortu, email_ortu, asal_sekolah, tahun_ajaran</p>
+              <button onClick={downloadTemplate} className="text-xs text-teal-600 underline mb-4 block">Download Template Excel</button>
+              <input type="file" accept=".xlsx,.xls" onChange={handleFileChange}
+                className="block w-full text-sm text-gray-600 border border-gray-200 rounded-lg p-2 mb-3" />
+              {importPreview.length > 0 && (
+                <div className="mb-3 border border-gray-100 rounded-lg overflow-hidden">
+                  <p className="text-xs text-gray-400 px-3 py-1 bg-gray-50 border-b">Preview (3 baris pertama)</p>
+                  {importPreview.map((r, i) => (
+                    <div key={i} className="px-3 py-1.5 text-xs text-gray-600 border-b last:border-0">
+                      <span className="font-medium">{r.nama}</span> · {r.level} · {r.nama_ortu}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {importing && <p className="text-xs text-teal-600 mb-3">Mengimpor data...</p>}
+              {importResult && (
+                <p className="text-xs mb-3">
+                  <span className="text-green-600 font-bold">Berhasil: {importResult.ok}</span>
+                  {importResult.fail > 0 && <span className="text-red-500 ml-2">Gagal: {importResult.fail}</span>}
+                </p>
+              )}
+              <div className="flex gap-2 justify-end">
+                <button onClick={() => setShowImport(false)} className="px-4 py-2 border border-gray-200 rounded-lg text-sm">Tutup</button>
+                <button onClick={handleImport} disabled={!importFile || importing}
+                  className="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium disabled:opacity-50">
+                  {importing ? 'Mengimpor...' : 'Import'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Form tambah */}
         {showForm && !editTarget && (

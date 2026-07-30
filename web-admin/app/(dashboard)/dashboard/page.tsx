@@ -139,7 +139,26 @@ export default function DashboardSelectPage() {
           })}
         </motion.div>
 
-        <div className="mt-16">
+        {/* Keuangan card */}
+        <motion.div variants={fadeUp} initial="hidden" animate="show" className="mt-8 w-full max-w-4xl">
+          <motion.button
+            onClick={() => router.push('/dashboard/keuangan')}
+            whileHover={{ y: -4, boxShadow: '0 12px 32px rgba(0,0,0,0.10)' }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full bg-white rounded-2xl shadow-sm border border-teal-100 p-6 flex items-center gap-5 text-left group"
+          >
+            <div className="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center shrink-0">
+              <Wallet size={26} className="text-teal-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-gray-800">Dashboard Keuangan</h3>
+              <p className="text-sm text-gray-400">Rekap tagihan, pembayaran, dan tunggakan siswa</p>
+            </div>
+            <ArrowRight size={18} className="text-gray-300 group-hover:text-teal-500 transition-colors" />
+          </motion.button>
+        </motion.div>
+
+        <div className="mt-8">
           <button
             onClick={() => router.push('/dashboard/master')}
             className="text-xs text-gray-300 hover:text-gray-400 transition-colors"
