@@ -4,15 +4,15 @@ import { AuthRequest } from '../middleware/auth';
 
 export const getByKandidat = async (req: AuthRequest, res: Response): Promise<void> => {
   const catatan = await CatatanPewawancara.findAll({
-    where: { kandidat_id: req.params.kandidat_id },
+    where: { kandidat_id: req.params.kandidat_id as string },
     order: [['created_at', 'ASC']],
   });
   res.json({ success: true, data: catatan });
 };
 
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { kandidat_id } = req.params;
-  const k = await Kandidat.findByPk(kandidat_id as string);
+  const kandidat_id = req.params.kandidat_id as string;
+  const k = await Kandidat.findByPk(kandidat_id);
   if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
 
   const { pewawancara_email, pewawancara_nama, observasi, penilaian_akademik, dukungan_keluarga, catatan_karakter, catatan_lain, rekomendasi } = req.body;
@@ -33,7 +33,7 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
 export const update = async (req: AuthRequest, res: Response): Promise<void> => {
   const c = await CatatanPewawancara.findByPk(req.params.id as string);
   if (!c) { res.status(404).json({ success: false, message: 'Catatan tidak ditemukan' }); return; }
-  if (c.is_locked && req.user?.role !== 'admin') {
+  if (c.is_locked && (req.user as any)?.role !== 'admin') {
     res.status(403).json({ success: false, message: 'Catatan sudah dikunci' }); return;
   }
   const allowed = ['pewawancara_email', 'pewawancara_nama', 'observasi', 'penilaian_akademik',

@@ -50,7 +50,7 @@ export const remove = async (req: AuthRequest, res: Response): Promise<void> => 
 
 // Kandidat submit tes
 export const submitTes = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { kandidat_id } = req.params;
+  const kandidat_id = req.params.kandidat_id as string;
   const k = await Kandidat.findByPk(kandidat_id as string);
   if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
 
@@ -90,6 +90,6 @@ export const submitTes = async (req: AuthRequest, res: Response): Promise<void> 
 };
 
 export const getHasil = async (req: AuthRequest, res: Response): Promise<void> => {
-  const hasil = await HasilTesAkademik.findOne({ where: { kandidat_id: req.params.kandidat_id } });
+  const hasil = await HasilTesAkademik.findOne({ where: { kandidat_id: req.params.kandidat_id as string } });
   res.json({ success: true, data: hasil });
 };
