@@ -1,75 +1,67 @@
 'use client';
 
-import { useState } from 'react';
-import { GraduationCap, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { GraduationCap, Search, User, Users } from 'lucide-react';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+type Kandidat = { id: string; nama: string; nama_diperbaiki: string | null; level: string; tahun_ajaran: string };
 
-export default function FormPendaftaranPage() {
-  const [form, setForm] = useState({
-    nama: '', level: 'SMP', nama_ortu: '', no_telp_ortu: '',
-    email_ortu: '', asal_sekolah: '', jenis_kelamin: '', tanggal_lahir: '',
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
-  const [err, setErr] = useState('');
+export default function FormPortalPage() {
+  const [level, setLevel] = useState('SMP');
+  const [search, setSearch] = useState('');
+  const [kandidat, setKandidat] = useState<Kandidat[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [selected, setSelected] = useState<Kandidat | null>(null);
+  const [jawabanStatus, setJawabanStatus] = useState<string[]>([]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.nama || !form.level) return;
-    setSubmitting(true); setErr('');
-    try {
-      const res = await fetch(`${API}/kandidat/daftar-publik`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (data.success) setDone(true);
-      else setErr(data.message || 'Gagal mengirim');
-    } catch { setErr('Koneksi gagal'); }
-    setSubmitting(false);
-  };
+  useEffect(() => {
+    if (search.length < 2) { setKandidat([]); setSearched(false); return; }
+    const t = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API}/kandidat/publik/cari?search=${encodeURIComponent(search)}&level=${level}`);
+        const data = await res.json();
+        setKandidat(data.data || []);
+      } catch { setKandidat([]); }
+      setLoading(false); setSearched(true);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [search, level]);
 
-  if (done) return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6">
-      <div className="bg-white rounded-[40px] p-10 shadow-2xl text-center max-w-md w-full">
-        <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 className="w-10 h-10 text-emerald-500" />
-        </div>
-        <h2 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">Pendaftaran Terkirim!</h2>
-        <p className="text-slate-500 text-sm leading-relaxed">
-          Terima kasih! Tim kami akan menghubungi Anda melalui nomor atau email yang didaftarkan untuk informasi selanjutnya.
-        </p>
-      </div>
-    </div>
-  );
+  useEffect(() => {
+    if (!selected) return;
+    fetch(`${API}/jawaban-form/kandidat/${selected.id}`).then(r => r.json()).then(d => {
+      setJawabanStatus((d.data || []).map((j: any) => j.role));
+    }).catch(() => setJawabanStatus([]));
+  }, [selected]);
 
-  const inputCls = "w-full h-12 px-4 rounded-2xl bg-slate-50 border-2 border-slate-50 focus:border-[#1B8B87] focus:bg-white outline-none transition-all font-bold text-slate-800";
-  const labelCls = "block text-xs font-black text-slate-400 uppercase tracking-widest mb-2";
+  const nama = selected ? (selected.nama_diperbaiki || selected.nama) : '';
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-6 pb-20">
-      <div className="max-w-2xl mx-auto space-y-10 pt-10">
+      <div className="max-w-2xl mx-auto space-y-8 pt-10">
         <div className="text-center space-y-4">
-          <div className="relative h-28 w-28 mx-auto">
-            <div className="absolute inset-0 bg-teal-500/20 rounded-[40px] blur-2xl" />
-            <div className="relative h-28 w-28 bg-white rounded-[32px] flex items-center justify-center shadow-2xl shadow-teal-500/10 border border-teal-50 p-3">
-              <GraduationCap className="w-14 h-14 text-[#1B8B87]" />
+          <div className="relative h-24 w-24 mx-auto">
+            <div className="absolute inset-0 bg-teal-500/20 rounded-[36px] blur-2xl" />
+            <div className="relative h-24 w-24 bg-white rounded-[28px] flex items-center justify-center shadow-2xl shadow-teal-500/10 border border-teal-50">
+              <GraduationCap className="w-12 h-12 text-[#1B8B87]" />
             </div>
           </div>
-          <div className="space-y-1">
-            <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Formulir Pendaftaran</h1>
-            <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">SMP Islam Al Fakhir</p>
+          <div>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Formulir Observasi</h1>
+            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">SMP Islam Al Fakhir</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-[40px] p-8 shadow-2xl shadow-slate-200 border border-slate-100 space-y-6">
+        <div className="bg-white rounded-[36px] p-7 shadow-xl shadow-slate-200/60 border border-slate-100 space-y-5">
           <div>
-            <label className={labelCls}>Jenjang *</label>
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Pilih Jenjang</p>
             <div className="flex gap-2">
               {['SD', 'SMP', 'SMA'].map(l => (
-                <button type="button" key={l} onClick={() => setForm(f => ({...f, level: l}))}
-                  className={`flex-1 py-2.5 rounded-2xl text-sm font-bold transition-all ${form.level === l ? 'bg-[#1B8B87] text-white shadow-lg shadow-teal-500/20' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
+                <button key={l} onClick={() => { setLevel(l); setSelected(null); }}
+                  className={`flex-1 py-2.5 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${level === l ? 'bg-[#1B8B87] text-white shadow-lg shadow-teal-500/20' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
                   {l}
                 </button>
               ))}
@@ -77,61 +69,68 @@ export default function FormPendaftaranPage() {
           </div>
 
           <div>
-            <label className={labelCls}>Nama Lengkap Calon Siswa *</label>
-            <input required className={inputCls} placeholder="Nama sesuai akta kelahiran" value={form.nama} onChange={e => setForm(f => ({...f, nama: e.target.value}))} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelCls}>Jenis Kelamin</label>
-              <select className={inputCls} value={form.jenis_kelamin} onChange={e => setForm(f => ({...f, jenis_kelamin: e.target.value}))}>
-                <option value="">Pilih...</option>
-                <option value="L">Laki-laki</option>
-                <option value="P">Perempuan</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelCls}>Tanggal Lahir</label>
-              <input type="date" className={inputCls} value={form.tanggal_lahir} onChange={e => setForm(f => ({...f, tanggal_lahir: e.target.value}))} />
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Cari Nama Siswa</p>
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
+              <input type="text" placeholder="Ketik nama lengkap..."
+                value={search} onChange={e => { setSearch(e.target.value); setSelected(null); }}
+                className="w-full h-14 pl-12 pr-4 rounded-2xl bg-slate-50 border-2 border-slate-50 focus:border-[#1B8B87] focus:bg-white outline-none transition-all font-bold text-slate-800" />
             </div>
           </div>
 
-          <div>
-            <label className={labelCls}>Asal Sekolah</label>
-            <input className={inputCls} placeholder="SD/MI asal" value={form.asal_sekolah} onChange={e => setForm(f => ({...f, asal_sekolah: e.target.value}))} />
-          </div>
+          {loading && <div className="py-6 text-center"><div className="w-5 h-5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin mx-auto" /></div>}
+          {!loading && searched && kandidat.length === 0 && (
+            <p className="text-center text-sm text-slate-400 italic py-4">Nama tidak ditemukan untuk jenjang {level}.</p>
+          )}
+          {!loading && kandidat.length > 0 && (
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {kandidat.map(k => (
+                <button key={k.id} onClick={() => setSelected(k)}
+                  className={`w-full text-left p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${selected?.id === k.id ? 'border-[#1B8B87] bg-teal-50' : 'border-slate-50 bg-slate-50/50 hover:border-slate-200'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#1B8B87]/10 flex items-center justify-center text-[#1B8B87] font-black">
+                      {(k.nama_diperbaiki || k.nama).charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-800 text-sm">{k.nama_diperbaiki || k.nama}</p>
+                      <p className="text-xs text-slate-400">{k.level} · {k.tahun_ajaran}</p>
+                    </div>
+                  </div>
+                  {selected?.id === k.id && <div className="w-2 h-2 rounded-full bg-[#1B8B87]" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-          <div className="border-t border-slate-100 pt-6">
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Data Orang Tua / Wali</p>
-            <div className="space-y-4">
-              <div>
-                <label className={labelCls}>Nama Orang Tua / Wali</label>
-                <input className={inputCls} placeholder="Nama lengkap" value={form.nama_ortu} onChange={e => setForm(f => ({...f, nama_ortu: e.target.value}))} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelCls}>No. HP</label>
-                  <input type="tel" className={inputCls} placeholder="08xxxxxxxxxx" value={form.no_telp_ortu} onChange={e => setForm(f => ({...f, no_telp_ortu: e.target.value}))} />
-                </div>
-                <div>
-                  <label className={labelCls}>Email</label>
-                  <input type="email" className={inputCls} placeholder="email@example.com" value={form.email_ortu} onChange={e => setForm(f => ({...f, email_ortu: e.target.value}))} />
-                </div>
-              </div>
+        {selected && (
+          <div className="bg-white rounded-[36px] p-7 shadow-xl shadow-slate-200/60 border border-slate-100">
+            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Mengisi formulir untuk</p>
+            <p className="text-xl font-black text-slate-900 mb-6">{nama}</p>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { role: 'ortu', label: 'Orang Tua / Wali', icon: Users, desc: 'Formulir untuk orang tua atau wali siswa' },
+                { role: 'siswa', label: 'Siswa', icon: User, desc: 'Formulir untuk calon siswa sendiri' },
+              ].map(({ role, label, icon: Icon, desc }) => {
+                const sudah = jawabanStatus.includes(role);
+                return (
+                  <Link key={role} href={`/form/${selected.id}?role=${role}`}
+                    className={`p-5 rounded-3xl border-2 flex flex-col gap-3 transition-all hover:shadow-lg group ${sudah ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100 hover:border-[#1B8B87] hover:bg-teal-50'}`}>
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${sudah ? 'bg-emerald-100' : 'bg-slate-50 group-hover:bg-teal-100'}`}>
+                      <Icon className={`w-6 h-6 ${sudah ? 'text-emerald-500' : 'text-slate-400 group-hover:text-[#1B8B87]'}`} />
+                    </div>
+                    <div>
+                      <p className={`font-black text-sm ${sudah ? 'text-emerald-700' : 'text-slate-800'}`}>{label}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{sudah ? '✓ Sudah diisi' : desc}</p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
+        )}
 
-          {err && <p className="text-red-500 text-sm font-bold text-center">{err}</p>}
-
-          <button type="submit" disabled={submitting || !form.nama}
-            className={`w-full h-14 rounded-3xl font-black uppercase tracking-widest text-sm transition-all active:scale-95 ${form.nama ? 'bg-[#1B8B87] hover:bg-teal-600 text-white shadow-xl shadow-teal-500/20' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
-            {submitting ? 'Mengirim...' : 'Kirim Pendaftaran'}
-          </button>
-        </form>
-
-        <p className="text-center text-xs text-slate-400">
-          Hubungi panitia jika butuh bantuan: <strong>smpislamalfakhir@gmail.com</strong>
-        </p>
+        <p className="text-center text-xs text-slate-400">Butuh bantuan? <strong>smpislamalfakhir@gmail.com</strong></p>
       </div>
     </div>
   );

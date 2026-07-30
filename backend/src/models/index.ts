@@ -22,6 +22,7 @@ import SoalAkademik from './SoalAkademik';
 import HasilTesAkademik from './HasilTesAkademik';
 import JawabanAkademik from './JawabanAkademik';
 import RingkasanAI from './RingkasanAI';
+import JawabanForm from './JawabanForm';
 
 // User <-> Guru / Siswa / OrangTua
 User.hasOne(Guru, { foreignKey: 'user_id', as: 'guru_detail' });
@@ -133,11 +134,14 @@ JawabanAkademik.belongsTo(SoalAkademik, { foreignKey: 'soal_id', as: 'soal' });
 Kandidat.hasOne(RingkasanAI, { foreignKey: 'kandidat_id', as: 'ringkasan_ai' });
 RingkasanAI.belongsTo(Kandidat, { foreignKey: 'kandidat_id', as: 'kandidat' });
 
+Kandidat.hasMany(JawabanForm, { foreignKey: 'kandidat_id', as: 'jawaban_form_list' });
+JawabanForm.belongsTo(Kandidat, { foreignKey: 'kandidat_id', as: 'kandidat' });
+
 export {
   User, Sekolah, Kelas, MataPelajaran,
   Siswa, Guru, OrangTua,
   JadwalPelajaran, Absensi, QrCodeSession,
   Nilai, Pembayaran, PembayaranDetail,
   Rapor, JurnalGuru, ActivityLog, PendingChange, Feedback,
-  Kandidat, CatatanPewawancara, SoalAkademik, HasilTesAkademik, JawabanAkademik, RingkasanAI,
+  Kandidat, CatatanPewawancara, SoalAkademik, HasilTesAkademik, JawabanAkademik, RingkasanAI, JawabanForm,
 };

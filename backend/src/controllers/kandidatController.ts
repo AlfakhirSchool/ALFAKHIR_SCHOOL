@@ -250,7 +250,13 @@ export const monitorPewawancara = async (req: any, res: Response): Promise<void>
     if (kAny.catatan_list?.length > 0) map[key].sudah_catatan++;
   }
 
-  res.json({ success: true, data: Object.values(map).sort((a: any, b: any) => b.total - a.total) });
+  const result = Object.values(map).map((r: any) => ({
+    ...r,
+    status: (r.diterima + r.ditolak) === r.total && r.total > 0 ? 'complete'
+      : r.sudah_catatan > 0 ? 'in_progress'
+      : 'not_started',
+  })).sort((a: any, b: any) => b.total - a.total);
+  res.json({ success: true, data: result });
 };
 
 export const exportExcel = async (req: any, res: Response): Promise<void> => {

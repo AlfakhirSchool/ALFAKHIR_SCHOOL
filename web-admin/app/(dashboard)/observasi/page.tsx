@@ -741,11 +741,19 @@ function MonitorPewawancaraTab({ levelFromUser }: { levelFromUser: string }) {
         <div className="space-y-3">
           {rows.map((row: any) => {
             const pct = row.total > 0 ? Math.round(((row.diterima + row.ditolak) / row.total) * 100) : 0;
+            const statusBadge = row.status === 'complete'
+              ? { label: 'Selesai', cls: 'bg-green-100 text-green-700' }
+              : row.status === 'in_progress'
+              ? { label: 'Proses', cls: 'bg-yellow-100 text-yellow-700' }
+              : { label: 'Belum Mulai', cls: 'bg-gray-100 text-gray-500' };
             return (
               <div key={row.pewawancara_id || 'unassigned'} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <p className="font-semibold text-gray-800 text-sm">{row.pewawancara_nama}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-800 text-sm">{row.pewawancara_nama}</p>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge.cls}`}>{statusBadge.label}</span>
+                    </div>
                     <p className="text-xs text-gray-400 mt-0.5">{row.sudah_catatan} dari {row.total} sudah dicatat</p>
                   </div>
                   <span className="text-lg font-bold text-teal-600">{row.total}</span>

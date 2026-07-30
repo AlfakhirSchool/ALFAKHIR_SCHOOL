@@ -30,6 +30,7 @@ const masterMenu: MenuItem[] = [
   { href: '/laporan',         icon: <BarChart3 size={18} />,        label: 'Laporan' },
   { href: '/users',           icon: <UserCog size={18} />,          label: 'Kelola Akun' },
   { href: '/observasi',        icon: <ClipboardList size={18} />,    label: 'Penerimaan Siswa' },
+  { href: '/observasi/catatan', icon: <FileText size={18} />,         label: 'Semua Catatan' },
   { href: '/interviewer',      icon: <ClipboardList size={18} />,    label: 'Monitor Pewawancara' },
   { href: '/pending-changes', icon: <Bell size={18} />,             label: 'Permintaan Akun' },
   { href: '/audit-log',       icon: <Search size={18} />,           label: 'Audit Log' },
@@ -52,6 +53,7 @@ const levelMenu = (level: string): MenuItem[] => [
   { href: '/nilai',           icon: <FileText size={18} />,         label: 'Nilai' },
   { href: '/laporan',         icon: <BarChart3 size={18} />,        label: 'Laporan' },
   { href: '/observasi',        icon: <ClipboardList size={18} />,    label: 'Penerimaan Siswa' },
+  { href: '/observasi/catatan', icon: <FileText size={18} />,         label: 'Semua Catatan' },
   { href: '/interviewer',      icon: <ClipboardList size={18} />,    label: 'Pewawancara' },
   { href: '/users',           icon: <UserCog size={18} />,          label: 'Kelola Akun' },
 ];
