@@ -4,8 +4,9 @@ import * as ctrl from '../controllers/soalAkademikController';
 
 const router = Router();
 
-// Public: kandidat submit tes (link-based, no auth required)
+// Public routes (no auth)
 router.post('/kandidat/:kandidat_id/submit', ctrl.submitTes);
+router.get('/publik', ctrl.getAllPublik);
 
 router.use(authenticate);
 

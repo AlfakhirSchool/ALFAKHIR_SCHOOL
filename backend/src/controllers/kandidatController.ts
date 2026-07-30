@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
 import bcrypt from 'bcrypt';
-import { Kandidat, Guru, User, Siswa, Kelas, Sekolah, CatatanPewawancara, HasilTesAkademik, RingkasanAI } from '../models';
+import { Kandidat, Guru, User, Siswa, Kelas, Sekolah, CatatanPewawancara, HasilTesAkademik, RingkasanAI, SoalAkademik } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { kelasIdFilter } from '../utils/levelFilter';
 
@@ -145,6 +145,31 @@ export const daftarkan = async (req: AuthRequest, res: Response): Promise<void> 
 };
 
 // Public — tidak butuh auth
+// Publik: cari kandidat untuk portal tes
+export const cariPublik = async (req: any, res: Response): Promise<void> => {
+  const { search, level } = req.query;
+  const where: any = { status: ['PENDING', 'REVIEW'] };
+  if (level) where.level = level;
+  if (search) where.nama = { [Op.iLike]: `%${search}%` };
+  const kandidat = await Kandidat.findAll({
+    where,
+    attributes: ['id', 'nama', 'nama_diperbaiki', 'level', 'tahun_ajaran'],
+    order: [['nama', 'ASC']],
+    limit: 50,
+  });
+  res.json({ success: true, data: kandidat });
+};
+
+// Publik: info kandidat untuk halaman tes
+export const infoPublik = async (req: any, res: Response): Promise<void> => {
+  const k = await Kandidat.findByPk(req.params.id as string, {
+    attributes: ['id', 'nama', 'nama_diperbaiki', 'level', 'tahun_ajaran'],
+    include: [{ model: HasilTesAkademik, as: 'hasil_tes', attributes: ['total_skor'] }],
+  });
+  if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
+  res.json({ success: true, data: k });
+};
+
 export const daftarPublik = async (req: any, res: Response): Promise<void> => {
   const { nama, level, nama_ortu, no_telp_ortu, email_ortu, asal_sekolah, jenis_kelamin, tanggal_lahir } = req.body;
   if (!nama || !level) {

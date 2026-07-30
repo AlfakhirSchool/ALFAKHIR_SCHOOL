@@ -4,8 +4,10 @@ import * as kandidatController from '../controllers/kandidatController';
 
 const router = Router();
 
-// Public route (form pendaftaran online)
+// Public routes
 router.post('/daftar-publik', kandidatController.daftarPublik);
+router.get('/publik/cari', kandidatController.cariPublik);
+router.get('/publik/:id', kandidatController.infoPublik);
 
 // All routes below require auth
 router.use(authenticate);
