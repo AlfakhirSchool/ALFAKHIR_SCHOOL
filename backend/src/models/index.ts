@@ -23,6 +23,7 @@ import HasilTesAkademik from './HasilTesAkademik';
 import JawabanAkademik from './JawabanAkademik';
 import RingkasanAI from './RingkasanAI';
 import JawabanForm from './JawabanForm';
+import PertanyaanForm from './PertanyaanForm';
 
 // User <-> Guru / Siswa / OrangTua
 User.hasOne(Guru, { foreignKey: 'user_id', as: 'guru_detail' });
@@ -143,5 +144,5 @@ export {
   JadwalPelajaran, Absensi, QrCodeSession,
   Nilai, Pembayaran, PembayaranDetail,
   Rapor, JurnalGuru, ActivityLog, PendingChange, Feedback,
-  Kandidat, CatatanPewawancara, SoalAkademik, HasilTesAkademik, JawabanAkademik, RingkasanAI, JawabanForm,
+  Kandidat, CatatanPewawancara, SoalAkademik, HasilTesAkademik, JawabanAkademik, RingkasanAI, JawabanForm, PertanyaanForm,
 };

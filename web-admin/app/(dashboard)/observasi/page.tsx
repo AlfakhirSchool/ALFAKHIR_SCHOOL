@@ -61,7 +61,7 @@ export default function ObservasiPage() {
   const { user } = useAuthStore();
   const levelFromUser = user?.school_level || '';
 
-  const [tab, setTab] = useState<'kandidat' | 'soal' | 'monitor'>('kandidat');
+  const [tab, setTab] = useState<'kandidat' | 'soal' | 'monitor' | 'pertanyaan'>('kandidat');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterLevel, setFilterLevel] = useState(levelFromUser);
   const [showForm, setShowForm] = useState(false);
@@ -111,7 +111,7 @@ export default function ObservasiPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-white border border-gray-200 rounded-xl p-1 w-fit">
-          {([['kandidat', '👤 Kandidat'], ['monitor', '📊 Monitor Pewawancara'], ['soal', '📝 Soal Akademik']] as const).map(([k, label]) => (
+          {([['kandidat', '👤 Kandidat'], ['monitor', '📊 Monitor Pewawancara'], ['soal', '📝 Soal Akademik'], ['pertanyaan', '❓ Pertanyaan Form']] as const).map(([k, label]) => (
             <button key={k} onClick={() => setTab(k as any)}
               className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${tab === k ? 'bg-[#1B8B87] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
               {label}
@@ -138,6 +138,8 @@ export default function ObservasiPage() {
           />
         ) : tab === 'monitor' ? (
           <MonitorPewawancaraTab levelFromUser={levelFromUser} />
+        ) : tab === 'pertanyaan' ? (
+          <PertanyaanFormTab />
         ) : (
           <SoalTab levelFromUser={levelFromUser} />
         )}
@@ -1056,6 +1058,163 @@ function KandidatForm({ form, setForm, levelFromUser, showStatus }: any) {
           <option value="P">Perempuan</option>
         </select>
       </div>
+    </div>
+  );
+}
+
+// ─── Pertanyaan Form Tab ──────────────────────────────────────────────────────
+const TIPE_LABEL: Record<string, string> = { text: 'Teks Singkat', long_text: 'Teks Panjang', choice: 'Pilihan', rating: 'Rating' };
+const BLANK_PERTANYAAN = { teks: '', tipe: 'text', role: 'ortu', level: '', urutan: 0, options: '' };
+
+function PertanyaanFormTab() {
+  const qc = useQueryClient();
+  const [filterRole, setFilterRole] = useState<'ortu' | 'siswa'>('ortu');
+  const [showForm, setShowForm] = useState(false);
+  const [editTarget, setEditTarget] = useState<any>(null);
+  const [form, setForm] = useState({ ...BLANK_PERTANYAAN });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['pertanyaan-form', filterRole],
+    queryFn: () => api.get('/pertanyaan-form', { params: { role: filterRole } }).then(r => r.data.data || []),
+  });
+  const list: any[] = data || [];
+
+  const openEdit = (p: any) => {
+    setEditTarget(p);
+    setForm({ teks: p.teks, tipe: p.tipe, role: p.role, level: p.level || '', urutan: p.urutan, options: p.options || '' });
+    setShowForm(true);
+  };
+  const openAdd = () => { setEditTarget(null); setForm({ ...BLANK_PERTANYAAN, role: filterRole }); setShowForm(true); };
+  const closeForm = () => { setShowForm(false); setEditTarget(null); };
+
+  const saveMut = useMutation({
+    mutationFn: (d: any) => editTarget ? api.put(`/pertanyaan-form/${editTarget.id}`, d) : api.post('/pertanyaan-form', d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['pertanyaan-form'] }); closeForm(); },
+  });
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => api.delete(`/pertanyaan-form/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['pertanyaan-form'] }),
+  });
+
+  const handleSave = () => {
+    const payload: any = { teks: form.teks, tipe: form.tipe, role: form.role, level: form.level || null, urutan: form.urutan };
+    if (form.tipe === 'choice') payload.options = form.options;
+    saveMut.mutate(payload);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1">
+          {(['ortu', 'siswa'] as const).map(r => (
+            <button key={r} onClick={() => setFilterRole(r)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${filterRole === r ? 'bg-[#1B8B87] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              {r === 'ortu' ? '👨‍👩‍👧 Orang Tua' : '🎒 Siswa'}
+            </button>
+          ))}
+        </div>
+        <button onClick={openAdd} className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-all">
+          + Tambah Pertanyaan
+        </button>
+      </div>
+
+      {showForm && (
+        <div className="bg-white border border-gray-200 rounded-xl p-5 mb-5 shadow-sm">
+          <h4 className="font-semibold text-gray-800 mb-4">{editTarget ? 'Edit Pertanyaan' : 'Tambah Pertanyaan'}</h4>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Teks Pertanyaan *</label>
+              <textarea value={form.teks} onChange={e => setForm({ ...form, teks: e.target.value })} rows={3}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 resize-none" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Tipe</label>
+                <select value={form.tipe} onChange={e => setForm({ ...form, tipe: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
+                  <option value="text">Teks Singkat</option>
+                  <option value="long_text">Teks Panjang</option>
+                  <option value="choice">Pilihan</option>
+                  <option value="rating">Rating Bintang</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Role</label>
+                <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
+                  <option value="ortu">Orang Tua</option>
+                  <option value="siswa">Siswa</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Jenjang</label>
+                <select value={form.level} onChange={e => setForm({ ...form, level: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
+                  <option value="">Semua Jenjang</option>
+                  <option value="SD">SD</option>
+                  <option value="SMP">SMP</option>
+                  <option value="SMA">SMA</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Urutan</label>
+                <input type="number" value={form.urutan} onChange={e => setForm({ ...form, urutan: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none" />
+              </div>
+            </div>
+            {form.tipe === 'choice' && (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Pilihan (JSON array)</label>
+                <textarea value={form.options} onChange={e => setForm({ ...form, options: e.target.value })} rows={3}
+                  placeholder={'["Pilihan A","Pilihan B","Pilihan C"]'}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none font-mono resize-none" />
+              </div>
+            )}
+            <div className="flex gap-2 pt-1">
+              <button onClick={handleSave} disabled={!form.teks || saveMut.isPending}
+                className="px-4 py-1.5 bg-[#1B8B87] text-white rounded-lg text-sm font-medium disabled:opacity-50">
+                {saveMut.isPending ? 'Menyimpan...' : 'Simpan'}
+              </button>
+              <button onClick={closeForm} className="px-4 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Batal</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="text-center py-10 text-gray-400 text-sm">Memuat...</div>
+      ) : list.length === 0 ? (
+        <div className="text-center py-10 text-gray-400 text-sm">Belum ada pertanyaan.</div>
+      ) : (
+        <div className="space-y-2">
+          {list.map((p: any, idx: number) => (
+            <div key={p.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-start justify-between gap-4 shadow-sm">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <span className="text-xs font-black text-gray-300 w-6 shrink-0 mt-0.5">{idx + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 leading-snug">{p.teks}</p>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium">{TIPE_LABEL[p.tipe] || p.tipe}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium">{p.role === 'ortu' ? 'Orang Tua' : 'Siswa'}</span>
+                    {p.level && <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">{p.level}</span>}
+                    {p.is_system && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 font-medium">Sistem</span>}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                <button onClick={() => openEdit(p)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-all" title="Edit">
+                  ✏️
+                </button>
+                <button onClick={() => { if (!p.is_system && confirm('Hapus pertanyaan ini?')) deleteMut.mutate(p.id); }}
+                  disabled={p.is_system || deleteMut.isPending}
+                  className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-all disabled:opacity-30 disabled:cursor-not-allowed" title={p.is_system ? 'Pertanyaan sistem tidak bisa dihapus' : 'Hapus'}>
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

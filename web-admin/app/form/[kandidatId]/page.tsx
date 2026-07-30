@@ -7,26 +7,6 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 type Question = { id: string; label: string; type: 'text' | 'long_text' | 'choice' | 'rating'; options?: string[] };
 
-const QUESTIONS_ORTU: Question[] = [
-  { id: 'motivasi', label: 'Apa alasan utama Bapak/Ibu memilih SMP Islam Al Fakhir untuk putra/putri Anda?', type: 'long_text' },
-  { id: 'harapan', label: 'Apa harapan terbesar Bapak/Ibu terhadap pendidikan putra/putri di sekolah ini?', type: 'long_text' },
-  { id: 'karakter', label: 'Bagaimana karakter anak di rumah sehari-hari?', type: 'long_text' },
-  { id: 'keterlibatan', label: 'Seberapa aktif Bapak/Ibu berencana terlibat dalam kegiatan sekolah?', type: 'choice', options: ['Sangat aktif', 'Cukup aktif', 'Tergantung waktu', 'Kurang bisa terlibat'] },
-  { id: 'kondisi_khusus', label: 'Apakah ada kondisi kesehatan atau kebutuhan khusus yang perlu diketahui sekolah?', type: 'long_text' },
-  { id: 'sumber_info', label: 'Dari mana Bapak/Ibu mengetahui SMP Islam Al Fakhir?', type: 'choice', options: ['Rekomendasi teman/keluarga', 'Media sosial', 'Website sekolah', 'Brosur/spanduk', 'Lainnya'] },
-  { id: 'kesan', label: 'Seberapa baik kesan Bapak/Ibu terhadap proses pendaftaran ini?', type: 'rating' },
-];
-
-const QUESTIONS_SISWA: Question[] = [
-  { id: 'alasan', label: 'Kenapa kamu ingin bersekolah di SMP Islam Al Fakhir?', type: 'long_text' },
-  { id: 'hobi', label: 'Apa hobi atau kegiatan yang paling kamu sukai?', type: 'text' },
-  { id: 'mapel_favorit', label: 'Mata pelajaran apa yang paling kamu sukai di sekolah sebelumnya?', type: 'text' },
-  { id: 'cita_cita', label: 'Apa cita-cita atau impianmu ke depan?', type: 'text' },
-  { id: 'pengalaman_organisasi', label: 'Apakah kamu pernah aktif di organisasi atau kegiatan ekstra? Ceritakan!', type: 'long_text' },
-  { id: 'kekhawatiran', label: 'Apakah ada hal yang kamu khawatirkan tentang bersekolah di sini?', type: 'long_text' },
-  { id: 'semangat', label: 'Seberapa semangat kamu mengikuti proses observasi ini?', type: 'rating' },
-];
-
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hover, setHover] = useState(0);
   return (
@@ -48,10 +28,10 @@ export default function FormKandidatPage({ params, searchParams }: { params: Pro
   const { kandidatId } = use(params);
   const { role } = use(searchParams);
   const isOrtu = role === 'ortu';
-  const questions = isOrtu ? QUESTIONS_ORTU : QUESTIONS_SISWA;
   const roleLabel = isOrtu ? 'Orang Tua / Wali' : 'Siswa';
 
   const [kandidat, setKandidat] = useState<any>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [current, setCurrent] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | number>>({});
@@ -60,22 +40,38 @@ export default function FormKandidatPage({ params, searchParams }: { params: Pro
   const [err, setErr] = useState('');
 
   useEffect(() => {
-    fetch(`${API}/kandidat/publik/${kandidatId}`).then(r => r.json()).then(d => {
-      if (d.success) setKandidat(d.data);
+    const roleParam = role || 'siswa';
+    Promise.all([
+      fetch(`${API}/kandidat/publik/${kandidatId}`).then(r => r.json()),
+      fetch(`${API}/jawaban-form/kandidat/${kandidatId}`).then(r => r.json()),
+    ]).then(async ([kData, jData]) => {
+      if (kData.success) {
+        setKandidat(kData.data);
+        const existing = (jData.data || []).find((j: any) => j.role === roleParam);
+        if (existing) { setDone(true); setLoading(false); return; }
+        // Fetch pertanyaan dari API
+        const level = kData.data?.level || '';
+        const params = new URLSearchParams({ role: roleParam });
+        if (level) params.append('level', level);
+        const qRes = await fetch(`${API}/pertanyaan-form?${params}`);
+        const qData = await qRes.json();
+        const mapped: Question[] = (qData.data || []).map((p: any) => ({
+          id: p.id,
+          label: p.teks,
+          type: p.tipe as Question['type'],
+          options: p.options ? JSON.parse(p.options) : undefined,
+        }));
+        setQuestions(mapped);
+      }
       setLoading(false);
     }).catch(() => setLoading(false));
-
-    fetch(`${API}/jawaban-form/kandidat/${kandidatId}`).then(r => r.json()).then(d => {
-      const existing = (d.data || []).find((j: any) => j.role === role);
-      if (existing) setDone(true);
-    }).catch(() => {});
   }, [kandidatId, role]);
 
   const q = questions[current];
-  const progress = ((current + 1) / questions.length) * 100;
+  const progress = questions.length > 0 ? ((current + 1) / questions.length) * 100 : 0;
   const answered = Object.keys(answers).length;
 
-  const setAnswer = (val: string | number) => setAnswers(prev => ({ ...prev, [q.id]: val }));
+  const setAnswer = (val: string | number) => q && setAnswers(prev => ({ ...prev, [q.id]: val }));
 
   const handleSubmit = async () => {
     if (submitting) return;
@@ -114,6 +110,16 @@ export default function FormKandidatPage({ params, searchParams }: { params: Pro
     </div>
   );
 
+  if (questions.length === 0 && !loading) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="text-center">
+        <p className="text-4xl mb-4">📝</p>
+        <p className="font-bold text-slate-700">Belum ada pertanyaan untuk form ini.</p>
+        <a href="/form" className="mt-4 inline-block text-teal-600 hover:underline text-sm">← Kembali</a>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* Header */}
@@ -136,73 +142,71 @@ export default function FormKandidatPage({ params, searchParams }: { params: Pro
       </div>
 
       <div className="max-w-2xl mx-auto px-6 py-12 pb-32">
-        <div className="space-y-8">
-          {/* Question */}
-          <div className="space-y-2">
-            <p className="text-xs font-black text-slate-300 uppercase tracking-widest">Pertanyaan {current + 1}</p>
-            <h2 className="text-2xl font-black text-slate-900 leading-snug">{q.label}</h2>
-          </div>
+        {q && (
+          <div className="space-y-8">
+            <div className="space-y-2">
+              <p className="text-xs font-black text-slate-300 uppercase tracking-widest">Pertanyaan {current + 1}</p>
+              <h2 className="text-2xl font-black text-slate-900 leading-snug">{q.label}</h2>
+            </div>
 
-          {/* Answer input */}
-          <div>
-            {q.type === 'text' && (
-              <input type="text" placeholder="Tulis jawaban Anda..."
-                value={(answers[q.id] as string) || ''}
-                onChange={e => setAnswer(e.target.value)}
-                className="w-full h-14 px-5 rounded-2xl bg-white border-2 border-slate-100 focus:border-[#1B8B87] outline-none transition-all font-bold text-slate-800 shadow-sm" />
-            )}
-            {q.type === 'long_text' && (
-              <textarea placeholder="Tulis jawaban Anda..."
-                value={(answers[q.id] as string) || ''}
-                onChange={e => setAnswer(e.target.value)}
-                rows={5}
-                className="w-full px-5 py-4 rounded-2xl bg-white border-2 border-slate-100 focus:border-[#1B8B87] outline-none transition-all font-bold text-slate-800 shadow-sm resize-none" />
-            )}
-            {q.type === 'choice' && q.options && (
-              <div className="space-y-3">
-                {q.options.map(opt => (
-                  <button key={opt} onClick={() => setAnswer(opt)}
-                    className={`w-full text-left px-5 py-4 rounded-2xl border-2 font-bold text-sm transition-all ${answers[q.id] === opt ? 'border-[#1B8B87] bg-teal-50 text-[#1B8B87]' : 'border-slate-100 bg-white hover:border-slate-300 text-slate-700 shadow-sm'}`}>
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            )}
-            {q.type === 'rating' && (
-              <div className="bg-white rounded-2xl p-6 border-2 border-slate-100 shadow-sm">
-                <StarRating value={(answers[q.id] as number) || 0} onChange={setAnswer} />
-                {answers[q.id] ? (
-                  <p className="text-sm text-slate-500 mt-3 font-bold">{['', 'Sangat kurang', 'Kurang', 'Cukup', 'Baik', 'Sangat baik'][answers[q.id] as number]}</p>
-                ) : <p className="text-sm text-slate-300 mt-3">Pilih bintang...</p>}
-              </div>
-            )}
-          </div>
+            <div>
+              {q.type === 'text' && (
+                <input type="text" placeholder="Tulis jawaban Anda..."
+                  value={(answers[q.id] as string) || ''}
+                  onChange={e => setAnswer(e.target.value)}
+                  className="w-full h-14 px-5 rounded-2xl bg-white border-2 border-slate-100 focus:border-[#1B8B87] outline-none transition-all font-bold text-slate-800 shadow-sm" />
+              )}
+              {q.type === 'long_text' && (
+                <textarea placeholder="Tulis jawaban Anda..."
+                  value={(answers[q.id] as string) || ''}
+                  onChange={e => setAnswer(e.target.value)}
+                  rows={5}
+                  className="w-full px-5 py-4 rounded-2xl bg-white border-2 border-slate-100 focus:border-[#1B8B87] outline-none transition-all font-bold text-slate-800 shadow-sm resize-none" />
+              )}
+              {q.type === 'choice' && q.options && (
+                <div className="space-y-3">
+                  {q.options.map(opt => (
+                    <button key={opt} onClick={() => setAnswer(opt)}
+                      className={`w-full text-left px-5 py-4 rounded-2xl border-2 font-bold text-sm transition-all ${answers[q.id] === opt ? 'border-[#1B8B87] bg-teal-50 text-[#1B8B87]' : 'border-slate-100 bg-white hover:border-slate-300 text-slate-700 shadow-sm'}`}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {q.type === 'rating' && (
+                <div className="bg-white rounded-2xl p-6 border-2 border-slate-100 shadow-sm">
+                  <StarRating value={(answers[q.id] as number) || 0} onChange={setAnswer} />
+                  {answers[q.id] ? (
+                    <p className="text-sm text-slate-500 mt-3 font-bold">{['', 'Sangat kurang', 'Kurang', 'Cukup', 'Baik', 'Sangat baik'][answers[q.id] as number]}</p>
+                  ) : <p className="text-sm text-slate-300 mt-3">Pilih bintang...</p>}
+                </div>
+              )}
+            </div>
 
-          {err && <p className="text-red-500 text-sm font-bold">{err}</p>}
+            {err && <p className="text-red-500 text-sm font-bold">{err}</p>}
 
-          {/* Nav */}
-          <div className="flex items-center justify-between pt-4">
-            <button onClick={() => setCurrent(p => Math.max(0, p - 1))} disabled={current === 0}
-              className="h-12 px-6 rounded-2xl font-bold text-sm flex items-center gap-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 transition-all">
-              <ChevronLeft className="w-4 h-4" /> Kembali
-            </button>
-
-            {current < questions.length - 1 ? (
-              <button onClick={() => setCurrent(p => p + 1)} disabled={!answers[q.id]}
-                className={`h-12 px-8 rounded-2xl font-black text-sm flex items-center gap-2 transition-all active:scale-95 ${answers[q.id] ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-lg' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}>
-                Selanjutnya <ChevronRight className="w-4 h-4" />
+            <div className="flex items-center justify-between pt-4">
+              <button onClick={() => setCurrent(p => Math.max(0, p - 1))} disabled={current === 0}
+                className="h-12 px-6 rounded-2xl font-bold text-sm flex items-center gap-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 disabled:opacity-30 transition-all">
+                <ChevronLeft className="w-4 h-4" /> Kembali
               </button>
-            ) : (
-              <button onClick={handleSubmit}
-                disabled={submitting || answered < questions.length}
-                className={`h-12 px-8 rounded-2xl font-black text-sm flex items-center gap-2 transition-all active:scale-95 ${answered >= questions.length ? 'bg-[#1B8B87] hover:bg-teal-600 text-white shadow-xl shadow-teal-500/20' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}>
-                {submitting ? 'Mengirim...' : 'Kirim Formulir'}
-              </button>
-            )}
-          </div>
-        </div>
 
-        {/* Dot progress */}
+              {current < questions.length - 1 ? (
+                <button onClick={() => setCurrent(p => p + 1)} disabled={!answers[q.id]}
+                  className={`h-12 px-8 rounded-2xl font-black text-sm flex items-center gap-2 transition-all active:scale-95 ${answers[q.id] ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-lg' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}>
+                  Selanjutnya <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button onClick={handleSubmit}
+                  disabled={submitting || answered < questions.length}
+                  className={`h-12 px-8 rounded-2xl font-black text-sm flex items-center gap-2 transition-all active:scale-95 ${answered >= questions.length ? 'bg-[#1B8B87] hover:bg-teal-600 text-white shadow-xl shadow-teal-500/20' : 'bg-slate-100 text-slate-300 cursor-not-allowed'}`}>
+                  {submitting ? 'Mengirim...' : 'Kirim Formulir'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-center gap-1.5 mt-12">
           {questions.map((_, idx) => (
             <div key={idx} className={`rounded-full transition-all ${idx === current ? 'w-6 h-2 bg-[#1B8B87]' : answers[questions[idx].id] ? 'w-2 h-2 bg-emerald-400' : 'w-2 h-2 bg-slate-200'}`} />

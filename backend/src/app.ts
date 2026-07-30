@@ -30,6 +30,7 @@ import kandidatRoutes from './routes/kandidat';
 import catatanPewawancaraRoutes from './routes/catatanPewawancara';
 import soalAkademikRoutes from './routes/soalAkademik';
 import jawabanFormRoutes from './routes/jawabanForm';
+import pertanyaanFormRoutes from './routes/pertanyaanForm';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { globalAuditLogger } from './middleware/auditLog';
 import logger from './config/logger';
@@ -102,6 +103,7 @@ app.use(`${PREFIX}/kandidat`, kandidatRoutes);
 app.use(`${PREFIX}/catatan-pewawancara`, catatanPewawancaraRoutes);
 app.use(`${PREFIX}/soal-akademik`, soalAkademikRoutes);
 app.use(`${PREFIX}/jawaban-form`, jawabanFormRoutes);
+app.use(`${PREFIX}/pertanyaan-form`, pertanyaanFormRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
