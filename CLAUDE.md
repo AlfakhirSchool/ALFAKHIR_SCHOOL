@@ -26,6 +26,13 @@ Satu auth & RBAC layer — login sekali, menu disesuaikan role.
 - Proxmox, per-service dalam container terpisah
 - Domain: Google Workspace for Education
 
+## Akun Per-Individu (Penting)
+
+Ke depan setiap staf/guru punya username & password sendiri (bukan satu akun bersama per dashboard):
+- **Cek duplikat** sebelum buat akun baru — unique constraint di DB + validasi di aplikasi
+- **Cek sistem lain** (absensi, kuitansi, LMS) sebelum ubah skema akun/login — jangan rusak sesi yang sedang live
+- **Backup dulu** sebelum deploy perubahan skema akun ke server live
+
 ## Aturan Kerja
 
 - Cek dulu apakah fitur baru masuk dashboard yang ada atau butuh role/dashboard baru
