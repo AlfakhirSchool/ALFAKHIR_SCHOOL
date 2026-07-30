@@ -1,12 +1,14 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Users, LayoutGrid, CheckCircle, ArrowRight } from 'lucide-react';
+import { Users, LayoutGrid, CheckCircle, ArrowRight, Wallet } from 'lucide-react';
 import api from '@/lib/api';
 import Header from '@/components/layout/Header';
+import { useAuthStore } from '@/store/authStore';
 
 const SCHOOLS = [
   {
@@ -55,11 +57,19 @@ const stagger = { show: { transition: { staggerChildren: 0.12, delayChildren: 0.
 
 export default function DashboardSelectPage() {
   const router = useRouter();
+  const { user } = useAuthStore();
 
   const { data } = useQuery({
     queryKey: ['admin-dashboard-v2'],
     queryFn: () => api.get('/dashboard/admin').then(r => r.data.data),
+    enabled: user?.role !== 'guru',
   });
+
+  useEffect(() => {
+    if (user?.role === 'guru') router.replace('/dashboard/pewawancara');
+  }, [user, router]);
+
+  if (user?.role === 'guru') return null;
 
   const sekolah = data?.sekolah || {};
 

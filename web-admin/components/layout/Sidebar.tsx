@@ -13,6 +13,15 @@ import {
 
 type MenuItem = { href: string; icon: React.ReactNode; label: string };
 
+const pewawancaraMenu: MenuItem[] = [
+  { href: '/dashboard/pewawancara', icon: <LayoutDashboard size={18} />, label: 'Dashboard Saya' },
+  { href: '/interviewer',           icon: <ClipboardList size={18} />,   label: 'Daftar Kandidat' },
+  { href: '/interviewer/sd',        icon: <GraduationCap size={18} />,   label: 'Unit SD' },
+  { href: '/interviewer/smp',       icon: <GraduationCap size={18} />,   label: 'Unit SMP' },
+  { href: '/observasi/catatan',     icon: <FileText size={18} />,        label: 'Semua Catatan' },
+  { href: '/settings',              icon: <Settings size={18} />,        label: 'Pengaturan' },
+];
+
 const masterMenu: MenuItem[] = [
   { href: '/dashboard',       icon: <LayoutDashboard size={18} />,  label: 'Dashboard' },
   { href: '/siswa',           icon: <GraduationCap size={18} />,    label: 'Siswa' },
@@ -81,10 +90,12 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
   const { user } = useAuthStore();
   const level = user?.school_level as SchoolLevel;
 
-  const menuItems = level ? levelMenu(level) : masterMenu;
-  const accentColor = level ? LEVEL_COLOR[level] : '#60A5FA';
+  const isGuru = user?.role === 'guru';
+  const menuItems = isGuru ? pewawancaraMenu : level ? levelMenu(level) : masterMenu;
+  const accentColor = isGuru ? '#1B8B87' : level ? LEVEL_COLOR[level] : '#60A5FA';
   const logo = level ? (LEVEL_LOGO[level] ?? '/logo.png') : '/logo.png';
   const schoolName = level ? (LEVEL_NAME[level] ?? 'Al Fakhir School') : 'Al Fakhir School';
+  const subtitle = isGuru ? 'Pewawancara PPDB' : level ? `Admin ${level}` : 'Admin Control Center';
 
   return (
     <motion.aside
@@ -120,7 +131,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
             >
               <p className="font-bold text-sm leading-tight whitespace-nowrap">{schoolName}</p>
               <p className="text-xs whitespace-nowrap" style={{ color: accentColor }}>
-                {level ? `Admin ${level}` : 'Admin Control Center'}
+                {subtitle}
               </p>
             </motion.div>
             <button
