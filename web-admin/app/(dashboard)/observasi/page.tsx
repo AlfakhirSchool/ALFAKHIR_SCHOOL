@@ -1,52 +1,84 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
+// ─── Types ───────────────────────────────────────────────────────────────────
 type Kandidat = {
-  id: string; nama: string; level: 'SD' | 'SMP' | 'SMA';
-  status: 'PENDING' | 'REVIEW' | 'DITERIMA' | 'DITOLAK';
+  id: string; nama: string; nama_diperbaiki: string | null;
+  level: 'SD' | 'SMP' | 'SMA'; status: 'PENDING' | 'REVIEW' | 'DITERIMA' | 'DITOLAK';
   tahun_ajaran: string; nama_ortu: string | null; no_telp_ortu: string | null;
-  asal_sekolah: string | null; skor_akademik: number | null;
-  rekomendasi: string | null; pewawancara: { user: { nama: string } } | null;
-  created_at: string; siswa_id: string | null;
+  email_ortu: string | null; email_siswa: string | null; asal_sekolah: string | null;
+  jenis_kelamin: string | null; skor_akademik: number | null;
+  ruangan: string | null; pewawancara_nama: string | null;
+  siswa_id: string | null; created_at: string;
+  hasil_tes_akademik?: HasilTes | null;
+  ringkasan_ai?: RingkasanAI | null;
 };
-type Stats = { total: number; pending: number; review: number; diterima: number; ditolak: number };
+type CatatanPewawancara = {
+  id: string; kandidat_id: string; pewawancara_email: string | null;
+  pewawancara_nama: string | null; observasi: string | null;
+  penilaian_akademik: string | null; dukungan_keluarga: string | null;
+  catatan_karakter: string | null; catatan_lain: string | null;
+  rekomendasi: string | null; is_locked: boolean; created_at: string;
+};
+type HasilTes = { id: string; total_skor: number; skor_per_mapel: string; created_at: string };
+type RingkasanAI = { id: string; ringkasan: string; created_at: string };
+type SoalAkademik = {
+  id: string; teks: string; mata_pelajaran: string; gambar_url: string | null;
+  pilihan: string; jawaban_benar: string; urutan: number; level: string | null;
+};
 
+// ─── Constants ───────────────────────────────────────────────────────────────
 const LEVEL_COLOR: Record<string, string> = { SD: '#F97316', SMP: '#1B8B87', SMA: '#3B82F6' };
-const STATUS_COLOR: Record<string, { bg: string; text: string; label: string }> = {
-  PENDING:  { bg: '#FEF3C7', text: '#D97706', label: 'Menunggu' },
-  REVIEW:   { bg: '#EFF6FF', text: '#2563EB', label: 'Wawancara' },
-  DITERIMA: { bg: '#F0FDF4', text: '#16A34A', label: 'Diterima' },
-  DITOLAK:  { bg: '#FEF2F2', text: '#DC2626', label: 'Ditolak' },
+const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; border: string }> = {
+  PENDING:  { bg: '#FEF3C7', text: '#D97706', label: 'Menunggu',   border: '#FDE68A' },
+  REVIEW:   { bg: '#EFF6FF', text: '#2563EB', label: 'Wawancara',  border: '#BFDBFE' },
+  DITERIMA: { bg: '#F0FDF4', text: '#16A34A', label: 'Diterima',   border: '#BBF7D0' },
+  DITOLAK:  { bg: '#FEF2F2', text: '#DC2626', label: 'Ditolak',    border: '#FECACA' },
+};
+const REKOM_COLOR: Record<string, string> = {
+  DITERIMA: '#16A34A', DITOLAK: '#DC2626', REVIEW: '#D97706', '': '#6B7280',
 };
 
-const BLANK = { nama: '', level: 'SMP', nama_ortu: '', no_telp_ortu: '', email_ortu: '', asal_sekolah: '', jenis_kelamin: '', tanggal_lahir: '' };
+const BLANK_KANDIDAT = {
+  nama: '', level: 'SMP', nama_ortu: '', no_telp_ortu: '', email_ortu: '',
+  asal_sekolah: '', jenis_kelamin: '', tahun_ajaran: '2025/2026',
+};
+const BLANK_CATATAN = {
+  pewawancara_nama: '', pewawancara_email: '', observasi: '',
+  penilaian_akademik: '', dukungan_keluarga: '', catatan_karakter: '',
+  catatan_lain: '', rekomendasi: '',
+};
+const BLANK_SOAL = { teks: '', mata_pelajaran: '', pilihan: '', jawaban_benar: '', urutan: 0, level: '' };
 
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ObservasiPage() {
   const qc = useQueryClient();
   const { user } = useAuthStore();
   const levelFromUser = user?.school_level || '';
 
+  const [tab, setTab] = useState<'kandidat' | 'soal'>('kandidat');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterLevel, setFilterLevel] = useState(levelFromUser);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ ...BLANK, level: levelFromUser || 'SMP' });
+  const [form, setForm] = useState({ ...BLANK_KANDIDAT, level: levelFromUser || 'SMP' });
   const [editTarget, setEditTarget] = useState<Kandidat | null>(null);
+  const [detail, setDetail] = useState<Kandidat | null>(null);
   const [daftarModal, setDaftarModal] = useState<Kandidat | null>(null);
   const [selectedKelas, setSelectedKelas] = useState('');
   const [daftarResult, setDaftarResult] = useState<{ email: string; password: string } | null>(null);
 
-  const { data, isLoading, error } = useQuery({
+  // ── Queries ──
+  const { data, isLoading } = useQuery({
     queryKey: ['kandidat', filterStatus, filterLevel],
-    queryFn: () => api.get('/kandidat', { params: { status: filterStatus || undefined, level: filterLevel || undefined, limit: 100 } }).then(r => r.data),
+    queryFn: () => api.get('/kandidat', { params: { status: filterStatus || undefined, level: filterLevel || undefined, limit: 200 } }).then(r => r.data),
   });
-
   const kandidatList: Kandidat[] = data?.data || [];
-  const stats: Stats = data?.stats || { total: 0, pending: 0, review: 0, diterima: 0, ditolak: 0 };
+  const stats = data?.stats || { total: 0, pending: 0, review: 0, diterima: 0, ditolak: 0 };
 
   const { data: kelasList } = useQuery({
     queryKey: ['kelas-modal', daftarModal?.level],
@@ -54,27 +86,19 @@ export default function ObservasiPage() {
     enabled: !!daftarModal,
   });
 
-  const { data: guruList } = useQuery({
-    queryKey: ['guru-pewawancara', filterLevel || levelFromUser],
-    queryFn: () => api.get('/guru', { params: { jenjang: filterLevel || levelFromUser || undefined, limit: 100 } }).then(r => r.data.data || []),
-    enabled: !!editTarget,
-  });
-
+  // ── Mutations ──
   const createMut = useMutation({
-    mutationFn: (data: any) => api.post('/kandidat', data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['kandidat'] }); setShowForm(false); setForm({ ...BLANK, level: levelFromUser || 'SMP' }); },
+    mutationFn: (d: any) => api.post('/kandidat', d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['kandidat'] }); setShowForm(false); setForm({ ...BLANK_KANDIDAT, level: levelFromUser || 'SMP' }); },
   });
-
   const updateMut = useMutation({
     mutationFn: ({ id, data }: any) => api.put(`/kandidat/${id}`, data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['kandidat'] }); setEditTarget(null); },
+    onSuccess: (res) => { qc.invalidateQueries({ queryKey: ['kandidat'] }); setEditTarget(null); if (detail?.id === res.data.data?.id) setDetail(res.data.data); },
   });
-
   const deleteMut = useMutation({
     mutationFn: (id: string) => api.delete(`/kandidat/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['kandidat'] }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['kandidat'] }); if (detail) setDetail(null); },
   });
-
   const daftarkanMut = useMutation({
     mutationFn: ({ id, kelas_id }: any) => api.post(`/kandidat/${id}/daftarkan`, { kelas_id }),
     onSuccess: (res) => { setDaftarResult(res.data); qc.invalidateQueries({ queryKey: ['kandidat'] }); },
@@ -83,10 +107,50 @@ export default function ObservasiPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header title="Penerimaan Siswa Baru" />
-      <div className="p-6 max-w-6xl mx-auto">
+      <div className="p-6 max-w-7xl mx-auto">
 
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 bg-white border border-gray-200 rounded-xl p-1 w-fit">
+          {([['kandidat', '👤 Kandidat'], ['soal', '📝 Soal Akademik']] as const).map(([k, label]) => (
+            <button key={k} onClick={() => setTab(k)}
+              className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${tab === k ? 'bg-[#1B8B87] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'kandidat' ? (
+          <KandidatTab
+            kandidatList={kandidatList} stats={stats} isLoading={isLoading}
+            filterStatus={filterStatus} setFilterStatus={setFilterStatus}
+            filterLevel={filterLevel} setFilterLevel={setFilterLevel}
+            levelFromUser={levelFromUser}
+            showForm={showForm} setShowForm={setShowForm}
+            form={form} setForm={setForm}
+            editTarget={editTarget} setEditTarget={setEditTarget}
+            detail={detail} setDetail={setDetail}
+            daftarModal={daftarModal} setDaftarModal={setDaftarModal}
+            selectedKelas={selectedKelas} setSelectedKelas={setSelectedKelas}
+            daftarResult={daftarResult} setDaftarResult={setDaftarResult}
+            kelasList={kelasList || []}
+            createMut={createMut} updateMut={updateMut} deleteMut={deleteMut} daftarkanMut={daftarkanMut}
+            qc={qc}
+          />
+        ) : (
+          <SoalTab levelFromUser={levelFromUser} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Kandidat Tab ─────────────────────────────────────────────────────────────
+function KandidatTab({ kandidatList, stats, isLoading, filterStatus, setFilterStatus, filterLevel, setFilterLevel, levelFromUser, showForm, setShowForm, form, setForm, editTarget, setEditTarget, detail, setDetail, daftarModal, setDaftarModal, selectedKelas, setSelectedKelas, daftarResult, setDaftarResult, kelasList, createMut, updateMut, deleteMut, daftarkanMut, qc }: any) {
+  return (
+    <div className={detail ? 'grid grid-cols-5 gap-6' : ''}>
+      <div className={detail ? 'col-span-2' : ''}>
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-5 gap-3 mb-5">
           {[
             { label: 'Total', value: stats.total, color: '#6B7280' },
             { label: 'Menunggu', value: stats.pending, color: '#D97706' },
@@ -94,15 +158,15 @@ export default function ObservasiPage() {
             { label: 'Diterima', value: stats.diterima, color: '#16A34A' },
             { label: 'Ditolak', value: stats.ditolak, color: '#DC2626' },
           ].map(s => (
-            <div key={s.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-              <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
+            <div key={s.label} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
+              <p className="text-xl font-bold" style={{ color: s.color }}>{s.value}</p>
               <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap gap-3 mb-4 items-center justify-between">
+        <div className="flex flex-wrap gap-2 mb-4 items-center justify-between">
           <div className="flex gap-2 flex-wrap">
             <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
               className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500">
@@ -122,97 +186,108 @@ export default function ObservasiPage() {
               </select>
             )}
           </div>
-          <button onClick={() => { setShowForm(true); setEditTarget(null); }}
+          <button onClick={() => { setShowForm(true); setEditTarget(null); setDetail(null); }}
             className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-medium hover:bg-teal-700">
-            + Tambah Kandidat
+            + Tambah
           </button>
         </div>
 
         {/* Form tambah */}
         {showForm && !editTarget && (
-          <div className="bg-white rounded-xl border border-teal-200 p-5 mb-5 shadow-sm">
-            <h3 className="font-semibold text-gray-800 mb-4">Tambah Kandidat Baru</h3>
+          <div className="bg-white rounded-xl border border-teal-200 p-4 mb-4 shadow-sm">
+            <h3 className="font-semibold text-gray-800 mb-3 text-sm">Tambah Kandidat Baru</h3>
             <KandidatForm form={form} setForm={setForm} levelFromUser={levelFromUser} />
-            <div className="flex gap-2 mt-4">
+            <div className="flex gap-2 mt-3">
               <button onClick={() => createMut.mutate(form)} disabled={!form.nama || createMut.isPending}
-                className="px-5 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-medium disabled:opacity-50">
+                className="px-4 py-1.5 bg-[#1B8B87] text-white rounded-lg text-sm font-medium disabled:opacity-50">
                 {createMut.isPending ? 'Menyimpan...' : 'Simpan'}
               </button>
-              <button onClick={() => setShowForm(false)} className="px-5 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Batal</button>
+              <button onClick={() => setShowForm(false)} className="px-4 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Batal</button>
             </div>
           </div>
         )}
 
         {/* Edit inline */}
         {editTarget && (
-          <div className="bg-white rounded-xl border border-amber-300 p-5 mb-5 shadow-sm">
-            <h3 className="font-semibold text-gray-800 mb-4">Edit: {editTarget.nama}</h3>
-            <KandidatForm form={form} setForm={setForm} levelFromUser={levelFromUser} guruList={guruList || []} showPewawancara />
-            <div className="flex gap-2 mt-4">
+          <div className="bg-white rounded-xl border border-amber-300 p-4 mb-4 shadow-sm">
+            <h3 className="font-semibold text-gray-800 mb-3 text-sm">Edit: {editTarget.nama}</h3>
+            <KandidatForm form={form} setForm={setForm} levelFromUser={levelFromUser} showStatus />
+            <div className="flex gap-2 mt-3">
               <button onClick={() => updateMut.mutate({ id: editTarget.id, data: form })} disabled={updateMut.isPending}
-                className="px-5 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium disabled:opacity-50">
+                className="px-4 py-1.5 bg-amber-500 text-white rounded-lg text-sm font-medium disabled:opacity-50">
                 {updateMut.isPending ? 'Menyimpan...' : 'Simpan'}
               </button>
-              <button onClick={() => setEditTarget(null)} className="px-5 py-2 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Batal</button>
+              <button onClick={() => setEditTarget(null)} className="px-4 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Batal</button>
             </div>
           </div>
         )}
 
-        {/* Table */}
+        {/* List */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           {isLoading ? (
-            <div className="py-16 text-center">
-              <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-sm text-gray-400">Memuat...</p>
+            <div className="py-12 text-center">
+              <div className="w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-xs text-gray-400">Memuat...</p>
             </div>
           ) : kandidatList.length === 0 ? (
-            <div className="py-16 text-center">
-              <p className="text-4xl mb-3">📋</p>
+            <div className="py-12 text-center">
+              <p className="text-3xl mb-2">📋</p>
               <p className="text-sm text-gray-500">Belum ada kandidat</p>
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Nama</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Jenjang</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Orang Tua</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Asal Sekolah</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3"></th>
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Nama</th>
+                  {!detail && <th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Jenjang</th>}
+                  {!detail && <th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Orang Tua</th>}
+                  <th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                  <th className="px-3 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {kandidatList.map((k) => {
-                  const st = STATUS_COLOR[k.status];
+                {kandidatList.map((k: Kandidat) => {
+                  const st = STATUS_CONFIG[k.status];
+                  const isSelected = detail?.id === k.id;
                   return (
-                    <tr key={k.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-gray-800">{k.nama}</td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-0.5 rounded-full text-xs font-semibold text-white" style={{ backgroundColor: LEVEL_COLOR[k.level] }}>
-                          {k.level}
-                        </span>
+                    <tr key={k.id}
+                      onClick={() => setDetail(isSelected ? null : k)}
+                      className={`cursor-pointer hover:bg-gray-50 transition-colors ${isSelected ? 'bg-teal-50 border-l-2 border-teal-500' : ''}`}>
+                      <td className="px-3 py-2.5">
+                        <p className="font-medium text-gray-800 text-xs">{k.nama_diperbaiki || k.nama}</p>
+                        {k.nama_diperbaiki && <p className="text-gray-400 text-xs line-through">{k.nama}</p>}
+                        {k.skor_akademik != null && (
+                          <p className="text-xs text-blue-600 mt-0.5">Skor: {k.skor_akademik}</p>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">
-                        <p>{k.nama_ortu || '—'}</p>
-                        {k.no_telp_ortu && <p className="text-gray-400">{k.no_telp_ortu}</p>}
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">{k.asal_sekolah || '—'}</td>
-                      <td className="px-4 py-3">
-                        <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: st.bg, color: st.text }}>
+                      {!detail && (
+                        <td className="px-3 py-2.5">
+                          <span className="px-1.5 py-0.5 rounded-full text-xs font-semibold text-white" style={{ backgroundColor: LEVEL_COLOR[k.level] }}>
+                            {k.level}
+                          </span>
+                        </td>
+                      )}
+                      {!detail && (
+                        <td className="px-3 py-2.5 text-gray-500 text-xs">
+                          <p>{k.nama_ortu || '—'}</p>
+                          {k.no_telp_ortu && <p className="text-gray-400">{k.no_telp_ortu}</p>}
+                        </td>
+                      )}
+                      <td className="px-3 py-2.5">
+                        <span className="px-1.5 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: st.bg, color: st.text }}>
                           {st.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2 justify-end">
+                      <td className="px-3 py-2.5" onClick={e => e.stopPropagation()}>
+                        <div className="flex gap-1.5 justify-end">
                           <button onClick={() => {
                             setEditTarget(k);
-                            setForm({ nama: k.nama, level: k.level, nama_ortu: k.nama_ortu || '', no_telp_ortu: k.no_telp_ortu || '', email_ortu: '', asal_sekolah: k.asal_sekolah || '', jenis_kelamin: '', tanggal_lahir: '' } as any);
+                            setForm({ nama: k.nama, level: k.level, nama_ortu: k.nama_ortu || '', no_telp_ortu: k.no_telp_ortu || '', email_ortu: k.email_ortu || '', asal_sekolah: k.asal_sekolah || '', jenis_kelamin: k.jenis_kelamin || '', tahun_ajaran: k.tahun_ajaran, status: k.status } as any);
                             setShowForm(false);
                           }} className="text-xs text-amber-600 hover:underline">Edit</button>
                           {k.status === 'DITERIMA' && !k.siswa_id && (
                             <button onClick={() => { setDaftarModal(k); setSelectedKelas(''); setDaftarResult(null); }}
-                              className="text-xs bg-teal-600 text-white px-2 py-1 rounded hover:bg-teal-700 font-medium">
+                              className="text-xs bg-teal-600 text-white px-2 py-0.5 rounded hover:bg-teal-700">
                               Daftarkan
                             </button>
                           )}
@@ -220,7 +295,7 @@ export default function ObservasiPage() {
                             <button onClick={() => { if (confirm('Hapus kandidat ini?')) deleteMut.mutate(k.id); }}
                               className="text-xs text-red-500 hover:underline">Hapus</button>
                           )}
-                          {k.siswa_id && <span className="text-xs text-green-600 font-medium">✓ Terdaftar</span>}
+                          {k.siswa_id && <span className="text-xs text-green-600 font-medium">✓</span>}
                         </div>
                       </td>
                     </tr>
@@ -231,6 +306,18 @@ export default function ObservasiPage() {
           )}
         </div>
       </div>
+
+      {/* Detail Panel */}
+      {detail && (
+        <div className="col-span-3">
+          <KandidatDetail
+            kandidat={detail}
+            onClose={() => setDetail(null)}
+            onDaftarkan={() => { setDaftarModal(detail); setSelectedKelas(''); setDaftarResult(null); }}
+            qc={qc}
+          />
+        </div>
+      )}
 
       {/* Modal daftarkan */}
       {daftarModal && (
@@ -254,9 +341,9 @@ export default function ObservasiPage() {
                   <select value={selectedKelas} onChange={e => setSelectedKelas(e.target.value)}
                     className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500">
                     <option value="">— Pilih kelas —</option>
-                    {(kelasList || []).map((k: any) => <option key={k.id} value={k.id}>{k.nama} ({k.tahun_ajaran})</option>)}
+                    {kelasList.map((k: any) => <option key={k.id} value={k.id}>{k.nama} ({k.tahun_ajaran})</option>)}
                   </select>
-                  {(kelasList || []).length === 0 && <p className="text-xs text-amber-600 mt-1.5">Belum ada kelas untuk {daftarModal.level}.</p>}
+                  {kelasList.length === 0 && <p className="text-xs text-amber-600 mt-1.5">Belum ada kelas untuk {daftarModal.level}.</p>}
                 </>
               )}
             </div>
@@ -280,9 +367,504 @@ export default function ObservasiPage() {
   );
 }
 
-function KandidatForm({ form, setForm, levelFromUser, guruList, showPewawancara }: any) {
+// ─── Kandidat Detail Panel ────────────────────────────────────────────────────
+function KandidatDetail({ kandidat, onClose, onDaftarkan, qc }: { kandidat: Kandidat; onClose: () => void; onDaftarkan: () => void; qc: any }) {
+  const [detailTab, setDetailTab] = useState<'info' | 'catatan' | 'tes' | 'ai'>('info');
+
+  const { data: catatanData, isLoading: loadCatatan } = useQuery({
+    queryKey: ['catatan-pewawancara', kandidat.id],
+    queryFn: () => api.get(`/catatan-pewawancara/kandidat/${kandidat.id}`).then(r => r.data.data || []),
+  });
+  const { data: hasilData } = useQuery({
+    queryKey: ['hasil-tes', kandidat.id],
+    queryFn: () => api.get(`/soal-akademik/kandidat/${kandidat.id}/hasil`).then(r => r.data.data),
+  });
+  const { data: ringkasanData } = useQuery({
+    queryKey: ['ringkasan-ai', kandidat.id],
+    queryFn: () => api.get(`/kandidat/${kandidat.id}`).then(r => r.data.data?.ringkasan_ai || null),
+  });
+
+  const catatan: CatatanPewawancara[] = catatanData || [];
+  const hasil: HasilTes | null = hasilData || null;
+  const ringkasan: RingkasanAI | null = ringkasanData || null;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden sticky top-4">
+      {/* Header */}
+      <div className="p-4 border-b border-gray-100 flex items-start justify-between" style={{ backgroundColor: '#f0fdfa' }}>
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="font-bold text-gray-800">{kandidat.nama_diperbaiki || kandidat.nama}</h2>
+            <span className="px-2 py-0.5 rounded-full text-xs font-semibold text-white" style={{ backgroundColor: LEVEL_COLOR[kandidat.level] }}>
+              {kandidat.level}
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: STATUS_CONFIG[kandidat.status].bg, color: STATUS_CONFIG[kandidat.status].text }}>
+              {STATUS_CONFIG[kandidat.status].label}
+            </span>
+          </div>
+          {kandidat.nama_diperbaiki && <p className="text-xs text-gray-400 mt-0.5">({kandidat.nama})</p>}
+          <p className="text-xs text-gray-500 mt-1">{kandidat.tahun_ajaran} {kandidat.ruangan && `· Ruang: ${kandidat.ruangan}`}</p>
+        </div>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+      </div>
+
+      {/* Sub-tabs */}
+      <div className="flex border-b border-gray-100 bg-gray-50 text-xs">
+        {([
+          ['info', 'Info'],
+          ['catatan', `Catatan (${catatan.length})`],
+          ['tes', hasil ? `Tes ✓ ${Math.round(hasil.total_skor)}` : 'Tes Akademik'],
+          ['ai', ringkasan ? 'Ringkasan AI ✓' : 'Ringkasan AI'],
+        ] as const).map(([k, label]) => (
+          <button key={k} onClick={() => setDetailTab(k)}
+            className={`px-4 py-2.5 font-medium transition-all border-b-2 ${detailTab === k ? 'border-teal-500 text-teal-700 bg-white' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="p-4 overflow-y-auto max-h-[calc(100vh-280px)]">
+        {detailTab === 'info' && <InfoTab kandidat={kandidat} onDaftarkan={onDaftarkan} />}
+        {detailTab === 'catatan' && <CatatanTab kandidat={kandidat} catatan={catatan} loading={loadCatatan} qc={qc} />}
+        {detailTab === 'tes' && <TesTab kandidat={kandidat} hasil={hasil} />}
+        {detailTab === 'ai' && <AITab ringkasan={ringkasan} />}
+      </div>
+    </div>
+  );
+}
+
+// ─── Info Tab ─────────────────────────────────────────────────────────────────
+function InfoTab({ kandidat, onDaftarkan }: { kandidat: Kandidat; onDaftarkan: () => void }) {
+  const rows = [
+    ['Nama Lengkap', kandidat.nama],
+    ['Nama (Diperbaiki)', kandidat.nama_diperbaiki || '—'],
+    ['Jenjang', kandidat.level],
+    ['Status', STATUS_CONFIG[kandidat.status].label],
+    ['Tahun Ajaran', kandidat.tahun_ajaran],
+    ['Orang Tua', kandidat.nama_ortu || '—'],
+    ['No. HP Ortu', kandidat.no_telp_ortu || '—'],
+    ['Email Ortu', kandidat.email_ortu || '—'],
+    ['Email Siswa', kandidat.email_siswa || '—'],
+    ['Asal Sekolah', kandidat.asal_sekolah || '—'],
+    ['Jenis Kelamin', kandidat.jenis_kelamin === 'L' ? 'Laki-laki' : kandidat.jenis_kelamin === 'P' ? 'Perempuan' : '—'],
+    ['Pewawancara', kandidat.pewawancara_nama || '—'],
+    ['Ruangan', kandidat.ruangan || '—'],
+    ['Skor Akademik', kandidat.skor_akademik != null ? `${kandidat.skor_akademik}` : '—'],
+    ['Terdaftar sbg Siswa', kandidat.siswa_id ? '✓ Ya' : 'Belum'],
+  ];
+  return (
+    <div>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+        {rows.map(([label, value]) => (
+          <div key={label} className="col-span-1">
+            <dt className="text-xs text-gray-400">{label}</dt>
+            <dd className="text-sm font-medium text-gray-700 mt-0.5">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      {kandidat.status === 'DITERIMA' && !kandidat.siswa_id && (
+        <button onClick={onDaftarkan}
+          className="mt-5 w-full py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700">
+          Daftarkan sebagai Siswa
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Catatan Pewawancara Tab ───────────────────────────────────────────────────
+function CatatanTab({ kandidat, catatan, loading, qc }: { kandidat: Kandidat; catatan: CatatanPewawancara[]; loading: boolean; qc: any }) {
+  const [showForm, setShowForm] = useState(false);
+  const [editCatatan, setEditCatatan] = useState<CatatanPewawancara | null>(null);
+  const [form, setForm] = useState({ ...BLANK_CATATAN });
+
+  const createMut = useMutation({
+    mutationFn: (d: any) => api.post(`/catatan-pewawancara/kandidat/${kandidat.id}`, d),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['catatan-pewawancara', kandidat.id] }); setShowForm(false); setForm({ ...BLANK_CATATAN }); },
+  });
+  const updateMut = useMutation({
+    mutationFn: ({ id, data }: any) => api.put(`/catatan-pewawancara/${id}`, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['catatan-pewawancara', kandidat.id] }); setEditCatatan(null); },
+  });
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => api.delete(`/catatan-pewawancara/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['catatan-pewawancara', kandidat.id] }),
+  });
+  const lockMut = useMutation({
+    mutationFn: ({ id, is_locked }: any) => api.put(`/catatan-pewawancara/${id}`, { is_locked }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['catatan-pewawancara', kandidat.id] }),
+  });
+
+  if (loading) return <div className="py-8 text-center text-xs text-gray-400">Memuat catatan...</div>;
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-3">
+        <p className="text-xs text-gray-500">{catatan.length} catatan</p>
+        <button onClick={() => { setShowForm(!showForm); setEditCatatan(null); }}
+          className="text-xs px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700">
+          + Tambah Catatan
+        </button>
+      </div>
+
+      {(showForm || editCatatan) && (
+        <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 mb-4">
+          <h4 className="text-xs font-semibold text-gray-700 mb-3">{editCatatan ? 'Edit Catatan' : 'Catatan Baru'}</h4>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              ['Nama Pewawancara', 'pewawancara_nama', 'text'],
+              ['Email Pewawancara', 'pewawancara_email', 'text'],
+            ].map(([label, key, type]) => (
+              <div key={key}>
+                <label className="block text-xs text-gray-500 mb-1">{label}</label>
+                <input type={type} value={(form as any)[key]} onChange={e => setForm({ ...form, [key]: e.target.value })}
+                  className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              </div>
+            ))}
+            {[
+              ['Observasi', 'observasi'],
+              ['Penilaian Akademik', 'penilaian_akademik'],
+              ['Dukungan Keluarga', 'dukungan_keluarga'],
+              ['Catatan Karakter', 'catatan_karakter'],
+              ['Catatan Lain', 'catatan_lain'],
+            ].map(([label, key]) => (
+              <div key={key} className="col-span-2">
+                <label className="block text-xs text-gray-500 mb-1">{label}</label>
+                <textarea value={(form as any)[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} rows={2}
+                  className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-teal-500 resize-none" />
+              </div>
+            ))}
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Rekomendasi</label>
+              <select value={form.rekomendasi} onChange={e => setForm({ ...form, rekomendasi: e.target.value })}
+                className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-teal-500">
+                <option value="">— Pilih —</option>
+                <option value="DITERIMA">Diterima</option>
+                <option value="REVIEW">Perlu Review</option>
+                <option value="DITOLAK">Ditolak</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-2 mt-3">
+            <button onClick={() => {
+              if (editCatatan) updateMut.mutate({ id: editCatatan.id, data: form });
+              else createMut.mutate(form);
+            }} disabled={createMut.isPending || updateMut.isPending}
+              className="px-3 py-1.5 bg-teal-600 text-white rounded-lg text-xs disabled:opacity-50">
+              {createMut.isPending || updateMut.isPending ? 'Menyimpan...' : 'Simpan'}
+            </button>
+            <button onClick={() => { setShowForm(false); setEditCatatan(null); }}
+              className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs hover:bg-gray-50">Batal</button>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {catatan.map((c) => (
+          <div key={c.id} className={`border rounded-xl p-3.5 ${c.is_locked ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-white'}`}>
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <p className="text-xs font-semibold text-gray-800">{c.pewawancara_nama || 'Anonim'}</p>
+                {c.pewawancara_email && <p className="text-xs text-gray-400">{c.pewawancara_email}</p>}
+              </div>
+              <div className="flex items-center gap-2">
+                {c.rekomendasi && (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full"
+                    style={{ color: REKOM_COLOR[c.rekomendasi] || '#6B7280', backgroundColor: '#f5f5f5' }}>
+                    {c.rekomendasi}
+                  </span>
+                )}
+                {c.is_locked && <span className="text-xs text-amber-700">🔒</span>}
+                <button onClick={() => lockMut.mutate({ id: c.id, is_locked: !c.is_locked })}
+                  className="text-xs text-gray-400 hover:text-gray-600">{c.is_locked ? 'Buka' : 'Kunci'}</button>
+                {!c.is_locked && (
+                  <>
+                    <button onClick={() => {
+                      setEditCatatan(c);
+                      setForm({ pewawancara_nama: c.pewawancara_nama || '', pewawancara_email: c.pewawancara_email || '', observasi: c.observasi || '', penilaian_akademik: c.penilaian_akademik || '', dukungan_keluarga: c.dukungan_keluarga || '', catatan_karakter: c.catatan_karakter || '', catatan_lain: c.catatan_lain || '', rekomendasi: c.rekomendasi || '' });
+                      setShowForm(false);
+                    }} className="text-xs text-amber-600 hover:underline">Edit</button>
+                    <button onClick={() => { if (confirm('Hapus catatan?')) deleteMut.mutate(c.id); }}
+                      className="text-xs text-red-500 hover:underline">Hapus</button>
+                  </>
+                )}
+              </div>
+            </div>
+            {[
+              ['Observasi', c.observasi],
+              ['Penilaian Akademik', c.penilaian_akademik],
+              ['Dukungan Keluarga', c.dukungan_keluarga],
+              ['Catatan Karakter', c.catatan_karakter],
+              ['Catatan Lain', c.catatan_lain],
+            ].filter(([, v]) => v).map(([label, value]) => (
+              <div key={label as string} className="mt-2">
+                <p className="text-xs text-gray-400">{label}</p>
+                <p className="text-xs text-gray-700 mt-0.5 whitespace-pre-wrap">{value}</p>
+              </div>
+            ))}
+          </div>
+        ))}
+        {catatan.length === 0 && (
+          <div className="py-8 text-center text-xs text-gray-400">Belum ada catatan pewawancara</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Tes Akademik Tab ─────────────────────────────────────────────────────────
+function TesTab({ kandidat, hasil }: { kandidat: Kandidat; hasil: HasilTes | null }) {
+  if (!hasil) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-3xl mb-2">📝</p>
+        <p className="text-sm text-gray-500">Belum mengerjakan tes akademik</p>
+        <p className="text-xs text-gray-400 mt-1">Link tes dapat diberikan ke kandidat</p>
+      </div>
+    );
+  }
+
+  let skorMapel: Record<string, { total: number; correct: number }> = {};
+  try { skorMapel = JSON.parse(hasil.skor_per_mapel); } catch {}
+
+  const totalSkor = Math.round(hasil.total_skor * 10) / 10;
+  const skorColor = totalSkor >= 80 ? '#16A34A' : totalSkor >= 60 ? '#D97706' : '#DC2626';
+
+  return (
+    <div>
+      <div className="flex items-center gap-4 bg-gray-50 rounded-xl p-4 mb-4">
+        <div className="text-center">
+          <p className="text-3xl font-bold" style={{ color: skorColor }}>{totalSkor}</p>
+          <p className="text-xs text-gray-500 mt-0.5">Total Skor</p>
+        </div>
+        <div className="h-10 w-px bg-gray-200" />
+        <div>
+          <p className="text-xs text-gray-500">Dikerjakan</p>
+          <p className="text-sm font-medium text-gray-700">{new Date(hasil.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        </div>
+      </div>
+
+      {Object.keys(skorMapel).length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-gray-600 mb-2">Per Mata Pelajaran</p>
+          <div className="space-y-2">
+            {Object.entries(skorMapel).map(([mapel, data]) => {
+              const pct = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+              const barColor = pct >= 80 ? '#16A34A' : pct >= 60 ? '#D97706' : '#DC2626';
+              return (
+                <div key={mapel}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-gray-600">{mapel}</span>
+                    <span className="font-medium" style={{ color: barColor }}>{data.correct}/{data.total} ({pct}%)</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Ringkasan AI Tab ─────────────────────────────────────────────────────────
+function AITab({ ringkasan }: { ringkasan: RingkasanAI | null }) {
+  if (!ringkasan) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-3xl mb-2">🤖</p>
+        <p className="text-sm text-gray-500">Belum ada ringkasan AI</p>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-3">
+        <p className="text-xs text-gray-400">Dibuat: {new Date(ringkasan.created_at).toLocaleDateString('id-ID')}</p>
+      </div>
+      <div className="bg-gradient-to-br from-blue-50 to-teal-50 border border-blue-100 rounded-xl p-4">
+        <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{ringkasan.ringkasan}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Soal Akademik Tab ────────────────────────────────────────────────────────
+function SoalTab({ levelFromUser }: { levelFromUser: string }) {
+  const qc = useQueryClient();
+  const [filterLevel, setFilterLevel] = useState(levelFromUser);
+  const [showForm, setShowForm] = useState(false);
+  const [editSoal, setEditSoal] = useState<SoalAkademik | null>(null);
+  const [form, setForm] = useState({ ...BLANK_SOAL, level: levelFromUser });
+
+  const { data: soalData, isLoading } = useQuery({
+    queryKey: ['soal-akademik', filterLevel],
+    queryFn: () => api.get('/soal-akademik', { params: { level: filterLevel || undefined } }).then(r => r.data.data || []),
+  });
+  const soalList: SoalAkademik[] = soalData || [];
+
+  const createMut = useMutation({
+    mutationFn: (d: any) => api.post('/soal-akademik', { ...d, pilihan: typeof d.pilihan === 'string' ? d.pilihan : JSON.stringify(d.pilihan) }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['soal-akademik'] }); setShowForm(false); setForm({ ...BLANK_SOAL, level: levelFromUser }); },
+  });
+  const updateMut = useMutation({
+    mutationFn: ({ id, data }: any) => api.put(`/soal-akademik/${id}`, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['soal-akademik'] }); setEditSoal(null); },
+  });
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => api.delete(`/soal-akademik/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['soal-akademik'] }),
+  });
+
+  const mapelGroups = soalList.reduce((acc: Record<string, SoalAkademik[]>, s) => {
+    if (!acc[s.mata_pelajaran]) acc[s.mata_pelajaran] = [];
+    acc[s.mata_pelajaran].push(s);
+    return acc;
+  }, {});
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2 mb-4 items-center justify-between">
+        <div className="flex gap-2">
+          {!levelFromUser && (
+            <select value={filterLevel} onChange={e => setFilterLevel(e.target.value)}
+              className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+              <option value="">Semua Jenjang</option>
+              <option value="SD">SD</option>
+              <option value="SMP">SMP</option>
+              <option value="SMA">SMA</option>
+            </select>
+          )}
+          <p className="text-sm text-gray-500 self-center">{soalList.length} soal</p>
+        </div>
+        <button onClick={() => { setShowForm(!showForm); setEditSoal(null); }}
+          className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-medium hover:bg-teal-700">
+          + Tambah Soal
+        </button>
+      </div>
+
+      {(showForm || editSoal) && (
+        <div className="bg-white rounded-xl border border-teal-200 p-4 mb-5 shadow-sm">
+          <h3 className="font-semibold text-gray-800 mb-3 text-sm">{editSoal ? 'Edit Soal' : 'Soal Baru'}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Pertanyaan *</label>
+              <textarea value={form.teks} onChange={e => setForm({ ...form, teks: e.target.value })} rows={2}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 resize-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Mata Pelajaran *</label>
+              <input value={form.mata_pelajaran} onChange={e => setForm({ ...form, mata_pelajaran: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Jenjang</label>
+              <select value={form.level} onChange={e => setForm({ ...form, level: e.target.value })}
+                disabled={!!levelFromUser}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:bg-gray-50">
+                <option value="">Semua Jenjang</option>
+                <option value="SD">SD</option>
+                <option value="SMP">SMP</option>
+                <option value="SMA">SMA</option>
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Pilihan Jawaban (JSON array) *</label>
+              <textarea value={form.pilihan} onChange={e => setForm({ ...form, pilihan: e.target.value })} rows={3}
+                placeholder={'[{"key":"A","text":"..."},{"key":"B","text":"..."}]'}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono focus:outline-none focus:ring-1 focus:ring-teal-500 resize-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Jawaban Benar *</label>
+              <input value={form.jawaban_benar} onChange={e => setForm({ ...form, jawaban_benar: e.target.value })}
+                placeholder="A"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Urutan</label>
+              <input type="number" value={form.urutan} onChange={e => setForm({ ...form, urutan: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
+            </div>
+          </div>
+          <div className="flex gap-2 mt-3">
+            <button onClick={() => {
+              if (editSoal) updateMut.mutate({ id: editSoal.id, data: form });
+              else createMut.mutate(form);
+            }} disabled={!form.teks || !form.mata_pelajaran || createMut.isPending || updateMut.isPending}
+              className="px-4 py-1.5 bg-[#1B8B87] text-white rounded-lg text-sm font-medium disabled:opacity-50">
+              {createMut.isPending || updateMut.isPending ? 'Menyimpan...' : 'Simpan'}
+            </button>
+            <button onClick={() => { setShowForm(false); setEditSoal(null); }}
+              className="px-4 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Batal</button>
+          </div>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="py-12 text-center text-sm text-gray-400">Memuat soal...</div>
+      ) : soalList.length === 0 ? (
+        <div className="py-12 text-center"><p className="text-3xl mb-2">📝</p><p className="text-sm text-gray-500">Belum ada soal</p></div>
+      ) : (
+        <div className="space-y-6">
+          {Object.entries(mapelGroups).map(([mapel, soals]) => (
+            <div key={mapel}>
+              <div className="flex items-center gap-2 mb-3">
+                <h3 className="text-sm font-semibold text-gray-700">{mapel}</h3>
+                <span className="text-xs text-gray-400">({soals.length} soal)</span>
+              </div>
+              <div className="space-y-2">
+                {soals.map((s, idx) => {
+                  let pilihan: { key: string; text: string }[] = [];
+                  try { pilihan = JSON.parse(s.pilihan); } catch {}
+                  return (
+                    <div key={s.id} className="bg-white border border-gray-200 rounded-xl p-3.5">
+                      <div className="flex justify-between items-start">
+                        <p className="text-sm text-gray-800 font-medium flex-1 mr-3">
+                          <span className="text-gray-400 mr-1.5">{idx + 1}.</span>{s.teks}
+                        </p>
+                        <div className="flex gap-2 shrink-0">
+                          {s.level && (
+                            <span className="text-xs px-1.5 py-0.5 rounded text-white" style={{ backgroundColor: LEVEL_COLOR[s.level] || '#6B7280' }}>
+                              {s.level}
+                            </span>
+                          )}
+                          <button onClick={() => {
+                            setEditSoal(s);
+                            setForm({ teks: s.teks, mata_pelajaran: s.mata_pelajaran, pilihan: s.pilihan, jawaban_benar: s.jawaban_benar, urutan: s.urutan, level: s.level || '' });
+                            setShowForm(false);
+                          }} className="text-xs text-amber-600 hover:underline">Edit</button>
+                          <button onClick={() => { if (confirm('Hapus soal ini?')) deleteMut.mutate(s.id); }}
+                            className="text-xs text-red-500 hover:underline">Hapus</button>
+                        </div>
+                      </div>
+                      {pilihan.length > 0 && (
+                        <div className="mt-2 grid grid-cols-2 gap-1">
+                          {pilihan.map((p) => (
+                            <div key={p.key} className={`text-xs px-2 py-1 rounded-lg ${p.key === s.jawaban_benar ? 'bg-green-50 text-green-700 font-medium border border-green-200' : 'bg-gray-50 text-gray-600'}`}>
+                              {p.key}. {p.text}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Kandidat Form ────────────────────────────────────────────────────────────
+function KandidatForm({ form, setForm, levelFromUser, showStatus }: any) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Nama Lengkap *</label>
         <input value={form.nama} onChange={e => setForm({ ...form, nama: e.target.value })}
@@ -298,6 +880,18 @@ function KandidatForm({ form, setForm, levelFromUser, guruList, showPewawancara 
           <option value="SMA">SMA</option>
         </select>
       </div>
+      {showStatus && (
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+          <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500">
+            <option value="PENDING">Menunggu</option>
+            <option value="REVIEW">Wawancara</option>
+            <option value="DITERIMA">Diterima</option>
+            <option value="DITOLAK">Ditolak</option>
+          </select>
+        </div>
+      )}
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Nama Orang Tua</label>
         <input value={form.nama_ortu} onChange={e => setForm({ ...form, nama_ortu: e.target.value })}
@@ -306,6 +900,11 @@ function KandidatForm({ form, setForm, levelFromUser, guruList, showPewawancara 
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">No. HP Orang Tua</label>
         <input value={form.no_telp_ortu} onChange={e => setForm({ ...form, no_telp_ortu: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">Email Orang Tua</label>
+        <input value={form.email_ortu} onChange={e => setForm({ ...form, email_ortu: e.target.value })}
           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
       </div>
       <div>
@@ -322,33 +921,6 @@ function KandidatForm({ form, setForm, levelFromUser, guruList, showPewawancara 
           <option value="P">Perempuan</option>
         </select>
       </div>
-      {showPewawancara && (
-        <>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
-            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500">
-              <option value="PENDING">Menunggu</option>
-              <option value="REVIEW">Wawancara</option>
-              <option value="DITERIMA">Diterima</option>
-              <option value="DITOLAK">Ditolak</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Pewawancara</label>
-            <select value={form.pewawancara_id || ''} onChange={e => setForm({ ...form, pewawancara_id: e.target.value || null })}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500">
-              <option value="">— Pilih Guru —</option>
-              {(guruList || []).map((g: any) => <option key={g.id} value={g.id}>{g.user?.nama}</option>)}
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-xs font-medium text-gray-600 mb-1">Catatan</label>
-            <textarea value={form.catatan || ''} onChange={e => setForm({ ...form, catatan: e.target.value })} rows={2}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 resize-none" />
-          </div>
-        </>
-      )}
     </div>
   );
 }
