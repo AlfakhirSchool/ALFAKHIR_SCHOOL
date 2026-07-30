@@ -36,8 +36,9 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
     Object.assign(guruWhere, { [Op.or]: [literal(`'${jenjang}' = ANY(school_levels)`)] });
   }
 
+  const hasWhere = Object.keys(guruWhere).length > 0 || Object.getOwnPropertySymbols(guruWhere).length > 0;
   const { count, rows } = await Guru.findAndCountAll({
-    where: Object.keys(guruWhere).length > 0 ? guruWhere : undefined,
+    where: hasWhere ? guruWhere : undefined,
     include: [{ model: User, as: 'user', where: userWhere, attributes: { exclude: ['password_hash'] } }],
     limit: parseInt(limit as string),
     offset,
