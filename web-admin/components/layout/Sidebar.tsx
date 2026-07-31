@@ -242,7 +242,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
 
   return (
     <motion.aside
-      className="flex flex-col h-screen fixed left-0 top-0 z-40 overflow-hidden"
+      className="flex flex-col h-screen fixed left-0 top-0 z-40 overflow-hidden text-white"
       style={{ background: 'linear-gradient(180deg, #0F172A 0%, #111827 100%)' }}
       animate={{ width: collapsed ? 64 : 260 }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
