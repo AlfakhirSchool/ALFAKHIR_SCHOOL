@@ -143,7 +143,7 @@ function GroupItem({
     return (
       <div
         className={`flex items-center justify-center w-9 h-9 rounded-xl mx-auto my-0.5 cursor-pointer transition-all duration-150 ${
-          hasActive ? 'text-white shadow-lg' : 'text-slate-400 hover:bg-slate-100'
+          hasActive ? 'text-white shadow-lg' : 'text-gray-700 hover:bg-gray-100'
         }`}
         style={hasActive ? { backgroundColor: groupColor, boxShadow: `0 4px 12px ${groupColor}40` } : {}}
         title={group.label}
@@ -158,7 +158,7 @@ function GroupItem({
       <button
         onClick={() => setOpen(o => !o)}
         className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-150 ${
-          hasActive ? '' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+          hasActive ? '' : 'text-gray-900 hover:text-black hover:bg-slate-100'
         }`}
         style={hasActive ? { color: groupColor } : {}}
       >
@@ -166,14 +166,14 @@ function GroupItem({
           className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md transition-all duration-150"
           style={hasActive
             ? { backgroundColor: groupColor + '15', color: groupColor }
-            : { color: '#94a3b8' }}
+            : { color: '#374151' }}
         >
           {group.icon}
         </span>
         <span className="flex-1 text-left">{group.label}</span>
         <ChevronRight
           size={12}
-          className={`flex-shrink-0 text-slate-400 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+          className={`flex-shrink-0 text-gray-600 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
         />
       </button>
 
@@ -196,7 +196,7 @@ function GroupItem({
                     className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all duration-150 ${
                       active
                         ? 'font-semibold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                        : 'text-gray-900 hover:text-black hover:bg-slate-100'
                     }`}
                     style={active ? {
                       backgroundColor: groupColor + '12',
@@ -204,7 +204,7 @@ function GroupItem({
                     } : {}}
                   >
                     <span
-                      className={`flex-shrink-0 transition-colors duration-150 ${active ? '' : 'text-slate-400'}`}
+                      className={`flex-shrink-0 transition-colors duration-150 ${active ? '' : 'text-gray-600'}`}
                       style={active ? { color: groupColor } : {}}
                     >
                       {item.icon}
@@ -241,7 +241,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
 
   return (
     <motion.aside
-      className="flex flex-col h-screen fixed left-0 top-0 z-40 overflow-hidden bg-white text-slate-800"
+      className="flex flex-col h-screen fixed left-0 top-0 z-40 overflow-hidden bg-white text-gray-900"
       style={{ borderRight: '1px solid #e2e8f0' }}
       animate={{ width: collapsed ? 64 : 260 }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
@@ -258,7 +258,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
             </div>
             <button
               onClick={onToggle}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-gray-600 hover:text-black hover:bg-gray-100 transition-colors"
               title="Buka sidebar"
             >
               <PanelLeftOpen size={15} />
@@ -280,7 +280,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
             </motion.div>
             <button
               onClick={onToggle}
-              className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg text-gray-600 hover:text-black hover:bg-gray-100 transition-colors"
               title="Tutup sidebar"
             >
               <PanelLeftClose size={15} />
@@ -311,7 +311,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
                   href={item.href}
                   title={collapsed ? item.label : undefined}
                   className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-sm transition-all duration-150 ${
-                    active ? 'font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    active ? 'font-semibold' : 'text-gray-900 hover:text-black hover:bg-slate-100'
                   }`}
                   style={active ? {
                     backgroundColor: accentColor + '20',
@@ -351,8 +351,8 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
               {(user.nama || user.email || 'U')[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-700 truncate">{user.nama || user.email}</p>
-              <p className="text-[10px] text-slate-400 capitalize truncate">{user.role}</p>
+              <p className="text-xs font-medium text-gray-900 truncate">{user.nama || user.email}</p>
+              <p className="text-[10px] text-gray-500 capitalize truncate">{user.role}</p>
             </div>
           </div>
         </div>
