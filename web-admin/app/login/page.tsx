@@ -13,9 +13,10 @@ type JenjangInfo = { logo: string; name: string; sub: string; accent: string; pa
 const getJenjangFromHostname = (): JenjangInfo => {
   if (typeof window === 'undefined') return { logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1565C0' };
   const h = window.location.hostname;
-  if (h.startsWith('admin-sd.'))  return { logo: '/logo.png', name: 'SD Islam Al-Fakhir',  sub: 'Admin SD',  accent: '#F97316', panelBg: '#C2440E' };
-  if (h.startsWith('admin-smp.')) return { logo: '/logo.png', name: 'SMP Islam Al-Fakhir', sub: 'Admin SMP', accent: '#1B8B87', panelBg: '#0D9488' };
-  if (h.startsWith('admin-sma.')) return { logo: '/logo.png', name: 'SMA Islam Al-Fakhir', sub: 'Admin SMA', accent: '#3B82F6', panelBg: '#2563EB' };
+  if (h.startsWith('admin-sd.'))    return { logo: '/logo.png', name: 'SD Islam Al-Fakhir',  sub: 'Admin SD',  accent: '#F97316', panelBg: '#C2440E' };
+  if (h.startsWith('admin-smp.'))  return { logo: '/logo.png', name: 'SMP Islam Al-Fakhir', sub: 'Admin SMP', accent: '#1B8B87', panelBg: '#0D9488' };
+  if (h.startsWith('admin-sma.'))  return { logo: '/logo.png', name: 'SMA Islam Al-Fakhir', sub: 'Admin SMA', accent: '#3B82F6', panelBg: '#2563EB' };
+  if (h.startsWith('pewawancara.')) return { logo: '/logo.png', name: 'Al Fakhir School',    sub: 'Portal Pewawancara PPDB', accent: '#1B8B87', panelBg: '#0D9488' };
   return { logo: '/logo.png', name: 'Al Fakhir School', sub: 'Admin Control Center', accent: '#3B7FD1', panelBg: '#1565C0' };
 };
 
@@ -40,13 +41,14 @@ export default function LoginPage() {
     try {
       const res = await api.post('/auth/login', { email, password });
       const { user, accessToken, refreshToken } = res.data.data;
-      if (!['admin'].includes(user.role)) {
-        setError('Akses hanya untuk Admin');
+      if (!['admin', 'guru', 'pewawancara'].includes(user.role)) {
+        setError('Akses hanya untuk Admin atau Pewawancara');
         setLoading(false);
         return;
       }
       login(user, accessToken, refreshToken);
       sessionStorage.setItem('just_logged_in', '1');
+      if (user.role === 'guru' || user.role === 'pewawancara') { router.push('/dashboard/pewawancara'); return; }
       if (user.school_level === 'SD')  { router.push('/dashboard/sd');  return; }
       if (user.school_level === 'SMP') { router.push('/dashboard/smp'); return; }
       if (user.school_level === 'SMA') { router.push('/dashboard/sma'); return; }
