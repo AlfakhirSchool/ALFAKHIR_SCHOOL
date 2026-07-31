@@ -21,7 +21,7 @@ router.get('/:id', authorize('admin', 'guru', 'pewawancara'), kandidatController
 router.put('/:id', authorize('admin'), kandidatController.update);
 router.delete('/:id', authorize('admin'), kandidatController.remove);
 router.post('/:id/daftarkan', authorize('admin'), kandidatController.daftarkan);
-router.post('/:id/generate-ai', authorize('admin'), kandidatController.generateRingkasanAI);
+router.post('/:id/generate-ai', authorize('admin', 'guru', 'pewawancara'), kandidatController.generateRingkasanAI);
 router.get('/:id/qrcode', authorize('admin'), kandidatController.getQrCode);
 
 export default router;
