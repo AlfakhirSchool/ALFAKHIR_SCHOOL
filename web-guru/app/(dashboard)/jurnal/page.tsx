@@ -138,7 +138,7 @@ export default function JurnalPage() {
                     const rows = (jurnalList || []).map((j: any) => ({
                       'Tanggal': j.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '',
                       'Kelas': j.kelas?.nama || '',
-                      'Mata Pelajaran': j.mataPelajaran?.nama || '',
+                      'Mata Pelajaran': j.mata_pelajaran?.nama || '',
                       'Topik Pelajaran': j.topik_pelajaran || '',
                       'Tugas': j.deskripsi_pembelajaran || '',
                       'Catatan Guru': j.hasil_pembelajaran || '',
@@ -184,7 +184,7 @@ export default function JurnalPage() {
                         </span>
                       </div>
                       <p className="text-sm text-gray-500">
-                        {j.kelas?.nama} · {j.mataPelajaran?.nama || '—'} · {new Date(j.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {j.kelas?.nama} · {j.mata_pelajaran?.nama || '—'} · {new Date(j.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </p>
                     </div>
                     <div className="flex gap-2" onClick={e => e.stopPropagation()}>
@@ -302,7 +302,7 @@ export default function JurnalPage() {
             <div className="p-6 space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
                 <div><span className="font-medium block">Kelas</span>{detailJurnal.kelas?.nama || '—'}</div>
-                <div><span className="font-medium block">Mata Pelajaran</span>{detailJurnal.mataPelajaran?.nama || '—'}</div>
+                <div><span className="font-medium block">Mata Pelajaran</span>{detailJurnal.mata_pelajaran?.nama || '—'}</div>
                 <div><span className="font-medium block">Tanggal</span>{new Date(detailJurnal.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
               </div>
               {detailJurnal.deskripsi_pembelajaran && (
