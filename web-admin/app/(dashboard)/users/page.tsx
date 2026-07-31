@@ -7,10 +7,10 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
 const ROLE_COLOR: Record<string, string> = {
-  admin: '#F97316', guru: '#2563EB', pewawancara: '#1B8B87', siswa: '#16A34A', ortu: '#9333EA',
+  admin: '#F97316', guru: '#2563EB', pewawancara: '#1B8B87', keuangan: '#F59E0B', siswa: '#16A34A', ortu: '#9333EA',
 };
 const ROLE_LABEL: Record<string, string> = {
-  admin: 'Admin', guru: 'Guru', pewawancara: 'Pewawancara', siswa: 'Siswa', ortu: 'Orang Tua',
+  admin: 'Admin', guru: 'Guru', pewawancara: 'Pewawancara', keuangan: 'Keuangan', siswa: 'Siswa', ortu: 'Orang Tua',
 };
 const LEVEL_COLOR: Record<string, string> = {
   SD: '#F97316', SMP: '#2563EB', SMA: '#7C3AED',
@@ -267,6 +267,8 @@ export default function UsersPage() {
             <option value="">Semua Role</option>
             <option value="admin">Admin</option>
             <option value="guru">Guru</option>
+            <option value="pewawancara">Pewawancara</option>
+            <option value="keuangan">Keuangan</option>
             <option value="siswa">Siswa</option>
             <option value="ortu">Orang Tua</option>
           </select>
@@ -547,6 +549,7 @@ export default function UsersPage() {
                     { value: 'admin',       label: 'Admin',       icon: '🛡️',  desc: 'Kelola data sekolah' },
                     { value: 'guru',        label: 'Guru',        icon: '👨‍🏫', desc: 'Input nilai & absensi' },
                     { value: 'pewawancara', label: 'Pewawancara', icon: '🎙️',  desc: 'Wawancara PPDB' },
+                    { value: 'keuangan',   label: 'Keuangan',   icon: '💰',  desc: 'Kelola pembayaran' },
                     { value: 'siswa',       label: 'Siswa',       icon: '👨‍🎓', desc: 'Akses info pribadi' },
                     { value: 'ortu',        label: 'Orang Tua',   icon: '👨‍👧', desc: 'Pantau anak' },
                   ].map(r => (
