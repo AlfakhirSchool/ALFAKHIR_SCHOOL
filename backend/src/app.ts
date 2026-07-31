@@ -50,8 +50,13 @@ app.use(cors({
       'http://localhost:3002',
       'http://10.10.9.73:3000',
       'http://10.10.9.73:3002',
+      // Production Cloudflare domains
+      'https://keuangan.smpialfakhir.sch.id',
+      'https://pewawancara.smpialfakhir.sch.id',
+      'https://guru.smpialfakhir.sch.id',
+      'https://dashboard.smpialfakhir.sch.id',
     ].filter(Boolean);
-    if (!origin || allowed.includes(origin) || (process.env.CLOUDFLARE_TUNNEL_TOKEN && origin?.endsWith('.trycloudflare.com'))) {
+    if (!origin || allowed.includes(origin) || origin?.endsWith('.smpialfakhir.sch.id') || (process.env.CLOUDFLARE_TUNNEL_TOKEN && origin?.endsWith('.trycloudflare.com'))) {
       callback(null, true);
     } else {
       callback(new Error(`CORS: origin tidak diizinkan: ${origin}`));
