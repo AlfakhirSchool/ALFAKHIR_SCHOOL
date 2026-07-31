@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useAuthStore } from '@/store/authStore';
 import styles from './kuitansi.module.css';
 
 // ── helpers ─────────────────────────────────────────────────────────────────
@@ -108,6 +109,13 @@ export default function KuitansiApp() {
   const [addingKelas, setAddingKelas] = useState(false);
   const [newKelasInput, setNewKelasInput] = useState('');
   const [kelasList, setKelasList] = useState<string[]>([]);
+
+  const { user } = useAuthStore();
+  // Deteksi signer berdasarkan nama user login
+  const isMia = user?.nama?.toLowerCase().includes('mia');
+  const signerTtd = isMia ? '/invoice/ttdmia.png' : '/invoice/ttdnun.png';
+  const signerNama = isMia ? 'Mia Andini Caniago, S.Ak.' : 'Nurhidayati, S.Pd.';
+  const signerRole = isMia ? 'Kepala Keuangan' : 'Bendahara Sekolah';
 
   const sheetScrollRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -551,25 +559,14 @@ export default function KuitansiApp() {
                     Pindai kode untuk menuju situs resmi sekolah dan memastikan dokumen ini diterbitkan oleh Al-Fakhir.
                   </div>
                 </div>
-                <div className={styles.signGroup}>
-                  <div className={styles.signBlock}>
-                    <div className={styles.signDate}>Depok, {tanggal}</div>
-                    <div className={styles.sealWrap}>
-                      <img className={styles.sealLogo} src={`/invoice/logo-${unit === 'SD' ? 'sd' : 'smp'}.png`} alt="Cap Sekolah" />
-                      <img className={styles.ttdSign} src="/invoice/ttdmia.png" alt="TTD Mia" />
-                    </div>
-                    <div className={styles.signName}>Mia Andini Caniago, S.Ak.</div>
-                    <div className={styles.signRole}>Kepala Keuangan</div>
+                <div className={styles.signBlock}>
+                  <div className={styles.signDate}>Depok, {tanggal}</div>
+                  <div className={styles.sealWrap}>
+                    <img className={styles.sealLogo} src={`/invoice/logo-${unit === 'SD' ? 'sd' : 'smp'}.png`} alt="Cap Sekolah" />
+                    <img className={styles.ttdSign} src={signerTtd} alt="TTD" />
                   </div>
-                  <div className={styles.signBlock}>
-                    <div className={styles.signDate}>Depok, {tanggal}</div>
-                    <div className={styles.sealWrap}>
-                      <img className={styles.sealLogo} src={`/invoice/logo-${unit === 'SD' ? 'sd' : 'smp'}.png`} alt="Cap Sekolah" />
-                      <img className={styles.ttdSign} src="/invoice/ttdnun.png" alt="TTD Nun" />
-                    </div>
-                    <div className={styles.signName}>Nurhidayati, S.Pd.</div>
-                    <div className={styles.signRole}>Bendahara Sekolah</div>
-                  </div>
+                  <div className={styles.signName}>{signerNama}</div>
+                  <div className={styles.signRole}>{signerRole}</div>
                 </div>
               </div>
 
