@@ -41,13 +41,14 @@ export default function LoginPage() {
     try {
       const res = await api.post('/auth/login', { email, password });
       const { user, accessToken, refreshToken } = res.data.data;
-      if (!['admin', 'guru', 'pewawancara'].includes(user.role)) {
-        setError('Akses hanya untuk Admin atau Pewawancara');
+      if (!['admin', 'guru', 'pewawancara', 'keuangan'].includes(user.role)) {
+        setError('Akses hanya untuk Admin, Pewawancara, atau Keuangan');
         setLoading(false);
         return;
       }
       login(user, accessToken, refreshToken);
       sessionStorage.setItem('just_logged_in', '1');
+      if (user.role === 'keuangan') { router.push('/dashboard/keuangan'); return; }
       if (user.role === 'guru' || user.role === 'pewawancara') { router.push('/dashboard/pewawancara'); return; }
       if (user.school_level === 'SD')  { router.push('/dashboard/sd');  return; }
       if (user.school_level === 'SMP') { router.push('/dashboard/smp'); return; }
