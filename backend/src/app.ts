@@ -54,7 +54,7 @@ app.use(cors({
     if (!origin || allowed.includes(origin) || (process.env.CLOUDFLARE_TUNNEL_TOKEN && origin?.endsWith('.trycloudflare.com'))) {
       callback(null, true);
     } else {
-      callback(null, true);
+      callback(new Error(`CORS: origin tidak diizinkan: ${origin}`));
     }
   },
   credentials: true,

@@ -4,9 +4,18 @@ import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
 
-// Webhook tidak perlu auth (dipanggil oleh BCA/Mandiri)
-router.post('/webhook/bca', pembayaranController.webhookBca);
-router.post('/webhook/mandiri', pembayaranController.webhookMandiri);
+// Webhook: validasi token dari BCA/Mandiri via header X-Callback-Token
+function webhookAuth(req: import('express').Request, res: import('express').Response, next: import('express').NextFunction) {
+  const token = req.headers['x-callback-token'];
+  const expected = process.env.WEBHOOK_CALLBACK_TOKEN;
+  if (!expected || token !== expected) {
+    res.status(401).json({ status: 'unauthorized' });
+    return;
+  }
+  next();
+}
+router.post('/webhook/bca', webhookAuth, pembayaranController.webhookBca);
+router.post('/webhook/mandiri', webhookAuth, pembayaranController.webhookMandiri);
 
 router.use(authenticate);
 

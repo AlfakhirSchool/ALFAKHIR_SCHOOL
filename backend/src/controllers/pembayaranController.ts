@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
+import sequelize from '../config/database';
 import { Pembayaran, PembayaranDetail, Siswa, User } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
@@ -77,31 +78,48 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
 export const bayar = async (req: AuthRequest, res: Response): Promise<void> => {
   const { nominal_bayar, bank, reference_number } = req.body;
 
-  const pembayaran = await Pembayaran.findByPk(req.params.id as string, { include: [{ model: PembayaranDetail, as: 'detail_list' }] });
-  if (!pembayaran) throw createError('Tagihan tidak ditemukan', 404);
+  // Idempotency: tolak reference_number duplikat
+  if (reference_number) {
+    const existing = await PembayaranDetail.findOne({ where: { reference_number } });
+    if (existing) {
+      res.status(409).json({ success: false, message: 'Reference number sudah diproses' });
+      return;
+    }
+  }
 
-  const totalTerbayar = (pembayaran.nominal_terbayar || 0) + nominal_bayar;
-  let newStatus: 'belum_bayar' | 'sebagian' | 'lunas' = 'sebagian';
-  if (totalTerbayar >= pembayaran.nominal_biaya) newStatus = 'lunas';
-  if (totalTerbayar === 0) newStatus = 'belum_bayar';
+  const { totalTerbayar, newStatus, pembayaranId, jenisBiaya, tahunAjaran } = await sequelize.transaction(async (t) => {
+    const pembayaran = await Pembayaran.findByPk(req.params.id as string, {
+      include: [{ model: PembayaranDetail, as: 'detail_list' }],
+      lock: t.LOCK.UPDATE,
+      transaction: t,
+    });
+    if (!pembayaran) throw createError('Tagihan tidak ditemukan', 404);
 
-  await PembayaranDetail.create({
-    pembayaran_id: pembayaran.id,
-    nominal_bayar,
-    tanggal_bayar: new Date(),
-    bank,
-    reference_number,
-  });
+    const totalTerbayar = Number(pembayaran.nominal_terbayar || 0) + Number(nominal_bayar);
+    let newStatus: 'belum_bayar' | 'sebagian' | 'lunas' = 'sebagian';
+    if (totalTerbayar >= Number(pembayaran.nominal_biaya)) newStatus = 'lunas';
+    if (totalTerbayar === 0) newStatus = 'belum_bayar';
 
-  await pembayaran.update({
-    nominal_terbayar: totalTerbayar,
-    status: newStatus,
-    tanggal_bayar: newStatus === 'lunas' ? new Date() : pembayaran.tanggal_bayar,
-    metode_bayar: bank,
+    await PembayaranDetail.create({
+      pembayaran_id: pembayaran.id,
+      nominal_bayar,
+      tanggal_bayar: new Date(),
+      bank,
+      reference_number,
+    }, { transaction: t });
+
+    await pembayaran.update({
+      nominal_terbayar: totalTerbayar,
+      status: newStatus,
+      tanggal_bayar: newStatus === 'lunas' ? new Date() : pembayaran.tanggal_bayar,
+      metode_bayar: bank,
+    }, { transaction: t });
+
+    return { totalTerbayar, newStatus, pembayaranId: pembayaran.id, jenisBiaya: pembayaran.jenis_biaya, tahunAjaran: pembayaran.tahun_ajaran };
   });
 
   if (newStatus === 'lunas' && process.env.N8N_WEBHOOK_URL) {
-    const siswaData = await Pembayaran.findByPk(pembayaran.id, {
+    const siswaData = await Pembayaran.findByPk(pembayaranId, {
       include: [{ model: Siswa, as: 'siswa', include: [{ model: User, as: 'user', attributes: ['nama', 'email'] }] }],
     });
     const email = (siswaData as any)?.siswa?.user?.email;
@@ -113,9 +131,9 @@ export const bayar = async (req: AuthRequest, res: Response): Promise<void> => {
         body: JSON.stringify({
           email,
           nama_siswa,
-          jenis_pembayaran: pembayaran.jenis_biaya,
+          jenis_pembayaran: jenisBiaya,
           nominal: totalTerbayar,
-          tahun_ajaran: pembayaran.tahun_ajaran,
+          tahun_ajaran: tahunAjaran,
         }),
       }).catch((err) => logger.error({ event: 'n8n_webhook_error', error: err.message }));
     }

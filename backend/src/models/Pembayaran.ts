@@ -64,6 +64,9 @@ Pembayaran.init(
     timestamps: true,
     createdAt: 'created_at',
     updatedAt: 'updated_at',
+    indexes: [
+      { unique: true, fields: ['siswa_id', 'tahun_ajaran', 'jenis_biaya'], name: 'pembayaran_siswa_tahun_jenis_unique' },
+    ],
   }
 );
 
