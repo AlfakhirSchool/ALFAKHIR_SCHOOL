@@ -143,7 +143,7 @@ function GroupItem({
     return (
       <div
         className={`flex items-center justify-center w-9 h-9 rounded-xl mx-auto my-0.5 cursor-pointer transition-all duration-150 ${
-          hasActive ? 'text-white shadow-lg' : 'text-slate-500 hover:text-white hover:bg-white/10'
+          hasActive ? 'text-white shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/10'
         }`}
         style={hasActive ? { backgroundColor: groupColor, boxShadow: `0 4px 12px ${groupColor}40` } : {}}
         title={group.label}
@@ -158,7 +158,7 @@ function GroupItem({
       <button
         onClick={() => setOpen(o => !o)}
         className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-150 ${
-          hasActive ? '' : 'text-slate-300 hover:text-white'
+          hasActive ? '' : 'text-slate-100 hover:text-white'
         }`}
         style={hasActive ? { color: groupColor } : {}}
       >
@@ -166,14 +166,14 @@ function GroupItem({
           className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md transition-all duration-150"
           style={hasActive
             ? { backgroundColor: groupColor + '20', color: groupColor }
-            : { color: '#94a3b8' }}
+            : { color: '#cbd5e1' }}
         >
           {group.icon}
         </span>
         <span className="flex-1 text-left">{group.label}</span>
         <ChevronRight
           size={12}
-          className={`flex-shrink-0 text-slate-600 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+          className={`flex-shrink-0 text-slate-400 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
         />
       </button>
 
@@ -196,7 +196,7 @@ function GroupItem({
                     className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all duration-150 ${
                       active
                         ? 'font-medium text-white'
-                        : 'text-slate-300 hover:text-white hover:bg-white/10'
+                        : 'text-slate-100 hover:text-white hover:bg-white/10'
                     }`}
                     style={active ? {
                       backgroundColor: groupColor + '20',
@@ -205,7 +205,7 @@ function GroupItem({
                     } : {}}
                   >
                     <span
-                      className={`flex-shrink-0 transition-colors duration-150 ${active ? '' : 'text-slate-600'}`}
+                      className={`flex-shrink-0 transition-colors duration-150 ${active ? '' : 'text-slate-400'}`}
                       style={active ? { color: groupColor } : {}}
                     >
                       {item.icon}
@@ -315,7 +315,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
                   href={item.href}
                   title={collapsed ? item.label : undefined}
                   className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-sm transition-all duration-150 ${
-                    active ? 'text-white font-medium' : 'text-slate-300 hover:text-white hover:bg-white/10'
+                    active ? 'text-white font-medium' : 'text-slate-100 hover:text-white hover:bg-white/10'
                   }`}
                   style={active ? {
                     backgroundColor: accentColor + '20',
