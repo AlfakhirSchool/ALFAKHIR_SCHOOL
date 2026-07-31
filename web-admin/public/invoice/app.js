@@ -354,7 +354,7 @@
         "<td style=\"padding:6px 8px;\">"+esc(item.oleh||"-")+"</td>"+
         "<td style=\"padding:6px 8px;text-align:right;\">"+esc(item.jumlah)+"</td>"+
         "<td style=\"padding:6px 8px;white-space:nowrap;\">"+
-          "<button type=\"button\" class=\"btn btn-secondary riwayat-buka\" style=\"padding:4px 10px;margin:0;\">Buka</button>"+
+          "<button type=\"button\" class=\"btn btn-secondary riwayat-buka\" style=\"padding:4px 10px;margin:0;\">Tampilkan</button>"+
         "</td>";
       tr.querySelector(".riwayat-buka").addEventListener("click", function(){
         restoreState(item.state);
