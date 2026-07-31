@@ -20,6 +20,13 @@ function isGroup(e: SidebarEntry): e is MenuGroup {
   return 'items' in e;
 }
 
+const keuanganMenu: MenuItem[] = [
+  { href: '/dashboard/keuangan', icon: <LayoutDashboard size={16} />, label: 'Dashboard Keuangan' },
+  { href: '/pembayaran',         icon: <Wallet size={16} />,          label: 'Pembayaran' },
+  { href: '/laporan',            icon: <BarChart3 size={16} />,       label: 'Laporan' },
+  { href: '/settings',           icon: <Settings size={16} />,        label: 'Pengaturan' },
+];
+
 const pewawancaraMenu: MenuItem[] = [
   { href: '/dashboard/pewawancara', icon: <LayoutDashboard size={16} />, label: 'Dashboard Saya' },
   { href: '/interviewer',           icon: <ClipboardList size={16} />,   label: 'Daftar Kandidat' },
@@ -230,14 +237,17 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
   const level = user?.school_level as SchoolLevel;
 
   const isPewawancara = user?.role === 'pewawancara' || user?.role === 'guru';
-  const entries: SidebarEntry[] = isPewawancara
+  const isKeuangan    = user?.role === 'keuangan';
+  const entries: SidebarEntry[] = isKeuangan
+    ? keuanganMenu
+    : isPewawancara
     ? pewawancaraMenu
     : level ? levelMenu(level) : masterMenu;
 
-  const accentColor = isPewawancara ? '#14B8A6' : level ? LEVEL_COLOR[level] : '#60A5FA';
+  const accentColor = isKeuangan ? '#F59E0B' : isPewawancara ? '#14B8A6' : level ? LEVEL_COLOR[level] : '#60A5FA';
   const logo       = level ? (LEVEL_LOGO[level] ?? '/logo.png') : '/logo.png';
   const schoolName = level ? (LEVEL_NAME[level] ?? 'Al Fakhir School') : 'Al Fakhir School';
-  const subtitle   = isPewawancara ? 'Portal Pewawancara' : level ? `Admin ${level}` : 'Admin Control Center';
+  const subtitle   = isKeuangan ? 'Portal Keuangan' : isPewawancara ? 'Portal Pewawancara' : level ? `Admin ${level}` : 'Admin Control Center';
 
   return (
     <motion.aside
