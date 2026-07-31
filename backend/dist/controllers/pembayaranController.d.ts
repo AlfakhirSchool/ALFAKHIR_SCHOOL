@@ -4,5 +4,7 @@ export declare const getAll: (req: AuthRequest, res: Response) => Promise<void>;
 export declare const create: (req: AuthRequest, res: Response) => Promise<void>;
 export declare const bayar: (req: AuthRequest, res: Response) => Promise<void>;
 export declare const getLaporan: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const update: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const remove: (req: AuthRequest, res: Response) => Promise<void>;
 export declare const webhookBca: (req: AuthRequest, res: Response) => Promise<void>;
 export declare const webhookMandiri: (req: AuthRequest, res: Response) => Promise<void>;

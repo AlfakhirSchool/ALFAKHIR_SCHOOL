@@ -12,9 +12,11 @@ User.init({
     email: { type: sequelize_1.DataTypes.STRING(255), allowNull: false, unique: true },
     password_hash: { type: sequelize_1.DataTypes.STRING(255), allowNull: false },
     nama: { type: sequelize_1.DataTypes.STRING(255), allowNull: false },
-    role: { type: sequelize_1.DataTypes.ENUM('admin', 'guru', 'siswa', 'ortu'), allowNull: false },
+    role: { type: sequelize_1.DataTypes.ENUM('admin', 'guru', 'pewawancara', 'siswa', 'ortu'), allowNull: false },
+    school_level: { type: sequelize_1.DataTypes.ENUM('SD', 'SMP', 'SMA'), allowNull: true },
     is_active: { type: sequelize_1.DataTypes.BOOLEAN, defaultValue: true },
     profile_pic: { type: sequelize_1.DataTypes.STRING(500), allowNull: true },
+    device_id: { type: sequelize_1.DataTypes.STRING(255), allowNull: true },
 }, {
     sequelize: database_1.default,
     tableName: 'users',

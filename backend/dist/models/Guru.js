@@ -13,5 +13,6 @@ Guru.init({
     nip: { type: sequelize_1.DataTypes.STRING(30), allowNull: true, unique: true },
     spesialisasi: { type: sequelize_1.DataTypes.STRING(255), allowNull: true },
     no_telp: { type: sequelize_1.DataTypes.STRING(20), allowNull: true },
+    school_levels: { type: sequelize_1.DataTypes.ARRAY(sequelize_1.DataTypes.STRING), allowNull: true, defaultValue: [] },
 }, { sequelize: database_1.default, tableName: 'guru', timestamps: false });
 exports.default = Guru;

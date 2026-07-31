@@ -21,7 +21,7 @@ const authenticate = async (req, res, next) => {
             res.status(401).json({ success: false, message: 'Akun tidak ditemukan atau tidak aktif' });
             return;
         }
-        req.user = { id: decoded.id, email: decoded.email, nama: decoded.nama, role: decoded.role };
+        req.user = { id: decoded.id, email: decoded.email, nama: decoded.nama, role: decoded.role, school_level: user.school_level };
         next();
     }
     catch {

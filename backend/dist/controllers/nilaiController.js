@@ -1,9 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getLaporan = exports.remove = exports.update = exports.getSiswa = exports.create = void 0;
+const sequelize_1 = require("sequelize");
 const models_1 = require("../models");
 const Nilai_1 = require("../models/Nilai");
 const errorHandler_1 = require("../middleware/errorHandler");
+const levelFilter_1 = require("../utils/levelFilter");
 const create = async (req, res) => {
     const { siswa_id, mata_pelajaran_id, semester, tahun_ajaran, kuis, tugas, uts, uas, catatan } = req.body;
     const guru = await models_1.Guru.findOne({ where: { user_id: req.user.id } });
@@ -99,13 +101,17 @@ const remove = async (req, res) => {
 exports.remove = remove;
 const getLaporan = async (req, res) => {
     const { kelas_id, mata_pelajaran_id, semester, tahun_ajaran } = req.query;
+    // Filter kelas berdasarkan school_level admin
+    const levelWhere = await (0, levelFilter_1.kelasIdFilter)(req.user?.school_level);
+    const kelasFilter = kelas_id ? { id: kelas_id } : (levelWhere.kelas_id ? { id: levelWhere.kelas_id } : undefined);
     const include = [
         { model: models_1.MataPelajaran, as: 'mata_pelajaran' },
         {
             model: models_1.Siswa, as: 'siswa',
+            required: !!kelasFilter,
             include: [
                 { model: models_1.User, as: 'user', attributes: ['nama'] },
-                ...(kelas_id ? [{ model: models_1.Kelas, as: 'kelas', where: { id: kelas_id } }] : []),
+                ...(kelasFilter ? [{ model: models_1.Kelas, as: 'kelas', where: kelasFilter }] : [{ model: models_1.Kelas, as: 'kelas' }]),
             ],
         },
     ];
@@ -116,6 +122,11 @@ const getLaporan = async (req, res) => {
         where.semester = semester;
     if (tahun_ajaran)
         where.tahun_ajaran = tahun_ajaran;
+    // Filter siswa_id jika ada levelWhere langsung
+    if (!kelas_id && levelWhere.kelas_id) {
+        const siswaList = await models_1.Siswa.findAll({ where: levelWhere, attributes: ['id'] });
+        where.siswa_id = { [sequelize_1.Op.in]: siswaList.map((s) => s.id) };
+    }
     const nilaiList = await models_1.Nilai.findAll({ where, include, order: [['nilai_akhir', 'DESC']] });
     res.json({ success: true, data: nilaiList });
 };

@@ -3,14 +3,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.changePassword = exports.uploadProfilePhoto = exports.getProfile = exports.refreshToken = exports.logout = exports.login = exports.upload = void 0;
+exports.switchAccount = exports.changePassword = exports.resetDevice = exports.uploadProfilePhoto = exports.getProfile = exports.refreshToken = exports.logout = exports.login = exports.upload = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
+const sequelize_1 = require("sequelize");
 const models_1 = require("../models");
 const errorHandler_1 = require("../middleware/errorHandler");
+const auditLog_1 = require("../middleware/auditLog");
 const uploadsDir = path_1.default.join(__dirname, '..', '..', 'uploads', 'profiles');
 if (!fs_1.default.existsSync(uploadsDir))
     fs_1.default.mkdirSync(uploadsDir, { recursive: true });
@@ -33,12 +35,12 @@ exports.upload = (0, multer_1.default)({
 const generateTokens = (user) => {
     const accessOpts = { expiresIn: (process.env.JWT_EXPIRES_IN || '24h') };
     const refreshOpts = { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') };
-    const accessToken = jsonwebtoken_1.default.sign({ id: user.id, email: user.email, nama: user.nama, role: user.role }, process.env.JWT_SECRET, accessOpts);
+    const accessToken = jsonwebtoken_1.default.sign({ id: user.id, email: user.email, nama: user.nama, role: user.role, school_level: user.school_level ?? null }, process.env.JWT_SECRET, accessOpts);
     const refreshToken = jsonwebtoken_1.default.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, refreshOpts);
     return { accessToken, refreshToken };
 };
 const login = async (req, res) => {
-    const { email, nis, password, role: loginRole } = req.body;
+    const { email, nis, password, role: loginRole, device_id } = req.body;
     if (!password || (!email && !nis)) {
         res.status(400).json({ success: false, message: 'NIS/email dan password wajib diisi' });
         return;
@@ -68,7 +70,11 @@ const login = async (req, res) => {
         }
     }
     else {
+        // Lookup by email exact, or by nama (case-insensitive) for username-style login
         user = await models_1.User.findOne({ where: { email, is_active: true } });
+        if (!user) {
+            user = await models_1.User.findOne({ where: { nama: { [sequelize_1.Op.iLike]: email }, is_active: true } });
+        }
     }
     if (!user || !user.is_active) {
         res.status(401).json({ success: false, message: 'NIS/email atau password salah' });
@@ -79,6 +85,23 @@ const login = async (req, res) => {
     if (!validPassword) {
         res.status(401).json({ success: false, message: 'NIS/email atau password salah' });
         return;
+    }
+    // Device lock — hanya untuk role siswa & ortu (mobile app)
+    if (device_id && (user.role === 'siswa' || user.role === 'ortu')) {
+        // Cek: device ini sudah terdaftar di akun LAIN
+        const deviceOwner = await models_1.User.findOne({ where: { device_id } });
+        if (deviceOwner && deviceOwner.id !== user.id) {
+            res.status(403).json({
+                success: false,
+                message: 'Perangkat ini sudah terdaftar untuk akun lain. Hubungi admin untuk mereset perangkat.',
+                code: 'DEVICE_LOCKED',
+            });
+            return;
+        }
+        // Simpan device_id ke akun ini (pertama kali login)
+        if (!user.device_id) {
+            await user.update({ device_id });
+        }
     }
     const { accessToken, refreshToken } = generateTokens(user);
     let profileDetail = null;
@@ -91,6 +114,14 @@ const login = async (req, res) => {
     else if (user.role === 'ortu') {
         profileDetail = await models_1.OrangTua.findOne({ where: { user_id: user.id } });
     }
+    (0, auditLog_1.logAction)({
+        user_id: user.id, nama: user.nama, role: user.role,
+        school_level: user.school_level,
+        app_source: req.headers['x-app-source'] ||
+            ((req.headers['user-agent'] || '').toLowerCase().includes('dart') ? 'Mobile App' : 'Web'),
+        action: 'Login', table: 'users', record_id: user.id,
+        ip: req.ip || undefined, user_agent: req.headers['user-agent'],
+    });
     res.json({
         success: true,
         data: {
@@ -101,6 +132,7 @@ const login = async (req, res) => {
                 email: user.email,
                 nama: user.nama,
                 role: user.role,
+                school_level: user.school_level ?? null,
                 profile_pic: user.profile_pic,
                 profile_detail: profileDetail,
             },
@@ -192,6 +224,14 @@ const uploadProfilePhoto = async (req, res) => {
     res.json({ success: true, data: { profile_pic: profilePicUrl } });
 };
 exports.uploadProfilePhoto = uploadProfilePhoto;
+const resetDevice = async (req, res) => {
+    const user = await models_1.User.findByPk(req.params.userId);
+    if (!user)
+        throw (0, errorHandler_1.createError)('User tidak ditemukan', 404);
+    await user.update({ device_id: null });
+    res.json({ success: true, message: 'Perangkat berhasil direset. User dapat login di perangkat baru.' });
+};
+exports.resetDevice = resetDevice;
 const changePassword = async (req, res) => {
     const { old_password, new_password } = req.body;
     if (!old_password || !new_password) {
@@ -207,8 +247,35 @@ const changePassword = async (req, res) => {
         res.status(400).json({ success: false, message: 'Password lama tidak benar' });
         return;
     }
-    const hashed = await bcrypt_1.default.hash(new_password, 12);
+    const hashed = await bcrypt_1.default.hash(new_password, 10);
     await user.update({ password_hash: hashed });
     res.json({ success: true, message: 'Password berhasil diubah' });
 };
 exports.changePassword = changePassword;
+const switchAccount = async (req, res) => {
+    const current = req.user;
+    if (current.role !== 'admin') {
+        throw (0, errorHandler_1.createError)('Unauthorized', 403);
+    }
+    const target = await models_1.User.findByPk(req.params.userId);
+    if (!target || target.role !== 'admin' || !target.is_active) {
+        throw (0, errorHandler_1.createError)('Akun admin tidak ditemukan', 404);
+    }
+    const targetLevel = target.school_level ?? null;
+    const currentLevel = current.school_level ?? null;
+    // level admin cannot switch to master admin
+    if (currentLevel !== null && targetLevel === null) {
+        throw (0, errorHandler_1.createError)('Tidak dapat berpindah ke Admin Master', 403);
+    }
+    const { accessToken } = generateTokens({
+        id: target.id, email: target.email, nama: target.nama, role: target.role, school_level: targetLevel,
+    });
+    res.json({
+        success: true,
+        data: {
+            accessToken,
+            user: { id: target.id, email: target.email, nama: target.nama, role: target.role, school_level: targetLevel, profile_pic: target.profile_pic },
+        },
+    });
+};
+exports.switchAccount = switchAccount;

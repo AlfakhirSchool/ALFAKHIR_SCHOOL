@@ -346,3 +346,27 @@ export const daftarPublik = async (req: any, res: Response): Promise<void> => {
   });
   res.status(201).json({ success: true, message: 'Pendaftaran berhasil! Tim kami akan menghubungi Anda.', id: kandidat.id });
 };
+
+export const updateStatus = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { sendWAMessage } = await import('../utils/waNotification');
+  const k = await Kandidat.findByPk(req.params.id as string);
+  if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
+
+  const { status } = req.body;
+  if (!['PENDING', 'REVIEW', 'DITERIMA', 'DITOLAK'].includes(status)) {
+    res.status(400).json({ success: false, message: 'Status tidak valid' }); return;
+  }
+
+  await k.update({ status });
+
+  // Kirim WA notif ke ortu
+  if (k.no_telp_ortu && (status === 'DITERIMA' || status === 'DITOLAK')) {
+    const nama = k.nama_diperbaiki || k.nama;
+    const msg = status === 'DITERIMA'
+      ? `Assalamu'alaikum 🎉\n\nSelamat! Kami dengan bangga menyampaikan bahwa *${nama}* telah *DITERIMA* di *Al Fakhir School* Tahun Ajaran ${k.tahun_ajaran}.\n\nSilakan hubungi panitia PPDB untuk informasi selanjutnya.\n\n_Tim PPDB Al Fakhir School_`
+      : `Assalamu'alaikum,\n\nTerima kasih atas kepercayaan Anda mendaftarkan *${nama}* ke *Al Fakhir School*.\n\nMohon maaf, setelah melalui proses seleksi, kami belum dapat menerima calon siswa tersebut pada penerimaan kali ini.\n\nSemoga Allah mudahkan jalan terbaik.\n\n_Tim PPDB Al Fakhir School_`;
+    sendWAMessage(k.no_telp_ortu, msg).catch(() => {});
+  }
+
+  res.json({ success: true, data: k });
+};

@@ -5,8 +5,9 @@ interface GuruAttributes {
     nip: string | null;
     spesialisasi: string | null;
     no_telp: string | null;
+    school_levels: string[] | null;
 }
-interface GuruCreationAttributes extends Optional<GuruAttributes, 'id' | 'nip' | 'spesialisasi' | 'no_telp'> {
+interface GuruCreationAttributes extends Optional<GuruAttributes, 'id' | 'nip' | 'spesialisasi' | 'no_telp' | 'school_levels'> {
 }
 declare class Guru extends Model<GuruAttributes, GuruCreationAttributes> implements GuruAttributes {
     id: string;
@@ -14,5 +15,6 @@ declare class Guru extends Model<GuruAttributes, GuruCreationAttributes> impleme
     nip: string | null;
     spesialisasi: string | null;
     no_telp: string | null;
+    school_levels: string[] | null;
 }
 export default Guru;

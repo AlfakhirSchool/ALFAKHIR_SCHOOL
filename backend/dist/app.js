@@ -21,14 +21,27 @@ const pembayaran_1 = __importDefault(require("./routes/pembayaran"));
 const jurnalGuru_1 = __importDefault(require("./routes/jurnalGuru"));
 const dashboard_1 = __importDefault(require("./routes/dashboard"));
 const auditLog_1 = __importDefault(require("./routes/auditLog"));
+const users_1 = __importDefault(require("./routes/users"));
 const rapor_1 = __importDefault(require("./routes/rapor"));
 const notifikasi_1 = __importDefault(require("./routes/notifikasi"));
+const deleteRequests_1 = __importDefault(require("./routes/deleteRequests"));
+const absensiGerbang_1 = __importDefault(require("./routes/absensiGerbang"));
+const rfid_1 = __importDefault(require("./routes/rfid"));
+const feedback_1 = __importDefault(require("./routes/feedback"));
+const pendingChanges_1 = __importDefault(require("./routes/pendingChanges"));
+const observasi_1 = __importDefault(require("./routes/observasi"));
+const kandidat_1 = __importDefault(require("./routes/kandidat"));
+const catatanPewawancara_1 = __importDefault(require("./routes/catatanPewawancara"));
+const soalAkademik_1 = __importDefault(require("./routes/soalAkademik"));
+const jawabanForm_1 = __importDefault(require("./routes/jawabanForm"));
+const pertanyaanForm_1 = __importDefault(require("./routes/pertanyaanForm"));
 const errorHandler_1 = require("./middleware/errorHandler");
+const auditLog_2 = require("./middleware/auditLog");
 const logger_1 = __importDefault(require("./config/logger"));
 const emailService_1 = require("./utils/emailService");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-app.use((0, helmet_1.default)());
+app.use((0, helmet_1.default)({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
         const allowed = [
@@ -54,6 +67,7 @@ app.use((0, morgan_1.default)('combined', {
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '..', 'uploads')));
+app.use(auditLog_2.globalAuditLogger);
 const PREFIX = process.env.API_PREFIX || '/api';
 app.get(`${PREFIX}/health`, (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString(), version: '1.0.0' });
@@ -74,8 +88,20 @@ app.use(`${PREFIX}/pembayaran`, pembayaran_1.default);
 app.use(`${PREFIX}/jurnal-guru`, jurnalGuru_1.default);
 app.use(`${PREFIX}/dashboard`, dashboard_1.default);
 app.use(`${PREFIX}/audit-log`, auditLog_1.default);
+app.use(`${PREFIX}/users`, users_1.default);
 app.use(`${PREFIX}/rapor`, rapor_1.default);
 app.use(`${PREFIX}/notifikasi`, notifikasi_1.default);
+app.use(`${PREFIX}/delete-requests`, deleteRequests_1.default);
+app.use(`${PREFIX}/absensi-gerbang`, absensiGerbang_1.default);
+app.use(`${PREFIX}/rfid`, rfid_1.default);
+app.use(`${PREFIX}/pending-changes`, pendingChanges_1.default);
+app.use(`${PREFIX}/feedback`, feedback_1.default);
+app.use(`${PREFIX}/observasi`, observasi_1.default);
+app.use(`${PREFIX}/kandidat`, kandidat_1.default);
+app.use(`${PREFIX}/catatan-pewawancara`, catatanPewawancara_1.default);
+app.use(`${PREFIX}/soal-akademik`, soalAkademik_1.default);
+app.use(`${PREFIX}/jawaban-form`, jawabanForm_1.default);
+app.use(`${PREFIX}/pertanyaan-form`, pertanyaanForm_1.default);
 app.use(errorHandler_1.notFound);
 app.use(errorHandler_1.errorHandler);
 exports.default = app;

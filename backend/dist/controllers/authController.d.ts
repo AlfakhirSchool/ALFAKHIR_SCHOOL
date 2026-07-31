@@ -7,4 +7,6 @@ export declare const logout: (_req: AuthRequest, res: Response) => Promise<void>
 export declare const refreshToken: (req: Request, res: Response) => Promise<void>;
 export declare const getProfile: (req: AuthRequest, res: Response) => Promise<void>;
 export declare const uploadProfilePhoto: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const resetDevice: (req: AuthRequest, res: Response) => Promise<void>;
 export declare const changePassword: (req: AuthRequest, res: Response) => Promise<void>;
+export declare const switchAccount: (req: AuthRequest, res: Response) => Promise<void>;

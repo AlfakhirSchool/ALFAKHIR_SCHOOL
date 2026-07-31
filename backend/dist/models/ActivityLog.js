@@ -10,7 +10,11 @@ class ActivityLog extends sequelize_1.Model {
 ActivityLog.init({
     id: { type: sequelize_1.DataTypes.UUID, defaultValue: sequelize_1.DataTypes.UUIDV4, primaryKey: true },
     user_id: { type: sequelize_1.DataTypes.UUID, allowNull: true },
-    action: { type: sequelize_1.DataTypes.STRING(100), allowNull: false },
+    nama: { type: sequelize_1.DataTypes.STRING(255), allowNull: true },
+    role: { type: sequelize_1.DataTypes.STRING(20), allowNull: true },
+    school_level: { type: sequelize_1.DataTypes.STRING(3), allowNull: true },
+    app_source: { type: sequelize_1.DataTypes.STRING(30), allowNull: true },
+    action: { type: sequelize_1.DataTypes.STRING(150), allowNull: false },
     table_name: { type: sequelize_1.DataTypes.STRING(100), allowNull: true },
     record_id: { type: sequelize_1.DataTypes.UUID, allowNull: true },
     old_value: { type: sequelize_1.DataTypes.JSONB, allowNull: true },

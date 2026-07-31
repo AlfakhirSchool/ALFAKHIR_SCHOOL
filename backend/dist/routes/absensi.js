@@ -44,6 +44,18 @@ router.post('/scan-qr', (0, auth_1.authorize)('siswa', 'guru', 'admin'), absensi
 router.post('/input-code', (0, auth_1.authorize)('siswa', 'guru', 'admin'), absensiController.inputCode);
 router.post('/manual', (0, auth_1.authorize)('guru', 'admin'), absensiController.manualInput);
 router.put('/:id', (0, auth_1.authorize)('guru', 'admin'), absensiController.update);
+router.delete('/:id', (0, auth_1.authorize)('admin'), absensiController.remove);
 router.get('/laporan', (0, auth_1.authorize)('admin', 'guru'), absensiController.getLaporan);
+// Guru: persiapan absensi per jadwal (auto-fill dari gate), bulk submit
+router.get('/persiapan-guru', (0, auth_1.authorize)('guru', 'admin'), absensiController.persiapanGuru);
+router.post('/bulk-guru', (0, auth_1.authorize)('guru', 'admin'), absensiController.bulkGuru);
+router.post('/bulk-kelas', (0, auth_1.authorize)('admin', 'guru'), absensiController.bulkKelas);
+router.post('/izin-bulk', (0, auth_1.authorize)('guru', 'admin'), absensiController.izinBulk);
+// Wali kelas: rekap kelas yang diampu
+router.get('/wali-kelas', (0, auth_1.authorize)('guru', 'admin'), absensiController.rekapWaliKelas);
+// Download rekap bulanan Excel
+router.get('/rekap-download', (0, auth_1.authorize)('guru', 'admin'), absensiController.downloadRekap);
+// JSON data preview rekap per mata pelajaran
+router.get('/rekap-data', (0, auth_1.authorize)('guru', 'admin'), absensiController.rekapData);
 router.get('/:siswa_id/detail', (0, auth_1.authorize)('admin', 'guru', 'siswa', 'ortu'), absensiController.getSiswaDetail);
 exports.default = router;

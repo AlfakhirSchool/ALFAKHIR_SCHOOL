@@ -8,7 +8,7 @@ import { useAuthStore, SchoolLevel } from '@/store/authStore';
 import {
   LayoutDashboard, Users, GraduationCap, School, BookOpen, Calendar,
   DoorOpen, CreditCard, ClipboardCheck, FileText, Wallet, BookMarked,
-  BarChart3, UserCog, Search, Settings, Bell, MessageSquare,
+  BarChart3, UserCog, Search, Settings, Bell, MessageSquare, QrCode,
   PanelLeftClose, PanelLeftOpen, ClipboardList, ChevronRight,
 } from 'lucide-react';
 
@@ -32,7 +32,9 @@ const pewawancaraMenu: MenuItem[] = [
   { href: '/interviewer',           icon: <ClipboardList size={16} />,   label: 'Daftar Kandidat' },
   { href: '/interviewer/sd',        icon: <GraduationCap size={16} />,   label: 'Unit SD' },
   { href: '/interviewer/smp',       icon: <GraduationCap size={16} />,   label: 'Unit SMP' },
-  { href: '/observasi/catatan',     icon: <FileText size={16} />,        label: 'Semua Catatan' },
+  { href: '/observasi/catatan',      icon: <FileText size={16} />,        label: 'Semua Catatan' },
+  { href: '/observasi/hasil-tes',   icon: <GraduationCap size={16} />,   label: 'Hasil Tes Akademik' },
+  { href: '/observasi/qr-portal',   icon: <QrCode size={16} />,          label: 'QR Portal PPDB' },
   { href: '/settings',              icon: <Settings size={16} />,        label: 'Pengaturan' },
 ];
 
@@ -69,9 +71,12 @@ const masterMenu: SidebarEntry[] = [
   {
     label: 'PPDB', icon: <ClipboardList size={14} />, color: '#14B8A6',
     items: [
-      { href: '/observasi',         icon: <ClipboardList size={15} />, label: 'Penerimaan Siswa' },
-      { href: '/observasi/catatan', icon: <FileText size={15} />,      label: 'Semua Catatan' },
-      { href: '/interviewer',       icon: <ClipboardList size={15} />, label: 'Monitor Pewawancara' },
+      { href: '/observasi',              icon: <ClipboardList size={15} />, label: 'Penerimaan Siswa' },
+      { href: '/observasi/catatan',      icon: <FileText size={15} />,      label: 'Semua Catatan' },
+      { href: '/observasi/hasil-tes',    icon: <GraduationCap size={15} />, label: 'Hasil Tes Akademik' },
+      { href: '/observasi/qr-portal',    icon: <Search size={15} />,        label: 'QR Portal PPDB' },
+      { href: '/observasi/soal',         icon: <BookOpen size={15} />,      label: 'Soal Akademik' },
+      { href: '/interviewer',            icon: <ClipboardList size={15} />, label: 'Monitor Pewawancara' },
     ],
   },
   {

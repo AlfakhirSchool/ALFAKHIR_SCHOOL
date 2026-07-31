@@ -43,4 +43,6 @@ router.post('/refresh', authController.refreshToken);
 router.get('/profile', auth_1.authenticate, authController.getProfile);
 router.post('/change-password', auth_1.authenticate, authController.changePassword);
 router.post('/upload-photo', auth_1.authenticate, authController.upload.single('photo'), authController.uploadProfilePhoto);
+router.post('/reset-device/:userId', auth_1.authenticate, (0, auth_1.authorize)('admin'), authController.resetDevice);
+router.post('/switch-account/:userId', auth_1.authenticate, authController.switchAccount);
 exports.default = router;

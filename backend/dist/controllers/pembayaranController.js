@@ -3,10 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.webhookMandiri = exports.webhookBca = exports.getLaporan = exports.bayar = exports.create = exports.getAll = void 0;
+exports.webhookMandiri = exports.webhookBca = exports.remove = exports.update = exports.getLaporan = exports.bayar = exports.create = exports.getAll = void 0;
+const sequelize_1 = require("sequelize");
 const models_1 = require("../models");
 const errorHandler_1 = require("../middleware/errorHandler");
 const logger_1 = __importDefault(require("../config/logger"));
+const levelFilter_1 = require("../utils/levelFilter");
 const getAll = async (req, res) => {
     const { siswa_id, status, tahun_ajaran, page = '1', limit = '20' } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -17,8 +19,11 @@ const getAll = async (req, res) => {
         where.status = status;
     if (tahun_ajaran)
         where.tahun_ajaran = tahun_ajaran;
-    if (req.user.role === 'ortu') {
-        // filter hanya anak milik ortu ini - akan di-handle nanti via middleware
+    // Filter by school level — cari siswa_ids yang termasuk level ini
+    if (req.user?.school_level && !siswa_id) {
+        const levelWhere = await (0, levelFilter_1.kelasIdFilter)(req.user.school_level);
+        const siswaList = await models_1.Siswa.findAll({ where: levelWhere, attributes: ['id'] });
+        where.siswa_id = { [sequelize_1.Op.in]: siswaList.map((s) => s.id) };
     }
     const { count, rows } = await models_1.Pembayaran.findAndCountAll({
         where,
@@ -42,6 +47,11 @@ const create = async (req, res) => {
     const siswa = await models_1.Siswa.findByPk(siswa_id);
     if (!siswa)
         throw (0, errorHandler_1.createError)('Siswa tidak ditemukan', 404);
+    const duplikat = await models_1.Pembayaran.findOne({ where: { siswa_id, tahun_ajaran, jenis_biaya } });
+    if (duplikat) {
+        res.status(409).json({ success: false, message: `Tagihan ${jenis_biaya} tahun ${tahun_ajaran} untuk siswa ini sudah ada` });
+        return;
+    }
     // Generate Virtual Account (placeholder - di-replace oleh N8N workflow)
     const virtual_account = va_bank === 'bca'
         ? `${process.env.BCA_VA_PREFIX}${siswa.nisn}`
@@ -133,6 +143,29 @@ const getLaporan = async (req, res) => {
     });
 };
 exports.getLaporan = getLaporan;
+const update = async (req, res) => {
+    const pembayaran = await models_1.Pembayaran.findByPk(req.params.id);
+    if (!pembayaran)
+        throw (0, errorHandler_1.createError)('Tagihan tidak ditemukan', 404);
+    const { jenis_biaya, nominal_biaya, tanggal_jatuh_tempo, status } = req.body;
+    await pembayaran.update({
+        ...(jenis_biaya !== undefined && { jenis_biaya }),
+        ...(nominal_biaya !== undefined && { nominal_biaya }),
+        ...(tanggal_jatuh_tempo !== undefined && { tanggal_jatuh_tempo: tanggal_jatuh_tempo ? new Date(tanggal_jatuh_tempo) : null }),
+        ...(status !== undefined && { status }),
+    });
+    res.json({ success: true, message: 'Tagihan berhasil diperbarui', data: pembayaran });
+};
+exports.update = update;
+const remove = async (req, res) => {
+    const pembayaran = await models_1.Pembayaran.findByPk(req.params.id);
+    if (!pembayaran)
+        throw (0, errorHandler_1.createError)('Tagihan tidak ditemukan', 404);
+    await models_1.PembayaranDetail.destroy({ where: { pembayaran_id: pembayaran.id } });
+    await pembayaran.destroy();
+    res.json({ success: true, message: 'Tagihan berhasil dihapus' });
+};
+exports.remove = remove;
 const webhookBca = async (req, res) => {
     // Handler untuk webhook notifikasi pembayaran dari BCA
     const payload = req.body;

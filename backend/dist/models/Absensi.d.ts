@@ -10,10 +10,12 @@ interface AbsensiAttributes {
     qr_code_scanned: boolean;
     input_code: string | null;
     catatan: string | null;
+    latitude: number | null;
+    longitude: number | null;
     created_by: string;
     created_at?: Date;
 }
-interface AbsensiCreationAttributes extends Optional<AbsensiAttributes, 'id' | 'waktu_hadir' | 'qr_code_scanned' | 'input_code' | 'catatan'> {
+interface AbsensiCreationAttributes extends Optional<AbsensiAttributes, 'id' | 'waktu_hadir' | 'qr_code_scanned' | 'input_code' | 'catatan' | 'latitude' | 'longitude'> {
 }
 declare class Absensi extends Model<AbsensiAttributes, AbsensiCreationAttributes> implements AbsensiAttributes {
     id: string;
@@ -25,6 +27,8 @@ declare class Absensi extends Model<AbsensiAttributes, AbsensiCreationAttributes
     qr_code_scanned: boolean;
     input_code: string | null;
     catatan: string | null;
+    latitude: number | null;
+    longitude: number | null;
     created_by: string;
     readonly created_at: Date;
 }

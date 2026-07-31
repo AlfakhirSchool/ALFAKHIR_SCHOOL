@@ -18,7 +18,7 @@ const sequelize = new sequelize_1.Sequelize({
         ? { ssl: { require: true, rejectUnauthorized: false } }
         : {},
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
-    pool: { max: 10, min: 2, acquire: 30000, idle: 10000 },
+    pool: { max: 30, min: 2, acquire: 30000, idle: 10000 },
     define: { underscored: true, timestamps: true, paranoid: false },
 });
 exports.default = sequelize;

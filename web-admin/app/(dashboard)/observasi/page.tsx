@@ -570,6 +570,23 @@ function KandidatDetail({ kandidat, onClose, onDaftarkan, qc }: { kandidat: Kand
 
 // ─── Info Tab ─────────────────────────────────────────────────────────────────
 function InfoTab({ kandidat, onDaftarkan }: { kandidat: Kandidat; onDaftarkan: () => void }) {
+  const qc = useQueryClient();
+  const [statusLoading, setStatusLoading] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState('');
+
+  const updateStatus = async (status: string) => {
+    if (!confirm(`Yakin set status "${status}" untuk ${kandidat.nama_diperbaiki || kandidat.nama}?\n${kandidat.no_telp_ortu ? 'Notifikasi WA akan dikirim ke ortu.' : 'No HP ortu tidak ada — notif tidak terkirim.'}`)) return;
+    setStatusLoading(status);
+    setStatusMsg('');
+    try {
+      await api.patch(`/kandidat/${kandidat.id}/status`, { status });
+      qc.invalidateQueries({ queryKey: ['kandidat'] });
+      setStatusMsg(kandidat.no_telp_ortu ? '✓ Status diperbarui & notif WA terkirim' : '✓ Status diperbarui (no HP ortu tidak ada)');
+    } catch {
+      setStatusMsg('✗ Gagal memperbarui status');
+    } finally { setStatusLoading(null); }
+  };
+
   const rows = [
     ['Nama Lengkap', kandidat.nama],
     ['Nama (Diperbaiki)', kandidat.nama_diperbaiki || '—'],
@@ -597,10 +614,41 @@ function InfoTab({ kandidat, onDaftarkan }: { kandidat: Kandidat; onDaftarkan: (
           </div>
         ))}
       </dl>
+
+      {/* Keputusan */}
+      {kandidat.status !== 'DITERIMA' && kandidat.status !== 'DITOLAK' && (
+        <div className="mt-5 space-y-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Keputusan Seleksi</p>
+          <div className="flex gap-2">
+            <button onClick={() => updateStatus('DITERIMA')} disabled={!!statusLoading}
+              className="flex-1 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50 transition-colors">
+              {statusLoading === 'DITERIMA' ? '...' : '✓ Terima'}
+            </button>
+            <button onClick={() => updateStatus('DITOLAK')} disabled={!!statusLoading}
+              className="flex-1 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors">
+              {statusLoading === 'DITOLAK' ? '...' : '✗ Tolak'}
+            </button>
+          </div>
+          {statusMsg && <p className={`text-xs text-center ${statusMsg.startsWith('✓') ? 'text-green-600' : 'text-red-600'}`}>{statusMsg}</p>}
+        </div>
+      )}
+
       {kandidat.status === 'DITERIMA' && !kandidat.siswa_id && (
         <button onClick={onDaftarkan}
           className="mt-5 w-full py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700">
           Daftarkan sebagai Siswa
+        </button>
+      )}
+      {kandidat.status === 'DITERIMA' && (
+        <button onClick={() => updateStatus('PENDING')}
+          className="mt-2 w-full py-1.5 border border-gray-200 text-gray-500 rounded-lg text-xs hover:border-gray-400 transition-colors">
+          Reset ke Menunggu
+        </button>
+      )}
+      {kandidat.status === 'DITOLAK' && (
+        <button onClick={() => updateStatus('PENDING')}
+          className="mt-5 w-full py-1.5 border border-gray-200 text-gray-500 rounded-lg text-xs hover:border-gray-400 transition-colors">
+          Reset ke Menunggu
         </button>
       )}
     </div>

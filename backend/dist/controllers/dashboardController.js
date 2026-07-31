@@ -19,8 +19,10 @@ const getStatsForLevel = async (level) => {
     const [totalSiswa, absensiHariIni] = await Promise.all([
         models_1.Siswa.count({ where: { kelas_id: { [sequelize_1.Op.in]: kelasIds } } }),
         models_1.Absensi.count({
-            where: { tanggal: new Date().toISOString().split('T')[0] },
+            where: { tanggal: new Date().toISOString().split('T')[0], status: 'hadir' },
             include: [{ model: models_1.Siswa, as: 'siswa', where: { kelas_id: { [sequelize_1.Op.in]: kelasIds } }, attributes: [] }],
+            distinct: true,
+            col: 'siswa_id',
         }),
     ]);
     return { sekolahId: sekolah.id, namaSekolah: sekolah.nama, totalSiswa, totalKelas, absensiHariIni };
@@ -65,7 +67,10 @@ const guruDashboard = async (req, res) => {
     ]);
     res.json({
         success: true,
-        data: { kpi: { jurnalBulanIni, jurnalPending } },
+        data: {
+            kpi: { jurnalBulanIni, jurnalPending },
+            school_levels: guru.school_levels || [],
+        },
     });
 };
 exports.guruDashboard = guruDashboard;

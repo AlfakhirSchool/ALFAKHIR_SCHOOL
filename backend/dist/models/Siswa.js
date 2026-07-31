@@ -11,11 +11,12 @@ Siswa.init({
     id: { type: sequelize_1.DataTypes.UUID, defaultValue: sequelize_1.DataTypes.UUIDV4, primaryKey: true },
     user_id: { type: sequelize_1.DataTypes.UUID, allowNull: false, unique: true, references: { model: 'users', key: 'id' } },
     kelas_id: { type: sequelize_1.DataTypes.UUID, allowNull: false, references: { model: 'kelas', key: 'id' } },
-    nisn: { type: sequelize_1.DataTypes.STRING(20), allowNull: false, unique: true },
-    nis: { type: sequelize_1.DataTypes.STRING(20), allowNull: false },
-    no_induk: { type: sequelize_1.DataTypes.STRING(20), allowNull: false },
+    nisn: { type: sequelize_1.DataTypes.STRING(20), allowNull: true, unique: true },
+    nis: { type: sequelize_1.DataTypes.STRING(20), allowNull: true },
+    no_induk: { type: sequelize_1.DataTypes.STRING(20), allowNull: true },
     tempat_lahir: { type: sequelize_1.DataTypes.STRING(100), allowNull: true },
     tanggal_lahir: { type: sequelize_1.DataTypes.DATEONLY, allowNull: true },
     alamat: { type: sequelize_1.DataTypes.TEXT, allowNull: true },
+    jenis_kelamin: { type: sequelize_1.DataTypes.STRING(1), allowNull: true },
 }, { sequelize: database_1.default, tableName: 'siswa', timestamps: false });
 exports.default = Siswa;

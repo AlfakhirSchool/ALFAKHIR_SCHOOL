@@ -7,9 +7,9 @@ interface JurnalGuruAttributes {
     kelas_id: string;
     mata_pelajaran_id: string;
     tanggal: Date;
-    hari: string;
-    jam_mulai: string;
-    jam_selesai: string;
+    hari: string | null;
+    jam_mulai: string | null;
+    jam_selesai: string | null;
     topik_pelajaran: string;
     metode_pembelajaran: string | null;
     deskripsi_pembelajaran: string | null;
@@ -31,7 +31,7 @@ interface JurnalGuruAttributes {
     updated_at?: Date;
     deleted_at?: Date | null;
 }
-interface JurnalGuruCreationAttributes extends Optional<JurnalGuruAttributes, 'id' | 'wali_kelas_id' | 'metode_pembelajaran' | 'deskripsi_pembelajaran' | 'hasil_pembelajaran' | 'hambatan_pembelajaran' | 'rencana_tindak_lanjut' | 'media_pembelajaran' | 'sumber_belajar' | 'ttd_guru' | 'signed_at' | 'ttd_wali_kelas' | 'wali_kelas_signed_at' | 'status' | 'deleted_at'> {
+interface JurnalGuruCreationAttributes extends Optional<JurnalGuruAttributes, 'id' | 'wali_kelas_id' | 'hari' | 'jam_mulai' | 'jam_selesai' | 'metode_pembelajaran' | 'deskripsi_pembelajaran' | 'hasil_pembelajaran' | 'hambatan_pembelajaran' | 'rencana_tindak_lanjut' | 'media_pembelajaran' | 'sumber_belajar' | 'ttd_guru' | 'signed_at' | 'ttd_wali_kelas' | 'wali_kelas_signed_at' | 'status' | 'deleted_at'> {
 }
 declare class JurnalGuru extends Model<JurnalGuruAttributes, JurnalGuruCreationAttributes> implements JurnalGuruAttributes {
     id: string;
@@ -40,9 +40,9 @@ declare class JurnalGuru extends Model<JurnalGuruAttributes, JurnalGuruCreationA
     kelas_id: string;
     mata_pelajaran_id: string;
     tanggal: Date;
-    hari: string;
-    jam_mulai: string;
-    jam_selesai: string;
+    hari: string | null;
+    jam_mulai: string | null;
+    jam_selesai: string | null;
     topik_pelajaran: string;
     metode_pembelajaran: string | null;
     deskripsi_pembelajaran: string | null;

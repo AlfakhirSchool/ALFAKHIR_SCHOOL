@@ -12,5 +12,7 @@ MataPelajaran.init({
     nama: { type: sequelize_1.DataTypes.STRING(255), allowNull: false },
     kode: { type: sequelize_1.DataTypes.STRING(20), allowNull: false, unique: true },
     kkm: { type: sequelize_1.DataTypes.INTEGER, allowNull: false, defaultValue: 75 },
+    jenjang: { type: sequelize_1.DataTypes.STRING(10), allowNull: true },
+    jam_pelajaran: { type: sequelize_1.DataTypes.INTEGER, allowNull: true },
 }, { sequelize: database_1.default, tableName: 'mata_pelajaran', timestamps: false });
 exports.default = MataPelajaran;

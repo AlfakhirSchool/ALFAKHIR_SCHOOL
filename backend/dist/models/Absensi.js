@@ -17,6 +17,8 @@ Absensi.init({
     qr_code_scanned: { type: sequelize_1.DataTypes.BOOLEAN, defaultValue: false },
     input_code: { type: sequelize_1.DataTypes.STRING(6), allowNull: true },
     catatan: { type: sequelize_1.DataTypes.TEXT, allowNull: true },
+    latitude: { type: sequelize_1.DataTypes.DOUBLE, allowNull: true },
+    longitude: { type: sequelize_1.DataTypes.DOUBLE, allowNull: true },
     created_by: { type: sequelize_1.DataTypes.UUID, allowNull: false },
 }, {
     sequelize: database_1.default,
