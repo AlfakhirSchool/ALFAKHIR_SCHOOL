@@ -40,7 +40,6 @@ const menuEntries: Entry[] = [
     ],
   },
   { href: '/feedback', icon: <MessageSquare size={16} />, label: 'Saran & Pertanyaan' },
-  { href: '/settings', icon: <Settings size={16} />,      label: 'Pengaturan' },
 ];
 
 function GroupItem({ group, collapsed }: { group: MenuGroup; collapsed: boolean }) {
