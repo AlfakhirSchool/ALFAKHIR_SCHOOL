@@ -178,12 +178,14 @@ export default function KuitansiApp() {
       const sheet = sheetRef.current;
       if (!wrap || !sheet) return;
       sheet.style.transform = '';
-      const natural = sheet.getBoundingClientRect().width;
+      const naturalW = sheet.getBoundingClientRect().width;
+      const naturalH = sheet.getBoundingClientRect().height;
       const avail = wrap.clientWidth - 32;
-      const scale = avail < natural ? avail / natural : 1;
+      const scale = avail < naturalW ? avail / naturalW : 1;
       if (scale < 1) {
         sheet.style.transform = `scale(${scale})`;
-        wrap.style.minHeight = `${sheet.getBoundingClientRect().height * scale + 32}px`;
+        // getBoundingClientRect already accounts for transform, no need to multiply by scale again
+        wrap.style.minHeight = `${naturalH * scale + 32}px`;
       } else {
         wrap.style.minHeight = '';
       }
@@ -409,6 +411,17 @@ export default function KuitansiApp() {
             </div>
 
             <div className="ml-auto flex gap-2 flex-wrap">
+              <button type="button" onClick={() => {
+                setRows(DEFAULT_ROWS);
+                setNama('');
+                setPotongan('0');
+                setPotonganMode('rp');
+                setUntukChecks([true, false, true, true, false]);
+                localStorage.removeItem('afDraftState');
+              }}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 text-sm font-medium hover:bg-slate-100">
+                Reset
+              </button>
               <button type="button" onClick={handlePrint}
                 className="px-4 py-1.5 rounded-lg bg-teal-700 text-white text-sm font-semibold hover:bg-teal-800">
                 Cetak / Simpan PDF
