@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { use, useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import {
@@ -27,6 +27,17 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }>
 };
 
 const ta = "w-full border-2 border-slate-100 rounded-2xl p-4 text-sm resize-none focus:outline-none focus:border-teal-400 bg-slate-50 min-h-[90px] font-medium transition-colors";
+
+function QrCanvas({ url, size = 200 }: { url: string; size?: number }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (!url || !ref.current) return;
+    import('qrcode').then(QRCode => {
+      QRCode.toCanvas(ref.current!, url, { width: size, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
+    });
+  }, [url, size]);
+  return <canvas ref={ref} width={size} height={size} />;
+}
 
 function getPredikat(skor: number) {
   if (skor >= 86) return { grade: 'A', desc: 'Sangat Baik', color: 'text-emerald-600', bar: 'bg-emerald-500' };
@@ -184,11 +195,7 @@ export default function KandidatDetailPage({ params }: { params: Promise<{ level
             </div>
             <div className="flex flex-col items-center gap-4">
               <div className="p-4 bg-white border-2 border-slate-100 rounded-2xl">
-                {/* QR code via Google Chart API — no library needed */}
-                <img
-                  src={`https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=${encodeURIComponent(formUrl)}&choe=UTF-8`}
-                  alt="QR Code" width={200} height={200}
-                />
+                <QrCanvas url={formUrl} size={200} />
               </div>
               <p className="text-xs text-slate-400 text-center break-all">{formUrl}</p>
               <button
@@ -211,10 +218,7 @@ export default function KandidatDetailPage({ params }: { params: Promise<{ level
             </div>
             <div className="flex flex-col items-center gap-4">
               <div className="p-4 bg-white border-2 border-slate-100 rounded-2xl">
-                <img
-                  src={`https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=${encodeURIComponent(tesUrl)}&choe=UTF-8`}
-                  alt="QR Tes" width={200} height={200}
-                />
+                <QrCanvas url={tesUrl} size={200} />
               </div>
               <p className="text-xs text-slate-400 text-center break-all">{tesUrl}</p>
               <button
