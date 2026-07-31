@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
 import sequelize from '../config/database';
-import { User, Siswa, Guru, Kelas, Sekolah, Absensi, Nilai, Pembayaran, JurnalGuru } from '../models';
+import { User, Siswa, Guru, Kelas, Sekolah, Absensi, Nilai, Pembayaran, JurnalGuru, JadwalPelajaran } from '../models';
 import { AuthRequest } from '../middleware/auth';
 
 const getStatsForLevel = async (level: string): Promise<{ sekolahId?: string; namaSekolah?: string; totalSiswa: number; totalKelas: number; absensiHariIni: number }> => {
@@ -58,22 +58,27 @@ export const guruDashboard = async (req: AuthRequest, res: Response): Promise<vo
     return;
   }
 
-  const [jurnalBulanIni, jurnalPending] = await Promise.all([
+  const hariMap: Record<number, string> = { 0: 'Minggu', 1: 'Senin', 2: 'Selasa', 3: 'Rabu', 4: 'Kamis', 5: 'Jumat', 6: 'Sabtu' };
+  const hariIni = hariMap[new Date().getDay()];
+
+  const [jurnalBulanIni, jurnalPending, jadwalGuru] = await Promise.all([
     JurnalGuru.count({
       where: {
         guru_id: guru.id,
-        tanggal: {
-          [Op.gte]: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-        },
+        tanggal: { [Op.gte]: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
       },
     }),
     JurnalGuru.count({ where: { guru_id: guru.id, status: 'submitted' } }),
+    JadwalPelajaran.findAll({ where: { guru_id: guru.id }, attributes: ['kelas_id', 'hari'] }),
   ]);
+
+  const totalKelas = new Set((jadwalGuru as any[]).map((j: any) => j.kelas_id)).size;
+  const jadwalHariIni = (jadwalGuru as any[]).filter((j: any) => j.hari === hariIni).length;
 
   res.json({
     success: true,
     data: {
-      kpi: { jurnalBulanIni, jurnalPending },
+      kpi: { jurnalBulanIni, jurnalPending, totalKelas, jadwalHariIni },
       school_levels: guru.school_levels || [],
     },
   });
