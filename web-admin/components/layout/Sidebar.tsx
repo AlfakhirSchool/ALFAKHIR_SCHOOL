@@ -121,6 +121,7 @@ const levelMenu = (level: string): SidebarEntry[] => [
     items: [
       { href: '/observasi',         icon: <ClipboardList size={15} />, label: 'Penerimaan Siswa' },
       { href: '/observasi/catatan', icon: <FileText size={15} />,      label: 'Semua Catatan' },
+      { href: '/observasi/soal',    icon: <BookOpen size={15} />,      label: 'Soal Akademik' },
       { href: '/interviewer',       icon: <ClipboardList size={15} />, label: 'Pewawancara' },
     ],
   },

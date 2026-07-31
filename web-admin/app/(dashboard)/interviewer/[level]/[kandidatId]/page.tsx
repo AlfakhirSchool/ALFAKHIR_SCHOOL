@@ -52,6 +52,7 @@ export default function KandidatDetailPage({ params }: { params: Promise<{ level
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>('Info & Form');
   const [showQr, setShowQr] = useState(false);
+  const [showQrTes, setShowQrTes] = useState(false);
   const [origin, setOrigin] = useState('');
   const [aiSummary, setAiSummary] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
@@ -153,6 +154,7 @@ export default function KandidatDetailPage({ params }: { params: Promise<{ level
   const jawabanOrtu = k.jawaban_form_list?.find((j: any) => j.role === 'ortu');
   const jawabanSiswa = k.jawaban_form_list?.find((j: any) => j.role === 'siswa');
   const formUrl = `${origin}/form/${kandidatId}`;
+  const tesUrl  = `${origin}/tes/${kandidatId}`;
 
   let skorPerMapel: Record<string, { correct: number; total: number }> = {};
   if (hasil?.skor_per_mapel) {
@@ -199,6 +201,32 @@ export default function KandidatDetailPage({ params }: { params: Promise<{ level
         </div>
       )}
 
+      {/* QR Modal Tes Akademik */}
+      {showQrTes && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowQrTes(false)}>
+          <div className="bg-white rounded-[32px] p-8 max-w-sm w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-black text-slate-900 italic uppercase tracking-tight">QR Tes Akademik</h3>
+              <button onClick={() => setShowQrTes(false)} className="p-2 rounded-xl hover:bg-slate-100"><X size={18} /></button>
+            </div>
+            <div className="flex flex-col items-center gap-4">
+              <div className="p-4 bg-white border-2 border-slate-100 rounded-2xl">
+                <img
+                  src={`https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=${encodeURIComponent(tesUrl)}&choe=UTF-8`}
+                  alt="QR Tes" width={200} height={200}
+                />
+              </div>
+              <p className="text-xs text-slate-400 text-center break-all">{tesUrl}</p>
+              <button
+                onClick={() => navigator.clipboard?.writeText(tesUrl)}
+                className="w-full py-3 bg-teal-500 text-white rounded-2xl text-sm font-black hover:bg-teal-600 transition-colors">
+                Salin Link Tes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start gap-4">
         <button onClick={() => router.push(`/interviewer/${level}`)}
@@ -220,9 +248,16 @@ export default function KandidatDetailPage({ params }: { params: Promise<{ level
         <div className="flex gap-2 mt-1">
           <button onClick={() => setShowQr(true)}
             className="p-3 rounded-2xl bg-white border-2 border-slate-100 hover:border-teal-400 text-slate-500 hover:text-teal-600 transition-all shadow-sm"
-            title="QR Code Form">
+            title="QR Code Form Pendaftaran">
             <QrCode size={18} />
           </button>
+          {!hasil && (
+            <button onClick={() => setShowQrTes(true)}
+              className="p-3 rounded-2xl bg-white border-2 border-slate-100 hover:border-indigo-400 text-slate-500 hover:text-indigo-600 transition-all shadow-sm"
+              title="QR Tes Akademik">
+              <GraduationCap size={18} />
+            </button>
+          )}
           {hasil && (
             <button onClick={exportExcel}
               className="p-3 rounded-2xl bg-white border-2 border-slate-100 hover:border-emerald-400 text-slate-500 hover:text-emerald-600 transition-all shadow-sm"
