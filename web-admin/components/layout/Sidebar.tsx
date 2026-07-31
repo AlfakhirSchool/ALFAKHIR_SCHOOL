@@ -157,23 +157,23 @@ function GroupItem({
     <div className="mb-0.5">
       <button
         onClick={() => setOpen(o => !o)}
-        className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-semibold tracking-wide uppercase transition-all duration-150 group ${
-          hasActive
-            ? 'text-white'
-            : 'text-slate-500 hover:text-slate-300'
+        className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-sm transition-all duration-150 ${
+          hasActive ? 'font-semibold' : 'text-slate-500 hover:text-slate-300 font-medium'
         }`}
         style={hasActive ? { color: groupColor } : {}}
       >
         <span
-          className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-md transition-all duration-150"
-          style={hasActive ? { backgroundColor: groupColor + '25', color: groupColor } : {}}
+          className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-150"
+          style={hasActive
+            ? { backgroundColor: groupColor + '20', color: groupColor }
+            : { backgroundColor: 'rgba(255,255,255,0.05)', color: '#64748b' }}
         >
           {group.icon}
         </span>
         <span className="flex-1 text-left">{group.label}</span>
         <ChevronRight
-          size={12}
-          className={`flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+          size={13}
+          className={`flex-shrink-0 text-slate-600 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
         />
       </button>
 
