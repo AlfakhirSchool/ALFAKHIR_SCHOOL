@@ -161,85 +161,134 @@ export default function Header({ title }: HeaderProps) {
             )}
           </button>
           {notifOpen && (
-            <div className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 flex flex-col" style={{ width: 340, maxHeight: 480 }}>
-              {/* Sticky header */}
-              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50 rounded-t-xl flex-shrink-0">
+            <div
+              className="absolute right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50"
+              style={{ width: 360, boxShadow: '0 20px 60px -10px rgba(0,0,0,0.18)' }}
+            >
+              {/* Header — sticky */}
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between rounded-t-2xl bg-white">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-[#1A2332]">Notifikasi</span>
-                  {notifs.length > 0 && (
-                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{notifs.length}</span>
+                  <span className="font-bold text-sm text-gray-900">Notifikasi</span>
+                  {(notifs.filter(n=>!n.read).length + activityFeed.length) > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                      {notifs.filter(n=>!n.read).length + activityFeed.length}
+                    </span>
                   )}
                 </div>
-                <button onClick={fetchNotifs} className="text-xs text-[#1B8B87] hover:underline">
-                  {notifLoading ? 'Memuat...' : 'Perbarui'}
+                <button
+                  onClick={fetchNotifs}
+                  className="flex items-center gap-1 text-xs text-[#1B8B87] hover:text-[#146f6b] font-medium transition-colors"
+                >
+                  {notifLoading ? (
+                    <span className="w-3 h-3 border border-[#1B8B87] border-t-transparent rounded-full animate-spin inline-block" />
+                  ) : '↻'} Perbarui
                 </button>
               </div>
 
-              {/* Scrollable body */}
-              <div className="overflow-y-auto flex-1 [scrollbar-width:thin]">
-                {notifLoading && notifs.length === 0 ? (
-                  <div className="px-4 py-8 text-center">
-                    <div className="w-5 h-5 border-2 border-[#1B8B87] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                    <p className="text-xs text-gray-400">Memuat notifikasi...</p>
-                  </div>
-                ) : notifs.length === 0 ? (
-                  <div className="px-4 py-6 text-center">
-                    <span className="text-3xl">🔔</span>
-                    <p className="text-sm text-gray-500 mt-2">Tidak ada notifikasi</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Semua aktivitas terkini akan muncul di sini</p>
-                  </div>
-                ) : (
-                  <div className="py-1">
+              {/* Scrollable content — fixed height */}
+              <div style={{ maxHeight: 400, overflowY: 'auto', overflowX: 'hidden' }}>
+
+                {/* Group 1: notifikasi sistem */}
+                {notifs.length > 0 && (
+                  <div>
+                    <div className="px-4 pt-3 pb-1.5 flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sistem</span>
+                      <span className="h-px flex-1 bg-gray-100" />
+                      <span className="text-[10px] text-gray-400">{notifs.length}</span>
+                    </div>
                     {notifs.map((n) => {
                       const meta = NOTIF_META[n.type] || NOTIF_META.default;
+                      const label = n.type === 'jurnal' ? 'Jurnal Guru'
+                        : n.type === 'siswa' ? 'Data Siswa'
+                        : n.type === 'pembayaran' ? 'Pembayaran'
+                        : n.type === 'absensi' ? 'Absensi Gerbang'
+                        : n.type === 'alfa' ? 'Perhatian'
+                        : n.type === 'tagihan' ? 'Tagihan' : 'Sistem';
                       return (
-                        <div key={n.id} className="px-4 py-3 hover:bg-gray-50 flex items-start gap-3 border-b border-gray-50 last:border-0 cursor-pointer">
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base" style={{ backgroundColor: meta.bg }}>
+                        <div key={n.id} className={`mx-2 mb-1 px-3 py-2.5 rounded-xl flex items-start gap-3 cursor-pointer hover:bg-gray-50 transition-colors ${!n.read ? 'bg-blue-50/50' : ''}`}>
+                          <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-sm" style={{ backgroundColor: meta.bg }}>
                             {meta.icon}
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-800 leading-snug">{n.message}</p>
-                            <p className="text-xs mt-0.5 font-medium" style={{ color: meta.color }}>
-                              {n.type === 'jurnal' ? 'Jurnal Guru' :
-                               n.type === 'siswa' ? 'Data Siswa' :
-                               n.type === 'pembayaran' ? 'Pembayaran' :
-                               n.type === 'absensi' ? 'Absensi Gerbang' :
-                               n.type === 'alfa' ? 'Perhatian' :
-                               n.type === 'tagihan' ? 'Tagihan' : 'Sistem'}
-                            </p>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13px] font-medium text-gray-800 leading-snug">{n.message}</p>
+                            <p className="text-[11px] mt-0.5 font-semibold" style={{ color: meta.color }}>{label}</p>
                           </div>
-                          {!n.read && <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: meta.color }} />}
+                          {!n.read && <div className="w-2 h-2 rounded-full shrink-0 mt-1" style={{ backgroundColor: meta.color }} />}
                         </div>
                       );
                     })}
                   </div>
                 )}
 
-                {activityFeed.length > 0 && (
-                  <div className="border-t border-gray-100">
-                    <div className="px-4 py-2 bg-gray-50 flex items-center justify-between sticky top-0">
-                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Aktivitas Penerimaan</span>
-                      <span className="text-xs bg-[#1B8B87] text-white px-1.5 py-0.5 rounded-full font-bold">{activityFeed.length}</span>
-                    </div>
-                    {activityFeed.map((a) => {
-                      const meta = ACTIVITY_META[a.type] || { icon: '📌', color: '#6B7280' };
-                      return (
-                        <div key={`act-${a.id}`} className="px-4 py-3 hover:bg-gray-50 flex items-start gap-3 border-b border-gray-50 last:border-0">
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base bg-gray-50">{meta.icon}</div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-800 leading-snug">{a.desc}</p>
-                            <p className="text-xs mt-0.5 font-medium" style={{ color: meta.color }}>{a.title}{a.level ? ` · ${a.level}` : ''}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
+                {/* Empty state jika notifs kosong */}
+                {notifs.length === 0 && !notifLoading && activityFeed.length === 0 && (
+                  <div className="px-4 py-10 text-center">
+                    <div className="text-4xl mb-2">🔔</div>
+                    <p className="text-sm font-medium text-gray-500">Tidak ada notifikasi</p>
+                    <p className="text-xs text-gray-400 mt-1">Aktivitas terbaru akan muncul di sini</p>
                   </div>
                 )}
+
+                {/* Loading */}
+                {notifLoading && notifs.length === 0 && activityFeed.length === 0 && (
+                  <div className="px-4 py-10 text-center">
+                    <div className="w-5 h-5 border-2 border-[#1B8B87] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-xs text-gray-400">Memuat...</p>
+                  </div>
+                )}
+
+                {/* Group 2: aktivitas penerimaan, per-tipe */}
+                {activityFeed.length > 0 && (() => {
+                  const groups: Record<string, ActivityItem[]> = {};
+                  activityFeed.forEach(a => {
+                    const key = a.type || 'lain';
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(a);
+                  });
+                  const groupLabel: Record<string, string> = {
+                    catatan: 'Catatan Pewawancara',
+                    form: 'Formulir Masuk',
+                    kandidat: 'Kandidat Baru',
+                    lain: 'Aktivitas Lain',
+                  };
+                  return Object.entries(groups).map(([type, items]) => {
+                    const meta = ACTIVITY_META[type] || { icon: '📌', color: '#6B7280' };
+                    return (
+                      <div key={type}>
+                        <div className="px-4 pt-3 pb-1.5 flex items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: meta.color }}>
+                            {groupLabel[type] ?? type}
+                          </span>
+                          <span className="h-px flex-1" style={{ backgroundColor: meta.color + '30' }} />
+                          <span
+                            className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white"
+                            style={{ backgroundColor: meta.color }}
+                          >{items.length}</span>
+                        </div>
+                        {items.map((a) => (
+                          <div key={`act-${a.id}`} className="mx-2 mb-1 px-3 py-2.5 rounded-xl flex items-start gap-3 hover:bg-gray-50 transition-colors">
+                            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-sm bg-gray-50">
+                              {meta.icon}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[13px] font-medium text-gray-800 leading-snug">{a.desc}</p>
+                              <p className="text-[11px] mt-0.5 font-semibold" style={{ color: meta.color }}>
+                                {a.title}{a.level ? ` · ${a.level}` : ''}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  });
+                })()}
+
+                <div className="h-2" />
               </div>
 
-              {/* Sticky footer */}
-              <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 rounded-b-xl flex-shrink-0">
-                <p className="text-xs text-gray-400 text-center">Diperbarui otomatis setiap 2 menit</p>
+              {/* Footer */}
+              <div className="px-4 py-2.5 border-t border-gray-100 rounded-b-2xl">
+                <p className="text-[11px] text-gray-400 text-center">Auto-refresh setiap 2 menit</p>
               </div>
             </div>
           )}
