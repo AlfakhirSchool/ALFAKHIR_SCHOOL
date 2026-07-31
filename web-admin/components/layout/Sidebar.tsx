@@ -352,10 +352,10 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
               className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
               style={{ backgroundColor: accentColor + '40', color: accentColor }}
             >
-              {(user.nama || user.username || 'U')[0].toUpperCase()}
+              {(user.nama || user.email || 'U')[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-300 truncate">{user.nama || user.username}</p>
+              <p className="text-xs font-medium text-slate-300 truncate">{user.nama || user.email}</p>
               <p className="text-[10px] text-slate-600 capitalize truncate">{user.role}</p>
             </div>
           </div>
