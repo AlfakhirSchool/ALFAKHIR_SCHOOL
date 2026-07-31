@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
+import Topbar from '@/components/layout/Topbar';
 import LoadingScreen from '@/components/LoadingScreen';
 import PageTransition from '@/components/PageTransition';
 import WelcomePopup from '@/components/WelcomePopup';
@@ -42,6 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           className="flex-1 bg-gray-50 min-w-0 transition-all duration-300"
           style={{ marginLeft: collapsed ? 64 : 256 }}
         >
+          <Topbar />
           <AnnouncementBanner feedbackPath="/feedback" />
           <PageTransition key={pathname}>
             {children}
