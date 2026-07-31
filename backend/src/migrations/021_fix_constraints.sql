@@ -12,3 +12,13 @@ ALTER TABLE pembayaran_detail
 -- Fix 3: nisn di tabel siswa boleh NULL (observasi/daftarkan isi belakangan)
 ALTER TABLE siswa ALTER COLUMN nisn DROP NOT NULL;
 ALTER TABLE siswa ALTER COLUMN nis DROP NOT NULL;
+
+-- Fix 4: Cegah kandidat duplikat (nama+level+tahun_ajaran)
+ALTER TABLE kandidat
+  ADD CONSTRAINT IF NOT EXISTS kandidat_nama_level_tahun_unique
+  UNIQUE (nama, level, tahun_ajaran);
+
+-- Fix 5: Satu pewawancara hanya bisa input satu catatan per kandidat
+ALTER TABLE catatan_pewawancara
+  ADD CONSTRAINT IF NOT EXISTS catatan_unique_kandidat_pewawancara
+  UNIQUE (kandidat_id, pewawancara_email);

@@ -335,7 +335,7 @@ export const bulkGuru = async (req: AuthRequest, res: Response): Promise<void> =
       `INSERT INTO activity_log (user_id, action, table_name, new_value) VALUES (:uid, 'bulk_absensi_guru', 'absensi', :val::jsonb)`,
       { replacements: { uid: req.user!.id, val: JSON.stringify({ jadwal_pelajaran_id, tanggal, jumlah: listAbsensi.length }) }, type: QueryTypes.INSERT }
     );
-  } catch (_) {}
+  } catch (err) { logger.error({ event: 'activity_log_error', error: err }); }
 
   res.json({ success: true, message: `${listAbsensi.length} absensi berhasil disimpan` });
 };

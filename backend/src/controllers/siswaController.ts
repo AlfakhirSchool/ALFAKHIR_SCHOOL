@@ -72,10 +72,12 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   }
 
   const finalNisn = nisn || nis;
-  const existingNisn = await Siswa.findOne({ where: { nisn: finalNisn } });
-  if (existingNisn) {
-    res.status(400).json({ success: false, message: nisn ? 'NISN sudah terdaftar' : 'NIS sudah terdaftar sebagai siswa' });
-    return;
+  if (finalNisn) {
+    const existingNisn = await Siswa.findOne({ where: { nisn: finalNisn } });
+    if (existingNisn) {
+      res.status(400).json({ success: false, message: nisn ? 'NISN sudah terdaftar' : 'NIS sudah terdaftar sebagai siswa' });
+      return;
+    }
   }
   const password_hash = await bcrypt.hash(autoPassword, 10);
 

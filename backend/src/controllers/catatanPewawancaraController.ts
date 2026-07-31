@@ -16,6 +16,15 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
 
   const { pewawancara_email, pewawancara_nama, observasi, penilaian_akademik, dukungan_keluarga, catatan_karakter, catatan_lain, rekomendasi } = req.body;
+
+  if (pewawancara_email) {
+    const duplikat = await CatatanPewawancara.findOne({ where: { kandidat_id, pewawancara_email } });
+    if (duplikat) {
+      res.status(409).json({ success: false, message: 'Pewawancara ini sudah mengisi catatan untuk kandidat ini. Gunakan Edit untuk memperbarui.' });
+      return;
+    }
+  }
+
   const catatan = await CatatanPewawancara.create({
     kandidat_id,
     pewawancara_email: pewawancara_email || null,

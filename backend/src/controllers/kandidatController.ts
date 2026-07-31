@@ -1,16 +1,11 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
-import bcrypt from 'bcrypt';
-import { Kandidat, Guru, User, Siswa, Kelas, Sekolah, CatatanPewawancara, HasilTesAkademik, RingkasanAI, SoalAkademik, JawabanForm } from '../models';
+import { Kandidat, Guru, User, Kelas, CatatanPewawancara, HasilTesAkademik, RingkasanAI, JawabanForm } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import sequelize from '../config/database';
 import { kelasIdFilter } from '../utils/levelFilter';
-
-function getTahunAjaran() {
-  const now = new Date();
-  const y = now.getFullYear();
-  return now.getMonth() >= 6 ? `${y}/${y + 1}` : `${y - 1}/${y}`;
-}
+import { getTahunAjaran } from '../utils/getTahunAjaran';
+import { createSiswaWithAccount } from '../utils/createSiswaFromKandidat';
 
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
   const { level, status, search, page = '1', limit = '20', tahun_ajaran } = req.query;
@@ -35,15 +30,21 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
     order: [['created_at', 'DESC']],
   });
 
-  // Stats
+  // Stats — satu query GROUP BY status
   const baseWhere = req.user?.school_level ? { level: req.user.school_level } : {};
-  const [total, pending, review, diterima, ditolak] = await Promise.all([
-    Kandidat.count({ where: baseWhere }),
-    Kandidat.count({ where: { ...baseWhere, status: 'PENDING' } }),
-    Kandidat.count({ where: { ...baseWhere, status: 'REVIEW' } }),
-    Kandidat.count({ where: { ...baseWhere, status: 'DITERIMA' } }),
-    Kandidat.count({ where: { ...baseWhere, status: 'DITOLAK' } }),
-  ]);
+  const statRows = await Kandidat.findAll({
+    where: baseWhere,
+    attributes: ['status', [sequelize.fn('COUNT', sequelize.col('status')), 'count']],
+    group: ['status'],
+    raw: true,
+  }) as any[];
+  const statMap: Record<string, number> = {};
+  let total = 0;
+  for (const r of statRows) { statMap[r.status] = parseInt(r.count, 10); total += parseInt(r.count, 10); }
+  const pending = statMap['PENDING'] || 0;
+  const review = statMap['REVIEW'] || 0;
+  const diterima = statMap['DITERIMA'] || 0;
+  const ditolak = statMap['DITOLAK'] || 0;
 
   res.json({
     success: true,
@@ -105,7 +106,15 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
 export const remove = async (req: AuthRequest, res: Response): Promise<void> => {
   const k = await Kandidat.findByPk(req.params.id as string);
   if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
-  await k.destroy();
+  try {
+    await k.destroy();
+  } catch (err: any) {
+    if (err?.original?.code === '23503' || err?.message?.includes('foreign key')) {
+      res.status(409).json({ success: false, message: 'Kandidat tidak dapat dihapus karena memiliki data terkait (catatan, hasil tes). Hapus data terkait dulu.' });
+      return;
+    }
+    throw err;
+  }
   res.json({ success: true, message: 'Kandidat dihapus' });
 };
 
@@ -120,37 +129,14 @@ export const daftarkan = async (req: AuthRequest, res: Response): Promise<void> 
   const kelas = await Kelas.findByPk(kelas_id);
   if (!kelas) { res.status(404).json({ success: false, message: 'Kelas tidak ditemukan' }); return; }
 
-  const slug = k.nama.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z.]/g, '');
-  const ts = Date.now().toString().slice(-4);
-  const autoEmail = `${slug}.${ts}@siswa.alfakhir.sch.id`;
-  const autoPassword = Math.random().toString(36).slice(-6).toUpperCase();
-  const password_hash = await bcrypt.hash(autoPassword, 10);
+  const { siswa, email, password } = await createSiswaWithAccount({
+    nama: k.nama, kelas_id, nisn: nisn || null, nis: nis || null, no_induk: nis || null,
+    jenis_kelamin: k.jenis_kelamin || null,
+    tanggal_lahir: k.tanggal_lahir ? new Date(k.tanggal_lahir) : null,
+  });
+  await k.update({ status: 'DITERIMA', siswa_id: (siswa as any).id });
 
-  const t = await sequelize.transaction();
-  try {
-    const user = await User.create({
-      email: autoEmail, password_hash, nama: k.nama,
-      role: 'siswa', password_default: autoPassword, is_active: true,
-    } as any, { transaction: t });
-
-    const siswa = await Siswa.create({
-      user_id: (user as any).id,
-      kelas_id,
-      nisn: nisn || null,
-      nis: nis || null,
-      no_induk: nis || null,
-      jenis_kelamin: k.jenis_kelamin || null,
-      tanggal_lahir: k.tanggal_lahir ? new Date(k.tanggal_lahir) : null,
-    } as any, { transaction: t });
-
-    await k.update({ status: 'DITERIMA', siswa_id: (siswa as any).id }, { transaction: t });
-    await t.commit();
-  } catch (err) {
-    await t.rollback();
-    throw err;
-  }
-
-  res.json({ success: true, message: `${k.nama} berhasil didaftarkan`, email: autoEmail, password: autoPassword });
+  res.json({ success: true, message: `${k.nama} berhasil didaftarkan`, email, password });
 };
 
 // Public — tidak butuh auth
@@ -217,11 +203,16 @@ Tuliskan ringkasan dalam Bahasa Indonesia yang profesional.`;
     }
   );
   if (!geminiRes.ok) {
-    const err = await geminiRes.text();
+    const err = await geminiRes.text().catch(() => '');
     res.status(502).json({ success: false, message: 'Gemini API error: ' + err }); return;
   }
-  const geminiData: any = await geminiRes.json();
-  const ringkasanText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  let ringkasanText = '';
+  try {
+    const geminiData: any = await geminiRes.json();
+    ringkasanText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  } catch {
+    res.status(502).json({ success: false, message: 'Gemini response tidak valid' }); return;
+  }
   if (!ringkasanText) { res.status(502).json({ success: false, message: 'Gemini tidak menghasilkan teks' }); return; }
 
   const [ringkasan] = await RingkasanAI.upsert({ kandidat_id: k.id, ringkasan: ringkasanText });
@@ -333,6 +324,12 @@ export const daftarPublik = async (req: any, res: Response): Promise<void> => {
     res.status(400).json({ success: false, message: 'nama dan level wajib diisi' });
     return;
   }
+  const tahun_ajaran = getTahunAjaran();
+  const duplikat = await Kandidat.findOne({ where: { nama, level, tahun_ajaran } });
+  if (duplikat) {
+    res.status(409).json({ success: false, message: 'Pendaftaran dengan nama dan jenjang yang sama sudah ada untuk tahun ajaran ini.' });
+    return;
+  }
   const kandidat = await Kandidat.create({
     nama, level,
     nama_ortu: nama_ortu || null,
@@ -341,7 +338,7 @@ export const daftarPublik = async (req: any, res: Response): Promise<void> => {
     asal_sekolah: asal_sekolah || null,
     jenis_kelamin: jenis_kelamin || null,
     tanggal_lahir: tanggal_lahir || null,
-    tahun_ajaran: getTahunAjaran(),
+    tahun_ajaran,
     status: 'PENDING',
   });
   res.status(201).json({ success: true, message: 'Pendaftaran berhasil! Tim kami akan menghubungi Anda.', id: kandidat.id });

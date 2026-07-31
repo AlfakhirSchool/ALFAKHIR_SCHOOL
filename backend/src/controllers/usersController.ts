@@ -69,30 +69,25 @@ export const listUsers = async (req: AuthRequest, res: Response): Promise<void> 
   }
 
   // Jenjang admin: filter berdasarkan lingkup jenjang
+  // j divalidasi whitelist VALID_JENJANG = ['SD','SMP','SMA'] — aman di literal SQL (bukan user-controlled free-text)
   if (effectiveJenjang && VALID_JENJANG.includes(effectiveJenjang)) {
     const j = effectiveJenjang;
+    const guruSub = `EXISTS (SELECT 1 FROM guru g WHERE g.user_id = "User"."id" AND '${j}' = ANY(g.school_levels))`;
+    const siswaSub = `EXISTS (SELECT 1 FROM siswa s JOIN kelas k ON s.kelas_id = k.id JOIN sekolah sch ON k.sekolah_id = sch.id WHERE s.user_id = "User"."id" AND sch.level = '${j}')`;
+    const ortuSub = `EXISTS (SELECT 1 FROM orang_tua ot JOIN siswa s ON ot.siswa_id = s.id JOIN kelas k ON s.kelas_id = k.id JOIN sekolah sch ON k.sekolah_id = sch.id WHERE ot.user_id = "User"."id" AND sch.level = '${j}')`;
+
     if (role === 'admin') {
       where.school_level = j;
     } else if (role === 'guru') {
-      where[Op.and] = [sequelize.literal(
-        `EXISTS (SELECT 1 FROM guru g WHERE g.user_id = "User"."id" AND '${j}' = ANY(g.school_levels))`
-      )];
+      where[Op.and] = [sequelize.literal(guruSub)];
     } else if (role === 'siswa') {
-      where[Op.and] = [sequelize.literal(
-        `EXISTS (SELECT 1 FROM siswa s JOIN kelas k ON s.kelas_id = k.id JOIN sekolah sch ON k.sekolah_id = sch.id WHERE s.user_id = "User"."id" AND sch.level = '${j}')`
-      )];
+      where[Op.and] = [sequelize.literal(siswaSub)];
     } else if (role === 'ortu') {
-      where[Op.and] = [sequelize.literal(
-        `EXISTS (SELECT 1 FROM orang_tua ot JOIN siswa s ON ot.siswa_id = s.id JOIN kelas k ON s.kelas_id = k.id JOIN sekolah sch ON k.sekolah_id = sch.id WHERE ot.user_id = "User"."id" AND sch.level = '${j}')`
-      )];
+      where[Op.and] = [sequelize.literal(ortuSub)];
     } else {
-      // Tidak ada filter role: tampilkan semua role dalam lingkup jenjang ini
-      where[Op.and] = [sequelize.literal(`(
-        ("User"."role" = 'admin' AND "User"."school_level" = '${j}') OR
-        ("User"."role" = 'guru' AND EXISTS (SELECT 1 FROM guru g WHERE g.user_id = "User"."id" AND '${j}' = ANY(g.school_levels))) OR
-        ("User"."role" = 'siswa' AND EXISTS (SELECT 1 FROM siswa s JOIN kelas k ON s.kelas_id = k.id JOIN sekolah sch ON k.sekolah_id = sch.id WHERE s.user_id = "User"."id" AND sch.level = '${j}')) OR
-        ("User"."role" = 'ortu' AND EXISTS (SELECT 1 FROM orang_tua ot JOIN siswa s ON ot.siswa_id = s.id JOIN kelas k ON s.kelas_id = k.id JOIN sekolah sch ON k.sekolah_id = sch.id WHERE ot.user_id = "User"."id" AND sch.level = '${j}'))
-      )`)];
+      where[Op.and] = [sequelize.literal(
+        `("User"."role" = 'admin' AND "User"."school_level" = '${j}') OR ("User"."role" = 'guru' AND ${guruSub}) OR ("User"."role" = 'siswa' AND ${siswaSub}) OR ("User"."role" = 'ortu' AND ${ortuSub})`
+      )];
     }
   }
 

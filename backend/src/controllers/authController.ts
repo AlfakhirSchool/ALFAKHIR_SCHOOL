@@ -77,9 +77,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       user = (siswa as any).user ?? null;
     }
   } else {
-    // Lookup by email exact, or by nama (case-insensitive) for username-style login
     user = await User.findOne({ where: { email, is_active: true } });
     if (!user) {
+      // ponytail: login by nama untuk guru/staf yang belum punya email di sistem
       user = await User.findOne({ where: { nama: { [Op.iLike]: email }, is_active: true } });
     }
   }
@@ -290,6 +290,12 @@ export const switchAccount = async (req: AuthRequest, res: Response): Promise<vo
 
   const { accessToken } = generateTokens({
     id: target.id, email: target.email, nama: target.nama, role: target.role, school_level: targetLevel,
+  });
+
+  logAction({
+    user_id: current.id, nama: current.nama, role: current.role, school_level: currentLevel,
+    action: 'switch_account', table: 'users', record_id: target.id,
+    new_value: { target_id: target.id, target_nama: target.nama, target_email: target.email },
   });
 
   res.json({

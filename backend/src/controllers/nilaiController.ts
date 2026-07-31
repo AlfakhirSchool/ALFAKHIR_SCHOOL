@@ -58,7 +58,7 @@ export const getSiswa = async (req: AuthRequest, res: Response): Promise<void> =
   if (tahun_ajaran) where.tahun_ajaran = tahun_ajaran;
 
   const nilaiList = await Nilai.findAll({
-    where: { ...where, siswa_id: req.params.siswa_id as string },
+    where,
     include: [
       { model: MataPelajaran, as: 'mata_pelajaran' },
       { model: Guru, as: 'guru', include: [{ model: User, as: 'user', attributes: ['nama'] }] },

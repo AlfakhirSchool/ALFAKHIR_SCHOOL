@@ -1,8 +1,7 @@
 import { Router, Response } from 'express';
 import { AuthRequest, authenticate, authorize } from '../middleware/auth';
-import { Kelas, Sekolah, User, Siswa } from '../models';
-import bcrypt from 'bcrypt';
-import sequelize from '../config/database';
+import { Kelas, Sekolah, Siswa } from '../models';
+import { createSiswaWithAccount } from '../utils/createSiswaFromKandidat';
 
 const router = Router();
 router.use(authenticate);
@@ -42,38 +41,26 @@ router.post('/daftarkan', authorize('admin'), async (req: AuthRequest, res: Resp
       return;
     }
 
-    const kelas = await Kelas.findByPk(kelas_id, { include: [{ model: Sekolah, as: 'sekolah' }] });
-    if (!kelas) {
+    if (!await Kelas.findByPk(kelas_id, { include: [{ model: Sekolah, as: 'sekolah' }] })) {
       res.status(404).json({ success: false, message: 'Kelas tidak ditemukan' });
       return;
     }
 
-    const slug = nama.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z.]/g, '');
-    const ts = Date.now().toString().slice(-4);
-    const autoEmail = `${slug}.${ts}@siswa.alfakhir.sch.id`;
-    const autoPassword = Math.random().toString(36).slice(-6).toUpperCase();
-    const password_hash = await bcrypt.hash(autoPassword, 10);
-
-    const t = await sequelize.transaction();
-    try {
-      const user = await User.create({
-        email: autoEmail, password_hash, nama, role: 'siswa',
-        password_default: autoPassword, is_active: true,
-      } as any, { transaction: t });
-
-      await Siswa.create({
-        user_id: (user as any).id, kelas_id,
-        nisn: nisn || null, nis: no_induk || null, no_induk: no_induk || null,
-        observasi_kandidat_id: kandidat_id || null,
-      } as any, { transaction: t });
-
-      await t.commit();
-    } catch (innerErr) {
-      await t.rollback();
-      throw innerErr;
+    // Cegah duplikat: kandidat yang sama tidak boleh didaftarkan 2x
+    if (kandidat_id) {
+      const existing = await Siswa.findOne({ where: { observasi_kandidat_id: kandidat_id } as any });
+      if (existing) {
+        res.status(409).json({ success: false, message: 'Kandidat ini sudah memiliki akun siswa' });
+        return;
+      }
     }
 
-    res.json({ success: true, message: `${nama} berhasil didaftarkan sebagai siswa`, email: autoEmail, password: autoPassword });
+    const { email, password } = await createSiswaWithAccount({
+      nama, kelas_id, nisn: nisn || null, nis: no_induk || null, no_induk: no_induk || null,
+      observasi_kandidat_id: kandidat_id || null,
+    });
+
+    res.json({ success: true, message: `${nama} berhasil didaftarkan sebagai siswa`, email, password });
   } catch (err: any) {
     res.status(500).json({ success: false, message: 'Gagal mendaftarkan siswa: ' + err.message });
   }

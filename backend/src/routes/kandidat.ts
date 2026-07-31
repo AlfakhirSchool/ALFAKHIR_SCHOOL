@@ -4,7 +4,7 @@ import * as kandidatController from '../controllers/kandidatController';
 
 const router = Router();
 
-// Public routes
+// Public routes — TODO: tambah express-rate-limit (max 20 req/mnt per IP) sebelum launch production
 router.post('/daftar-publik', kandidatController.daftarPublik);
 router.get('/publik/cari', kandidatController.cariPublik);
 router.get('/publik/:id', kandidatController.infoPublik);
