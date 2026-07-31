@@ -175,7 +175,8 @@
 .qr { width: 56px; height: 56px; }
 .verifyText { font-family: Arial, sans-serif; font-size: 8.5px; color: #6b7280; max-width: 150px; line-height: 1.4; }
 .verifyText b { color: #1c2333; display: block; font-size: 9.5px; margin-bottom: 2px; }
-.signBlock { text-align: center; position: relative; width: 190px; }
+.signGroup { display: flex; gap: 16px; align-items: flex-end; }
+.signBlock { text-align: center; position: relative; width: 160px; }
 .signDate { font-family: Arial, sans-serif; font-size: 10.5px; color: #6b7280; margin-bottom: 2px; }
 .sealWrap { position: relative; height: 78px; display: flex; align-items: center; justify-content: center; }
 .sealLogo {
@@ -229,11 +230,12 @@
 .sheet.a5 .sealWrap { height: 34px; }
 .sheet.a5 .sealLogo { width: 32px; height: 32px; }
 .sheet.a5 .ttdSign { width: 52px; max-height: 42px; }
-.sheet.a5 .signBlock { width: 140px; }
+.sheet.a5 .signGroup { gap: 8px; }
+.sheet.a5 .signBlock { width: 110px; }
 .sheet.a5 .signDate { font-size: 8px; }
 .sheet.a5 .signName { font-size: 9px; }
 .sheet.a5 .signRole { font-size: 7px; }
-.sheet.a5 .footnote { font-size: 6.5px; margin-top: 34px; }
+.sheet.a5 .footnote { font-size: 6.5px; margin-top: 8px; }
 .sheet.a5 .catatan { font-size: 7px; }
 .sheet.a5 .rekeningBox { font-size: 8px; }
 .sheet.a5 .verifyText { font-size: 7px; max-width: 120px; }

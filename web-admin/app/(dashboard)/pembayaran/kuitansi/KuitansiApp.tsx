@@ -538,14 +538,25 @@ export default function KuitansiApp() {
                     Pindai kode untuk menuju situs resmi sekolah dan memastikan dokumen ini diterbitkan oleh Al-Fakhir.
                   </div>
                 </div>
-                <div className={styles.signBlock}>
-                  <div className={styles.signDate}>Depok, {tanggal}</div>
-                  <div className={styles.sealWrap}>
-                    <img className={styles.sealLogo} src={`/invoice/logo-${unit === 'SD' ? 'sd' : 'smp'}.png`} alt="Cap Sekolah" />
-                    <img className={styles.ttdSign} src="/invoice/ttdnun.png" alt="TTD" />
+                <div className={styles.signGroup}>
+                  <div className={styles.signBlock}>
+                    <div className={styles.signDate}>Depok, {tanggal}</div>
+                    <div className={styles.sealWrap}>
+                      <img className={styles.sealLogo} src={`/invoice/logo-${unit === 'SD' ? 'sd' : 'smp'}.png`} alt="Cap Sekolah" />
+                      <img className={styles.ttdSign} src="/invoice/ttdmia.png" alt="TTD Mia" />
+                    </div>
+                    <div className={styles.signName}>Mia Andini Caniago, S.Ak.</div>
+                    <div className={styles.signRole}>Kepala Keuangan</div>
                   </div>
-                  <div className={styles.signName}>Nurhidayati, S.Pd.</div>
-                  <div className={styles.signRole}>Bendahara Sekolah</div>
+                  <div className={styles.signBlock}>
+                    <div className={styles.signDate}>Depok, {tanggal}</div>
+                    <div className={styles.sealWrap}>
+                      <img className={styles.sealLogo} src={`/invoice/logo-${unit === 'SD' ? 'sd' : 'smp'}.png`} alt="Cap Sekolah" />
+                      <img className={styles.ttdSign} src="/invoice/ttdnun.png" alt="TTD Nun" />
+                    </div>
+                    <div className={styles.signName}>Nurhidayati, S.Pd.</div>
+                    <div className={styles.signRole}>Bendahara Sekolah</div>
+                  </div>
                 </div>
               </div>
 
