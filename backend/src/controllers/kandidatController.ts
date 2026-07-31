@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import bcrypt from 'bcrypt';
 import { Kandidat, Guru, User, Siswa, Kelas, Sekolah, CatatanPewawancara, HasilTesAkademik, RingkasanAI, SoalAkademik, JawabanForm } from '../models';
 import { AuthRequest } from '../middleware/auth';
+import sequelize from '../config/database';
 import { kelasIdFilter } from '../utils/levelFilter';
 
 function getTahunAjaran() {
@@ -125,22 +126,29 @@ export const daftarkan = async (req: AuthRequest, res: Response): Promise<void> 
   const autoPassword = Math.random().toString(36).slice(-6).toUpperCase();
   const password_hash = await bcrypt.hash(autoPassword, 10);
 
-  const user = await User.create({
-    email: autoEmail, password_hash, nama: k.nama,
-    role: 'siswa', password_default: autoPassword, is_active: true,
-  } as any);
+  const t = await sequelize.transaction();
+  try {
+    const user = await User.create({
+      email: autoEmail, password_hash, nama: k.nama,
+      role: 'siswa', password_default: autoPassword, is_active: true,
+    } as any, { transaction: t });
 
-  const siswa = await Siswa.create({
-    user_id: (user as any).id,
-    kelas_id,
-    nisn: nisn || null,
-    nis: nis || null,
-    no_induk: nis || null,
-    jenis_kelamin: k.jenis_kelamin || null,
-    tanggal_lahir: k.tanggal_lahir ? new Date(k.tanggal_lahir) : null,
-  } as any);
+    const siswa = await Siswa.create({
+      user_id: (user as any).id,
+      kelas_id,
+      nisn: nisn || null,
+      nis: nis || null,
+      no_induk: nis || null,
+      jenis_kelamin: k.jenis_kelamin || null,
+      tanggal_lahir: k.tanggal_lahir ? new Date(k.tanggal_lahir) : null,
+    } as any, { transaction: t });
 
-  await k.update({ status: 'DITERIMA', siswa_id: (siswa as any).id });
+    await k.update({ status: 'DITERIMA', siswa_id: (siswa as any).id }, { transaction: t });
+    await t.commit();
+  } catch (err) {
+    await t.rollback();
+    throw err;
+  }
 
   res.json({ success: true, message: `${k.nama} berhasil didaftarkan`, email: autoEmail, password: autoPassword });
 };

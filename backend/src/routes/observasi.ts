@@ -1,9 +1,11 @@
 import { Router, Response } from 'express';
-import { AuthRequest, authorize } from '../middleware/auth';
+import { AuthRequest, authenticate, authorize } from '../middleware/auth';
 import { Kelas, Sekolah, User, Siswa } from '../models';
 import bcrypt from 'bcrypt';
+import sequelize from '../config/database';
 
 const router = Router();
+router.use(authenticate);
 
 const OBS_URL = process.env.OBSERVASI_API_URL || 'https://dashboard-alfakhir-seven.vercel.app';
 const OBS_KEY = process.env.OBSERVASI_API_KEY || '';
@@ -52,23 +54,24 @@ router.post('/daftarkan', authorize('admin'), async (req: AuthRequest, res: Resp
     const autoPassword = Math.random().toString(36).slice(-6).toUpperCase();
     const password_hash = await bcrypt.hash(autoPassword, 10);
 
-    const user = await User.create({
-      email: autoEmail,
-      password_hash,
-      nama,
-      role: 'siswa',
-      password_default: autoPassword,
-      is_active: true,
-    } as any);
+    const t = await sequelize.transaction();
+    try {
+      const user = await User.create({
+        email: autoEmail, password_hash, nama, role: 'siswa',
+        password_default: autoPassword, is_active: true,
+      } as any, { transaction: t });
 
-    await Siswa.create({
-      user_id: (user as any).id,
-      kelas_id,
-      nisn: nisn || null,
-      nis: no_induk || null,
-      no_induk: no_induk || null,
-      observasi_kandidat_id: kandidat_id || null,
-    } as any);
+      await Siswa.create({
+        user_id: (user as any).id, kelas_id,
+        nisn: nisn || null, nis: no_induk || null, no_induk: no_induk || null,
+        observasi_kandidat_id: kandidat_id || null,
+      } as any, { transaction: t });
+
+      await t.commit();
+    } catch (innerErr) {
+      await t.rollback();
+      throw innerErr;
+    }
 
     res.json({ success: true, message: `${nama} berhasil didaftarkan sebagai siswa`, email: autoEmail, password: autoPassword });
   } catch (err: any) {
