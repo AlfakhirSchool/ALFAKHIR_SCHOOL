@@ -143,7 +143,7 @@ function GroupItem({
     return (
       <div
         className={`flex items-center justify-center w-9 h-9 rounded-xl mx-auto my-0.5 cursor-pointer transition-all duration-150 ${
-          hasActive ? 'text-white shadow-lg' : 'text-slate-300 hover:text-white hover:bg-white/10'
+          hasActive ? 'text-white shadow-lg' : 'text-slate-400 hover:bg-slate-100'
         }`}
         style={hasActive ? { backgroundColor: groupColor, boxShadow: `0 4px 12px ${groupColor}40` } : {}}
         title={group.label}
@@ -158,15 +158,15 @@ function GroupItem({
       <button
         onClick={() => setOpen(o => !o)}
         className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-150 ${
-          hasActive ? '' : 'text-slate-100 hover:text-white'
+          hasActive ? '' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
         }`}
         style={hasActive ? { color: groupColor } : {}}
       >
         <span
           className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md transition-all duration-150"
           style={hasActive
-            ? { backgroundColor: groupColor + '20', color: groupColor }
-            : { color: '#cbd5e1' }}
+            ? { backgroundColor: groupColor + '15', color: groupColor }
+            : { color: '#94a3b8' }}
         >
           {group.icon}
         </span>
@@ -186,7 +186,7 @@ function GroupItem({
             transition={{ duration: 0.18, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="ml-2 pl-2 border-l-2 mt-0.5 space-y-0.5 pb-1" style={{ borderColor: groupColor + '30' }}>
+            <div className="ml-2 pl-2 border-l-2 mt-0.5 space-y-0.5 pb-1" style={{ borderColor: groupColor + '40' }}>
               {group.items.map(item => {
                 const active = pathname === item.href || pathname.startsWith(item.href + '/');
                 return (
@@ -195,13 +195,12 @@ function GroupItem({
                     href={item.href}
                     className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all duration-150 ${
                       active
-                        ? 'font-medium text-white'
-                        : 'text-slate-100 hover:text-white hover:bg-white/10'
+                        ? 'font-semibold'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                     style={active ? {
-                      backgroundColor: groupColor + '20',
+                      backgroundColor: groupColor + '12',
                       color: groupColor,
-                      boxShadow: `inset 0 0 0 1px ${groupColor}30`,
                     } : {}}
                   >
                     <span
@@ -242,8 +241,8 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
 
   return (
     <motion.aside
-      className="flex flex-col h-screen fixed left-0 top-0 z-40 overflow-hidden text-white"
-      style={{ background: 'linear-gradient(180deg, #0F172A 0%, #111827 100%)' }}
+      className="flex flex-col h-screen fixed left-0 top-0 z-40 overflow-hidden bg-white text-slate-800"
+      style={{ borderRight: '1px solid #e2e8f0' }}
       animate={{ width: collapsed ? 64 : 260 }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
     >
@@ -251,15 +250,15 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
       <div className="h-0.5 w-full flex-shrink-0" style={{ background: `linear-gradient(90deg, ${accentColor}, ${accentColor}00)` }} />
 
       {/* Header */}
-      <div className="border-b border-white/5 min-h-[68px] flex items-center flex-shrink-0">
+      <div className="border-b border-slate-100 min-h-[68px] flex items-center flex-shrink-0">
         {collapsed ? (
           <div className="w-full flex flex-col items-center gap-2 py-3">
-            <div className="w-9 h-9 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center shadow-inner">
+            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center">
               <img src={logo} alt="Logo" className="w-full h-full object-contain p-0.5" />
             </div>
             <button
               onClick={onToggle}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-colors"
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               title="Buka sidebar"
             >
               <PanelLeftOpen size={15} />
@@ -267,10 +266,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
           </div>
         ) : (
           <div className="px-3 w-full flex items-center gap-3">
-            <div
-              className="w-10 h-10 flex-shrink-0 rounded-xl overflow-hidden flex items-center justify-center shadow-lg"
-              style={{ background: `linear-gradient(135deg, ${accentColor}30, ${accentColor}10)`, border: `1px solid ${accentColor}30` }}
-            >
+            <div className="w-10 h-10 flex-shrink-0 rounded-xl overflow-hidden flex items-center justify-center">
               <img src={logo} alt="Logo" className="w-9 h-9 object-contain" />
             </div>
             <motion.div
@@ -279,12 +275,12 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
               transition={{ duration: 0.2 }}
               className="flex-1 overflow-hidden min-w-0"
             >
-              <p className="font-bold text-[13px] leading-tight text-white truncate">{schoolName}</p>
+              <p className="font-bold text-[13px] leading-tight text-slate-800 truncate">{schoolName}</p>
               <p className="text-[11px] font-medium mt-0.5 truncate" style={{ color: accentColor }}>{subtitle}</p>
             </motion.div>
             <button
               onClick={onToggle}
-              className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-colors"
+              className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               title="Tutup sidebar"
             >
               <PanelLeftClose size={15} />
@@ -315,7 +311,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
                   href={item.href}
                   title={collapsed ? item.label : undefined}
                   className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-sm transition-all duration-150 ${
-                    active ? 'text-white font-medium' : 'text-slate-100 hover:text-white hover:bg-white/10'
+                    active ? 'font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                   style={active ? {
                     backgroundColor: accentColor + '20',
@@ -346,17 +342,17 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
 
       {/* Footer — user info */}
       {!collapsed && user && (
-        <div className="px-3 py-3 border-t border-white/5 flex-shrink-0">
+        <div className="px-3 py-3 border-t border-slate-100 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-              style={{ backgroundColor: accentColor + '40', color: accentColor }}
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+              style={{ backgroundColor: accentColor + '20', color: accentColor }}
             >
               {(user.nama || user.email || 'U')[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-slate-300 truncate">{user.nama || user.email}</p>
-              <p className="text-[10px] text-slate-600 capitalize truncate">{user.role}</p>
+              <p className="text-xs font-medium text-slate-700 truncate">{user.nama || user.email}</p>
+              <p className="text-[10px] text-slate-400 capitalize truncate">{user.role}</p>
             </div>
           </div>
         </div>
