@@ -40,6 +40,7 @@ export default function Header({ title }: HeaderProps) {
   const router = useRouter();
   const [userOpen, setUserOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [switchOpen, setSwitchOpen] = useState(false);
   const [adminList, setAdminList] = useState<any[]>([]);
   const [switching, setSwitching] = useState<string | null>(null);
   const [notifs, setNotifs] = useState<Notif[]>([]);
@@ -343,38 +344,56 @@ export default function Header({ title }: HeaderProps) {
 
               {isAdmin && adminList.length > 0 && (
                 <div className="border-b border-gray-100">
-                  <p className="px-4 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Pindah Akun</p>
-                  <div className="max-h-48 overflow-y-auto">
-                    {adminList.map((a: any) => {
-                      const lvl = a.school_level;
-                      const color = lvl ? (LEVEL_COLOR[lvl] || '#3B7FD1') : '#3B7FD1';
-                      return (
-                        <button
-                          key={a.id}
-                          onClick={() => handleSwitch(a)}
-                          disabled={!!switching}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
-                        >
-                          <div
-                            className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                            style={{ backgroundColor: color }}
+                  <button
+                    onClick={() => setSwitchOpen(o => !o)}
+                    className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                      </svg>
+                      Pindah Akun
+                    </span>
+                    <svg
+                      className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${switchOpen ? 'rotate-180' : ''}`}
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {switchOpen && (
+                    <div className="max-h-48 overflow-y-auto border-t border-gray-50">
+                      {adminList.map((a: any) => {
+                        const lvl = a.school_level;
+                        const color = lvl ? (LEVEL_COLOR[lvl] || '#3B7FD1') : '#3B7FD1';
+                        return (
+                          <button
+                            key={a.id}
+                            onClick={() => handleSwitch(a)}
+                            disabled={!!switching}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50"
                           >
-                            {a.nama?.charAt(0) || 'A'}
-                          </div>
-                          <div className="text-left min-w-0">
-                            <p className="text-gray-800 font-medium truncate text-xs">{a.nama}</p>
-                            <p className="text-gray-400 text-xs">Admin {lvl || 'Master'}</p>
-                          </div>
-                          {switching === a.id && (
-                            <svg className="w-3.5 h-3.5 animate-spin text-gray-400 ml-auto shrink-0" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                            <div
+                              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                              style={{ backgroundColor: color }}
+                            >
+                              {a.nama?.charAt(0) || 'A'}
+                            </div>
+                            <div className="text-left min-w-0">
+                              <p className="text-gray-800 font-medium truncate text-xs">{a.nama}</p>
+                              <p className="text-gray-400 text-xs">Admin {lvl || 'Master'}</p>
+                            </div>
+                            {switching === a.id && (
+                              <svg className="w-3.5 h-3.5 animate-spin text-gray-400 ml-auto shrink-0" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
