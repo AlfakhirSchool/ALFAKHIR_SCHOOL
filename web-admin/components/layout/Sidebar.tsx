@@ -158,7 +158,7 @@ function GroupItem({
       <button
         onClick={() => setOpen(o => !o)}
         className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all duration-150 ${
-          hasActive ? '' : 'text-slate-500 hover:text-slate-300'
+          hasActive ? '' : 'text-slate-300 hover:text-white'
         }`}
         style={hasActive ? { color: groupColor } : {}}
       >
@@ -166,7 +166,7 @@ function GroupItem({
           className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md transition-all duration-150"
           style={hasActive
             ? { backgroundColor: groupColor + '20', color: groupColor }
-            : { color: '#64748b' }}
+            : { color: '#94a3b8' }}
         >
           {group.icon}
         </span>
@@ -196,7 +196,7 @@ function GroupItem({
                     className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-all duration-150 ${
                       active
                         ? 'font-medium text-white'
-                        : 'text-slate-400 hover:text-white hover:bg-white/8'
+                        : 'text-slate-300 hover:text-white hover:bg-white/10'
                     }`}
                     style={active ? {
                       backgroundColor: groupColor + '20',
@@ -315,7 +315,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
                   href={item.href}
                   title={collapsed ? item.label : undefined}
                   className={`flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-sm transition-all duration-150 ${
-                    active ? 'text-white font-medium' : 'text-slate-400 hover:text-white hover:bg-white/8'
+                    active ? 'text-white font-medium' : 'text-slate-300 hover:text-white hover:bg-white/10'
                   }`}
                   style={active ? {
                     backgroundColor: accentColor + '20',
