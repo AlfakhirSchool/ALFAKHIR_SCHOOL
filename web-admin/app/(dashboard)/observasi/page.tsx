@@ -395,7 +395,7 @@ function KandidatTab({ kandidatList, stats, isLoading, filterStatus, setFilterSt
                         <div className="flex gap-1.5 justify-end">
                           <button onClick={() => {
                             setEditTarget(k);
-                            setForm({ nama: k.nama, level: k.level, nama_ortu: k.nama_ortu || '', no_telp_ortu: k.no_telp_ortu || '', email_ortu: k.email_ortu || '', asal_sekolah: k.asal_sekolah || '', jenis_kelamin: k.jenis_kelamin || '', tahun_ajaran: k.tahun_ajaran, status: k.status } as any);
+                            setForm({ nama: k.nama, level: k.level, nama_ortu: k.nama_ortu || '', no_telp_ortu: k.no_telp_ortu || '', email_ortu: k.email_ortu || '', asal_sekolah: k.asal_sekolah || '', jenis_kelamin: k.jenis_kelamin || '', tahun_ajaran: k.tahun_ajaran, status: k.status, pewawancara_nama: k.pewawancara_nama || '', ruangan: k.ruangan || '' } as any);
                             setShowForm(false);
                           }} className="text-xs text-amber-600 hover:underline">Edit</button>
                           {k.status === 'DITERIMA' && !k.siswa_id && (
@@ -1157,6 +1157,22 @@ function KandidatForm({ form, setForm, levelFromUser, showStatus }: any) {
           <option value="P">Perempuan</option>
         </select>
       </div>
+      {showStatus && (
+        <>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Pewawancara</label>
+            <input value={form.pewawancara_nama || ''} onChange={e => setForm({ ...form, pewawancara_nama: e.target.value })}
+              placeholder="Nama pewawancara yang ditugaskan"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Ruangan</label>
+            <input value={form.ruangan || ''} onChange={e => setForm({ ...form, ruangan: e.target.value })}
+              placeholder="cth: A1"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
+          </div>
+        </>
+      )}
     </div>
   );
 }
