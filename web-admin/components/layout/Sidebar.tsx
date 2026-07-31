@@ -8,7 +8,7 @@ import { useAuthStore, SchoolLevel } from '@/store/authStore';
 import {
   LayoutDashboard, Users, GraduationCap, School, BookOpen, Calendar,
   DoorOpen, CreditCard, ClipboardCheck, FileText, Wallet, BookMarked,
-  BarChart3, UserCog, Search, Settings, Bell, MessageSquare, QrCode,
+  BarChart3, UserCog, Search, Settings, Bell, MessageSquare, QrCode, Printer,
   PanelLeftClose, PanelLeftOpen, ClipboardList, ChevronRight,
 } from 'lucide-react';
 
@@ -21,10 +21,10 @@ function isGroup(e: SidebarEntry): e is MenuGroup {
 }
 
 const keuanganMenu: MenuItem[] = [
-  { href: '/dashboard/keuangan', icon: <LayoutDashboard size={16} />, label: 'Dashboard Keuangan' },
-  { href: '/pembayaran',         icon: <Wallet size={16} />,          label: 'Pembayaran' },
-  { href: '/laporan',            icon: <BarChart3 size={16} />,       label: 'Laporan' },
-  { href: '/settings',           icon: <Settings size={16} />,        label: 'Pengaturan' },
+  { href: '/dashboard/keuangan',      icon: <LayoutDashboard size={16} />, label: 'Dashboard Keuangan' },
+  { href: '/pembayaran',              icon: <Wallet size={16} />,          label: 'Pembayaran' },
+  { href: '/pembayaran/kuitansi',     icon: <Printer size={16} />,         label: 'Cetak Kuitansi' },
+  { href: '/laporan',                 icon: <BarChart3 size={16} />,       label: 'Laporan' },
 ];
 
 const pewawancaraMenu: MenuItem[] = [
