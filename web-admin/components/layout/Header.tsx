@@ -161,7 +161,7 @@ export default function Header({ title }: HeaderProps) {
             )}
           </button>
           {notifOpen && (
-            <div className="absolute right-0 mt-2 w-84 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden" style={{ width: 340 }}>
+            <div className="absolute right-0 mt-2 w-84 bg-white rounded-xl shadow-xl border border-gray-100 z-50" style={{ width: 340 }}>
               <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm text-[#1A2332]">Notifikasi</span>
@@ -173,7 +173,7 @@ export default function Header({ title }: HeaderProps) {
                   {notifLoading ? 'Memuat...' : 'Perbarui'}
                 </button>
               </div>
-              <div className="py-1 max-h-80 overflow-y-auto">
+              <div className="py-1 max-h-80 overflow-y-auto rounded-b-xl">
                 {notifLoading && notifs.length === 0 ? (
                   <div className="px-4 py-8 text-center">
                     <div className="w-5 h-5 border-2 border-[#1B8B87] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
