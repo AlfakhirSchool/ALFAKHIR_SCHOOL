@@ -161,8 +161,9 @@ export default function Header({ title }: HeaderProps) {
             )}
           </button>
           {notifOpen && (
-            <div className="absolute right-0 mt-2 w-84 bg-white rounded-xl shadow-xl border border-gray-100 z-50" style={{ width: 340 }}>
-              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+            <div className="absolute right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 flex flex-col" style={{ width: 340, maxHeight: 480 }}>
+              {/* Sticky header */}
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50 rounded-t-xl flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm text-[#1A2332]">Notifikasi</span>
                   {notifs.length > 0 && (
@@ -173,64 +174,71 @@ export default function Header({ title }: HeaderProps) {
                   {notifLoading ? 'Memuat...' : 'Perbarui'}
                 </button>
               </div>
-              <div className="py-1 max-h-80 overflow-y-auto rounded-b-xl">
+
+              {/* Scrollable body */}
+              <div className="overflow-y-auto flex-1 [scrollbar-width:thin]">
                 {notifLoading && notifs.length === 0 ? (
                   <div className="px-4 py-8 text-center">
                     <div className="w-5 h-5 border-2 border-[#1B8B87] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     <p className="text-xs text-gray-400">Memuat notifikasi...</p>
                   </div>
                 ) : notifs.length === 0 ? (
-                  <div className="px-4 py-8 text-center">
+                  <div className="px-4 py-6 text-center">
                     <span className="text-3xl">🔔</span>
                     <p className="text-sm text-gray-500 mt-2">Tidak ada notifikasi</p>
                     <p className="text-xs text-gray-400 mt-0.5">Semua aktivitas terkini akan muncul di sini</p>
                   </div>
                 ) : (
-                  notifs.map((n) => {
-                    const meta = NOTIF_META[n.type] || NOTIF_META.default;
-                    return (
-                      <div key={n.id} className="px-4 py-3 hover:bg-gray-50 flex items-start gap-3 border-b border-gray-50 last:border-0 cursor-pointer">
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base" style={{ backgroundColor: meta.bg }}>
-                          {meta.icon}
+                  <div className="py-1">
+                    {notifs.map((n) => {
+                      const meta = NOTIF_META[n.type] || NOTIF_META.default;
+                      return (
+                        <div key={n.id} className="px-4 py-3 hover:bg-gray-50 flex items-start gap-3 border-b border-gray-50 last:border-0 cursor-pointer">
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base" style={{ backgroundColor: meta.bg }}>
+                            {meta.icon}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-800 leading-snug">{n.message}</p>
+                            <p className="text-xs mt-0.5 font-medium" style={{ color: meta.color }}>
+                              {n.type === 'jurnal' ? 'Jurnal Guru' :
+                               n.type === 'siswa' ? 'Data Siswa' :
+                               n.type === 'pembayaran' ? 'Pembayaran' :
+                               n.type === 'absensi' ? 'Absensi Gerbang' :
+                               n.type === 'alfa' ? 'Perhatian' :
+                               n.type === 'tagihan' ? 'Tagihan' : 'Sistem'}
+                            </p>
+                          </div>
+                          {!n.read && <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: meta.color }} />}
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-800 leading-snug">{n.message}</p>
-                          <p className="text-xs mt-0.5 font-medium" style={{ color: meta.color }}>
-                            {n.type === 'jurnal' ? 'Jurnal Guru' :
-                             n.type === 'siswa' ? 'Data Siswa' :
-                             n.type === 'pembayaran' ? 'Pembayaran' :
-                             n.type === 'absensi' ? 'Absensi Gerbang' :
-                             n.type === 'alfa' ? 'Perhatian' :
-                             n.type === 'tagihan' ? 'Tagihan' : 'Sistem'}
-                          </p>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {activityFeed.length > 0 && (
+                  <div className="border-t border-gray-100">
+                    <div className="px-4 py-2 bg-gray-50 flex items-center justify-between sticky top-0">
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Aktivitas Penerimaan</span>
+                      <span className="text-xs bg-[#1B8B87] text-white px-1.5 py-0.5 rounded-full font-bold">{activityFeed.length}</span>
+                    </div>
+                    {activityFeed.map((a) => {
+                      const meta = ACTIVITY_META[a.type] || { icon: '📌', color: '#6B7280' };
+                      return (
+                        <div key={`act-${a.id}`} className="px-4 py-3 hover:bg-gray-50 flex items-start gap-3 border-b border-gray-50 last:border-0">
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base bg-gray-50">{meta.icon}</div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-800 leading-snug">{a.desc}</p>
+                            <p className="text-xs mt-0.5 font-medium" style={{ color: meta.color }}>{a.title}{a.level ? ` · ${a.level}` : ''}</p>
+                          </div>
                         </div>
-                        {!n.read && <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: meta.color }} />}
-                      </div>
-                    );
-                  })
+                      );
+                    })}
+                  </div>
                 )}
               </div>
-              {activityFeed.length > 0 && (
-                <div className="border-t border-gray-100">
-                  <div className="px-4 py-2 bg-gray-50 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Aktivitas Penerimaan</span>
-                    <span className="text-xs bg-[#1B8B87] text-white px-1.5 py-0.5 rounded-full font-bold">{activityFeed.length}</span>
-                  </div>
-                  {activityFeed.map((a) => {
-                    const meta = ACTIVITY_META[a.type] || { icon: '📌', color: '#6B7280' };
-                    return (
-                      <div key={`act-${a.id}`} className="px-4 py-3 hover:bg-gray-50 flex items-start gap-3 border-b border-gray-50 last:border-0">
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base bg-gray-50">{meta.icon}</div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-800 leading-snug">{a.desc}</p>
-                          <p className="text-xs mt-0.5 font-medium" style={{ color: meta.color }}>{a.title}{a.level ? ` · ${a.level}` : ''}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50">
+
+              {/* Sticky footer */}
+              <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50 rounded-b-xl flex-shrink-0">
                 <p className="text-xs text-gray-400 text-center">Diperbarui otomatis setiap 2 menit</p>
               </div>
             </div>
