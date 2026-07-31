@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { ChevronDown, ChevronUp, Filter, FileText } from 'lucide-react';
+import { ChevronDown, ChevronUp, Filter, FileText, Search, User } from 'lucide-react';
+import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 
 type Kandidat = {
@@ -11,230 +11,239 @@ type Kandidat = {
   status: string; pewawancara_nama: string | null; rekomendasi: string | null;
 };
 type Catatan = {
-  id: string; isi: string; rekomendasi: string | null; pewawancara_nama: string | null;
-  created_at: string; updated_at: string;
+  id: string; pewawancara_nama: string | null; rekomendasi: string | null;
+  observasi: string | null; penilaian_akademik: string | null;
+  dukungan_keluarga: string | null; catatan_karakter: string | null;
+  catatan_lain: string | null; created_at: string;
 };
 
-const STATUS_COLOR: Record<string, string> = {
-  DITERIMA: '#16A34A', DITOLAK: '#DC2626', REVIEW: '#D97706', PENDING: '#6B7280',
+const STATUS_COLOR: Record<string, { bg: string; text: string; label: string }> = {
+  DITERIMA: { bg: '#F0FDF4', text: '#16A34A', label: 'Diterima' },
+  DITOLAK:  { bg: '#FEF2F2', text: '#DC2626', label: 'Ditolak' },
+  REVIEW:   { bg: '#EFF6FF', text: '#2563EB', label: 'Wawancara' },
+  PENDING:  { bg: '#F9FAFB', text: '#6B7280', label: 'Menunggu' },
 };
-const REKOM_COLOR: Record<string, string> = {
-  DITERIMA: '#16A34A', DITOLAK: '#DC2626', LANJUT: '#2563EB',
+const REKOM_COLOR: Record<string, { bg: string; text: string }> = {
+  DITERIMA:      { bg: '#F0FDF4', text: '#16A34A' },
+  DITOLAK:       { bg: '#FEF2F2', text: '#DC2626' },
+  LANJUT:        { bg: '#EFF6FF', text: '#2563EB' },
+  Terima:        { bg: '#F0FDF4', text: '#16A34A' },
+  Tolak:         { bg: '#FEF2F2', text: '#DC2626' },
+  Pertimbangkan: { bg: '#FFFBEB', text: '#D97706' },
 };
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return 'baru saja';
-  if (mins < 60) return `${mins} menit lalu`;
+  if (mins < 60) return `${mins} mnt lalu`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs} jam lalu`;
   return `${Math.floor(hrs / 24)} hari lalu`;
 }
 
+function CatatanDetail({ c }: { c: Catatan }) {
+  const fields = [
+    ['Observasi', c.observasi],
+    ['Penilaian Akademik', c.penilaian_akademik],
+    ['Dukungan Keluarga', c.dukungan_keluarga],
+    ['Karakter', c.catatan_karakter],
+    ['Catatan Lain', c.catatan_lain],
+  ].filter(([, v]) => v);
+
+  const rk = REKOM_COLOR[c.rekomendasi || ''];
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-100 p-4 space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center">
+            <User size={13} className="text-teal-600" />
+          </div>
+          <span className="text-sm font-semibold text-slate-700">{c.pewawancara_nama || 'Anonim'}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {c.rekomendasi && rk && (
+            <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: rk.bg, color: rk.text }}>
+              {c.rekomendasi}
+            </span>
+          )}
+          <span className="text-xs text-slate-400">{timeAgo(c.created_at)}</span>
+        </div>
+      </div>
+      {fields.length > 0 ? (
+        <div className="grid grid-cols-1 gap-2">
+          {fields.map(([label, value]) => (
+            <div key={label} className="text-sm">
+              <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">{label}</span>
+              <p className="text-slate-700 mt-0.5 leading-relaxed whitespace-pre-line">{value}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-slate-400 italic">Tidak ada isi catatan.</p>
+      )}
+    </div>
+  );
+}
+
 function KandidatRow({ k }: { k: Kandidat }) {
   const [open, setOpen] = useState(false);
-  const { data, isFetching } = useQuery<Catatan[]>({
+  const { data: catatanList = [], isFetching } = useQuery<Catatan[]>({
     queryKey: ['catatan', k.id],
-    queryFn: async () => {
-      const r = await api.get(`/catatan-pewawancara/kandidat/${k.id}`);
-      return r.data.data || [];
-    },
+    queryFn: () => api.get(`/catatan-pewawancara/kandidat/${k.id}`).then(r => r.data.data || []),
     enabled: open,
     staleTime: 30_000,
   });
 
+  const st = STATUS_COLOR[k.status] || STATUS_COLOR.PENDING;
+
   return (
-    <div className="border border-gray-100 rounded-xl overflow-hidden">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full px-5 py-4 flex items-center gap-4 hover:bg-gray-50 transition-colors text-left"
-      >
+    <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
+      <button onClick={() => setOpen(v => !v)}
+        className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors text-left">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0"
+          style={{ backgroundColor: `${st.text}15`, color: st.text }}>
+          {(k.nama_diperbaiki || k.nama).charAt(0).toUpperCase()}
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-gray-900 text-sm">{k.nama_diperbaiki || k.nama}</span>
-            <span className="text-xs text-gray-400">{k.level}</span>
-            {k.pewawancara_nama && (
-              <span className="text-xs text-gray-400">· {k.pewawancara_nama}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ color: STATUS_COLOR[k.status] || '#6B7280', backgroundColor: `${STATUS_COLOR[k.status] || '#6B7280'}15` }}>
-              {k.status}
+            <span className="font-semibold text-slate-800 text-sm">{k.nama_diperbaiki || k.nama}</span>
+            <span className="text-xs px-1.5 py-0.5 rounded-md font-medium"
+              style={{ backgroundColor: k.level === 'SD' ? '#FFF7ED' : k.level === 'SMP' ? '#F0FDFA' : '#EFF6FF',
+                       color: k.level === 'SD' ? '#C2440E' : k.level === 'SMP' ? '#0F766E' : '#1D4ED8' }}>
+              {k.level}
             </span>
-            {k.rekomendasi && (
-              <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ color: REKOM_COLOR[k.rekomendasi] || '#6B7280', backgroundColor: `${REKOM_COLOR[k.rekomendasi] || '#6B7280'}15` }}>
-                Rekom: {k.rekomendasi}
-              </span>
-            )}
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium border"
+              style={{ backgroundColor: st.bg, color: st.text, borderColor: `${st.text}30` }}>
+              {st.label}
+            </span>
           </div>
+          {k.pewawancara_nama && (
+            <p className="text-xs text-slate-400 mt-0.5">Pewawancara: {k.pewawancara_nama}</p>
+          )}
         </div>
-        <div className="text-gray-400 shrink-0">
+        <div className="text-slate-400 shrink-0">
           {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </div>
       </button>
 
       {open && (
-        <div className="border-t border-gray-100 bg-gray-50/50 px-5 py-4 space-y-3">
+        <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-4 space-y-3">
           {isFetching && (
-            <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
-              <div className="w-4 h-4 border-2 border-[#1B8B87] border-t-transparent rounded-full animate-spin" />
+            <div className="flex items-center gap-2 text-sm text-slate-400 py-2">
+              <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
               Memuat catatan...
             </div>
           )}
-          {!isFetching && (!data || data.length === 0) && (
-            <p className="text-sm text-gray-400 py-2">Belum ada catatan untuk kandidat ini.</p>
+          {!isFetching && catatanList.length === 0 && (
+            <p className="text-sm text-slate-400 py-2 text-center italic">Belum ada catatan untuk kandidat ini.</p>
           )}
-          {data?.map(c => (
-            <div key={c.id} className="bg-white rounded-lg p-4 border border-gray-100">
-              <div className="flex items-start justify-between gap-4 mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-500">{c.pewawancara_nama || '—'}</span>
-                  {c.rekomendasi && (
-                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ color: REKOM_COLOR[c.rekomendasi] || '#6B7280', backgroundColor: `${REKOM_COLOR[c.rekomendasi] || '#6B7280'}15` }}>
-                      {c.rekomendasi}
-                    </span>
-                  )}
-                </div>
-                <span className="text-xs text-gray-400 shrink-0">{timeAgo(c.created_at)}</span>
-              </div>
-              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{c.isi}</p>
-            </div>
-          ))}
+          {catatanList.map(c => <CatatanDetail key={c.id} c={c} />)}
         </div>
       )}
     </div>
   );
 }
 
-export default function SemualCatatanPage() {
+export default function SemuaCatatanPage() {
   const [filterPewawancara, setFilterPewawancara] = useState('');
   const [filterRekomendasi, setFilterRekomendasi] = useState('');
+  const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const limit = 20;
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['kandidat-all-for-catatan'],
-    queryFn: async () => {
-      const r = await api.get('/kandidat', { params: { limit: 200 } });
-      return (r.data.data || []) as Kandidat[];
-    },
+  const { data = [], isLoading } = useQuery<Kandidat[]>({
+    queryKey: ['kandidat-all-catatan'],
+    queryFn: () => api.get('/kandidat', { params: { limit: 500 } }).then(r => r.data.data || []),
     staleTime: 60_000,
   });
 
-  // Only show kandidat with pewawancara or rekomendasi (they have catatan)
-  const withCatatan = (data || []).filter(k => k.pewawancara_nama);
+  const pewawancaraList = [...new Set(data.map(k => k.pewawancara_nama).filter(Boolean))] as string[];
 
-  const filtered = withCatatan.filter(k => {
+  const filtered = data.filter(k => {
     if (filterPewawancara && k.pewawancara_nama !== filterPewawancara) return false;
     if (filterRekomendasi && k.rekomendasi !== filterRekomendasi) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!(k.nama_diperbaiki || k.nama).toLowerCase().includes(q)) return false;
+    }
     return true;
   });
 
   const totalPages = Math.ceil(filtered.length / limit);
   const paginated = filtered.slice((page - 1) * limit, page * limit);
 
-  const pewawancaraList = [...new Set(withCatatan.map(k => k.pewawancara_nama).filter(Boolean))] as string[];
-
-  // Chart data
-  const chartData = [
-    { name: 'DITERIMA', value: filtered.filter(k => k.rekomendasi === 'DITERIMA').length, color: '#16A34A' },
-    { name: 'LANJUT', value: filtered.filter(k => k.rekomendasi === 'LANJUT').length, color: '#2563EB' },
-    { name: 'DITOLAK', value: filtered.filter(k => k.rekomendasi === 'DITOLAK').length, color: '#DC2626' },
-    { name: 'Belum', value: filtered.filter(k => !k.rekomendasi).length, color: '#9CA3AF' },
-  ].filter(d => d.value > 0);
-
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[#1B8B87]/10 flex items-center justify-center">
-          <FileText size={20} className="text-[#1B8B87]" />
-        </div>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Semua Catatan Pewawancara</h1>
-          <p className="text-sm text-gray-500">{filtered.length} kandidat dengan catatan</p>
-        </div>
-      </div>
+    <div>
+      <Header title="Semua Catatan Pewawancara" />
+      <div className="p-6 space-y-5 max-w-4xl mx-auto">
 
-      {/* Chart */}
-      {chartData.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h2 className="text-sm font-semibold text-gray-700 mb-4">Distribusi Rekomendasi</h2>
-          <ResponsiveContainer width="100%" height={140}>
-            <BarChart data={chartData} barSize={40}>
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis hide />
-              <Tooltip
-                contentStyle={{ borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 12 }}
-                cursor={{ fill: '#F9FAFB' }}
-              />
-              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                {chartData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <Filter size={16} className="text-gray-400" />
-        <select
-          value={filterPewawancara}
-          onChange={e => { setFilterPewawancara(e.target.value); setPage(1); }}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1B8B87]/20"
-        >
-          <option value="">Semua Pewawancara</option>
-          {pewawancaraList.map(p => <option key={p} value={p}>{p}</option>)}
-        </select>
-        <select
-          value={filterRekomendasi}
-          onChange={e => { setFilterRekomendasi(e.target.value); setPage(1); }}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1B8B87]/20"
-        >
-          <option value="">Semua Rekomendasi</option>
-          <option value="DITERIMA">DITERIMA</option>
-          <option value="LANJUT">LANJUT</option>
-          <option value="DITOLAK">DITOLAK</option>
-        </select>
-        {(filterPewawancara || filterRekomendasi) && (
-          <button onClick={() => { setFilterPewawancara(''); setFilterRekomendasi(''); setPage(1); }}
-            className="text-xs text-[#1B8B87] hover:underline">Reset</button>
-        )}
-      </div>
-
-      {/* List */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="w-8 h-8 border-2 border-[#1B8B87] border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {paginated.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">
-              <FileText size={40} className="mx-auto mb-3 opacity-30" />
-              <p>Tidak ada catatan ditemukan.</p>
-            </div>
-          ) : (
-            paginated.map(k => <KandidatRow key={k.id} k={k} />)
+        {/* Filter bar */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex flex-wrap gap-3 items-center">
+          <div className="relative flex-1 min-w-48">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Cari nama kandidat..."
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-teal-400 bg-slate-50" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter size={14} className="text-slate-400" />
+            <select value={filterPewawancara} onChange={e => { setFilterPewawancara(e.target.value); setPage(1); }}
+              className="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-white text-slate-700 focus:outline-none focus:border-teal-400">
+              <option value="">Semua Pewawancara</option>
+              {pewawancaraList.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <select value={filterRekomendasi} onChange={e => { setFilterRekomendasi(e.target.value); setPage(1); }}
+              className="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-white text-slate-700 focus:outline-none focus:border-teal-400">
+              <option value="">Semua Rekomendasi</option>
+              <option value="Terima">Terima</option>
+              <option value="Pertimbangkan">Pertimbangkan</option>
+              <option value="Tolak">Tolak</option>
+              <option value="DITERIMA">DITERIMA</option>
+              <option value="DITOLAK">DITOLAK</option>
+            </select>
+          </div>
+          {(filterPewawancara || filterRekomendasi || search) && (
+            <button onClick={() => { setFilterPewawancara(''); setFilterRekomendasi(''); setSearch(''); setPage(1); }}
+              className="text-xs text-teal-600 hover:underline font-medium">Reset</button>
           )}
         </div>
-      )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-2">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-            className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50">
-            ← Prev
-          </button>
-          <span className="text-sm text-gray-500">{page} / {totalPages}</span>
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-            className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50">
-            Next →
-          </button>
-        </div>
-      )}
+        <p className="text-xs text-slate-400">{filtered.length} kandidat ditampilkan</p>
+
+        {/* List */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : paginated.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
+            <FileText size={40} className="mx-auto mb-3 text-slate-200" />
+            <p className="text-slate-400 font-medium">Tidak ada kandidat ditemukan</p>
+            <p className="text-xs text-slate-300 mt-1">Coba ubah filter atau kata kunci pencarian</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {paginated.map(k => <KandidatRow key={k.id} k={k} />)}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+              className="px-4 py-2 text-sm rounded-xl border border-slate-200 disabled:opacity-40 hover:bg-slate-50 font-medium">
+              ← Prev
+            </button>
+            <span className="text-sm text-slate-500 px-2">{page} / {totalPages}</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+              className="px-4 py-2 text-sm rounded-xl border border-slate-200 disabled:opacity-40 hover:bg-slate-50 font-medium">
+              Next →
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
