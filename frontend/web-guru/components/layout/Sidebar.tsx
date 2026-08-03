@@ -2,13 +2,13 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import {
   LayoutDashboard, ClipboardList, ClipboardCheck, BookOpen, FileText,
   BarChart3, BookMarked, Users, Calendar, MessageSquare, NotebookPen,
-  PanelLeftClose, PanelLeftOpen, ChevronRight, ChevronDown, LogOut, Settings,
+  PanelLeftClose, PanelLeftOpen, ChevronRight, ChevronDown,
 } from 'lucide-react';
 
 type MenuItem  = { href: string; icon: React.ReactNode; label: string };
@@ -131,20 +131,8 @@ function getSchoolLogo(levels: string[] = []): string {
 
 export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, logout } = useAuthStore();
-  const [profileOpen, setProfileOpen] = useState(false);
+  const { user } = useAuthStore();
   const profileRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const handleLogout = () => { logout(); router.push('/login'); };
   const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
   const picUrl = user?.profile_pic
     ? user.profile_pic.startsWith('http') ? user.profile_pic : `${apiBase}${user.profile_pic}`
@@ -191,10 +179,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
       {/* User profile dropdown */}
       {user && !collapsed && (
         <div className="px-3 py-2 border-b border-slate-100 relative" ref={profileRef}>
-          <button
-            onClick={() => setProfileOpen(o => !o)}
-            className="w-full flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-gray-50 transition-colors"
-          >
+          <div className="w-full flex items-center gap-2.5 rounded-xl px-2 py-1.5">
             <div
               className="w-9 h-9 flex-shrink-0 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-sm"
               style={{ backgroundColor: ACCENT }}
@@ -207,31 +192,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
               <p className="text-sm font-semibold text-gray-900 truncate">{user.nama}</p>
               <p className="text-[11px] text-gray-500">Guru</p>
             </div>
-            <ChevronDown size={14} className={`flex-shrink-0 text-gray-400 transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          <AnimatePresence>
-            {profileOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.15 }}
-                className="absolute left-3 right-3 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden"
-              >
-                <Link href="/settings" onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                  <Settings size={15} className="text-gray-400" />
-                  Pengaturan
-                </Link>
-                <button onClick={handleLogout}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100">
-                  <LogOut size={15} />
-                  Keluar
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          </div>
         </div>
       )}
 
