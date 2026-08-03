@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { LogOut, Settings, Bell } from 'lucide-react';
+import { LogOut, Settings, Bell, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
@@ -17,7 +17,9 @@ export default function Header({ title }: HeaderProps) {
   const router = useRouter();
   const handleLogout = () => { logout(); router.push('/login'); };
   const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const apiBase = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '');
   const picUrl = user?.profile_pic
@@ -68,6 +70,7 @@ export default function Header({ title }: HeaderProps) {
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -116,29 +119,34 @@ export default function Header({ title }: HeaderProps) {
           )}
         </div>
 
-        {/* Settings */}
-        <Link href="/settings" title="Pengaturan"
-          className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors">
-          <Settings size={18} />
-        </Link>
+        {/* Profile dropdown */}
+        <div className="relative" ref={profileRef}>
+          <button onClick={() => setProfileOpen(v => !v)}
+            className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-gray-50 transition-colors">
+            <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold border-2 border-white shadow bg-[#1B8B87]">
+              {picUrl
+                ? <img src={picUrl} alt="" className="w-full h-full object-cover" />
+                : user?.nama?.charAt(0) || 'G'}
+            </div>
+            <div className="hidden md:block text-left">
+              <p className="text-sm font-medium text-gray-800 leading-tight">{user?.nama}</p>
+              <p className="text-xs text-gray-400">Guru</p>
+            </div>
+            <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-        {/* Logout */}
-        <button onClick={handleLogout} title="Keluar"
-          className="p-2 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors">
-          <LogOut size={18} />
-        </button>
-
-        {/* Profile */}
-        <div className="flex items-center gap-2 pl-1 border-l border-gray-100">
-          <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-white text-sm font-bold border-2 border-white shadow bg-[#1B8B87]">
-            {picUrl
-              ? <img src={picUrl} alt="" className="w-full h-full object-cover" />
-              : user?.nama?.charAt(0) || 'G'}
-          </div>
-          <div className="hidden md:block text-left">
-            <p className="text-sm font-medium text-gray-800 leading-tight">{user?.nama}</p>
-            <p className="text-xs text-gray-400">Guru</p>
-          </div>
+          {profileOpen && (
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden">
+              <Link href="/settings" onClick={() => setProfileOpen(false)}
+                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                <Settings size={15} className="text-gray-400" /> Pengaturan
+              </Link>
+              <button onClick={handleLogout}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100">
+                <LogOut size={15} /> Keluar
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
