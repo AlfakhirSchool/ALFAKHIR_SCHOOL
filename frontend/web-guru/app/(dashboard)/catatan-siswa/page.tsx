@@ -1,202 +1,363 @@
 'use client';
 
 import { useState } from 'react';
-import { BookUser, TrendingUp, Calendar, BookOpen, ChevronDown, User } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { X, ChevronLeft, Save } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 
-const BADGE: Record<string, string> = {
-  hadir: 'bg-green-100 text-green-700 border border-green-200',
-  sakit: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
-  izin:  'bg-blue-100 text-blue-700 border border-blue-200',
-  alfa:  'bg-red-100 text-red-700 border border-red-200',
+const KEHADIRAN_OPTS = ['hadir', 'sakit', 'izin', 'alfa'] as const;
+const K_ACTIVE: Record<string, string> = {
+  hadir: 'bg-green-500 text-white border-green-500',
+  sakit: 'bg-yellow-400 text-white border-yellow-400',
+  izin:  'bg-blue-500 text-white border-blue-500',
+  alfa:  'bg-red-500 text-white border-red-500',
 };
-const LABEL: Record<string, string> = { hadir: 'Hadir', sakit: 'Sakit', izin: 'Izin', alfa: 'Alfa' };
+const K_LABEL: Record<string, string> = { hadir: 'H', sakit: 'S', izin: 'I', alfa: 'A' };
+const K_PASSIVE = 'bg-white text-gray-300 border-gray-200 hover:border-gray-300';
+
+const emptyForm = {
+  kelas_id: '', mata_pelajaran_id: '',
+  tanggal: new Date().toISOString().split('T')[0],
+  topik_pelajaran: '', hasil_pembelajaran: '',
+};
 
 export default function CatatanSiswaPage() {
-  const [kelasId, setKelasId] = useState('');
-  const [siswaId, setSiswaId] = useState('');
+  const qc = useQueryClient();
+  const { user, updateUser } = useAuthStore();
+
+  const { data: profileData } = useQuery({
+    queryKey: ['guru-profile-cs'],
+    queryFn: () => api.get('/auth/me').then(r => {
+      const d = r.data.data;
+      if (d?.guru && !((user as any)?.school_levels)?.length) {
+        updateUser({ school_levels: d.guru.school_levels || [] });
+      }
+      return d;
+    }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const schoolLevels: string[] = (user as any)?.school_levels?.length
+    ? (user as any).school_levels
+    : profileData?.guru?.school_levels || [];
+
+  const [view, setView] = useState<'list' | 'form'>('list');
+  const [form, setForm] = useState(emptyForm);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [filterTgl, setFilterTgl] = useState('');
+  const [rows, setRows] = useState<Record<string, { kehadiran: string; catatan: string }>>({});
+  const [savedMsg, setSavedMsg] = useState('');
+
+  const { data: jurnalList = [], isLoading } = useQuery({
+    queryKey: ['catatan-siswa-list'],
+    queryFn: () => api.get('/jurnal-guru').then(r => r.data.data || []),
+  });
 
   const { data: kelasList = [] } = useQuery({
-    queryKey: ['kelas-guru-catatan'],
+    queryKey: ['kelas-cs'],
     queryFn: () => api.get('/kelas').then(r => r.data.data || []),
   });
 
+  const { data: mapelListRaw = [] } = useQuery({
+    queryKey: ['mapel-cs', schoolLevels],
+    queryFn: async () => {
+      if (schoolLevels.length === 0) return api.get('/mata-pelajaran').then(r => r.data.data || []);
+      const res = await Promise.all(schoolLevels.map(l => api.get('/mata-pelajaran', { params: { jenjang: l } }).then(r => r.data.data || [])));
+      return res.flat();
+    },
+  });
+
   const { data: siswaList = [] } = useQuery({
-    queryKey: ['siswa-kelas-catatan', kelasId],
-    queryFn: () => api.get(`/kelas/${kelasId}/siswa`).then(r => r.data.data || []),
-    enabled: !!kelasId,
+    queryKey: ['siswa-cs', form.kelas_id],
+    queryFn: () => api.get(`/kelas/${form.kelas_id}/siswa`).then(r => r.data.data || []),
+    enabled: !!form.kelas_id && view === 'form',
   });
 
-  const { data: riwayat, isLoading } = useQuery({
-    queryKey: ['riwayat-siswa', siswaId, kelasId],
-    queryFn: () => api.get(`/jurnal-guru/siswa-riwayat/${siswaId}`, {
-      params: kelasId ? { kelas_id: kelasId } : {},
-    }).then(r => r.data),
-    enabled: !!siswaId,
+  // Saat edit, load detail siswa yang sudah ada
+  useQuery({
+    queryKey: ['catatan-siswa-detail-edit', editId],
+    queryFn: () => api.get(`/jurnal-guru/${editId}/siswa`).then(r => {
+      const map: Record<string, { kehadiran: string; catatan: string }> = {};
+      (r.data.data || []).forEach((d: any) => { map[d.siswa_id] = { kehadiran: d.kehadiran, catatan: d.catatan || '' }; });
+      setRows(map);
+      return r.data.data;
+    }),
+    enabled: !!editId && view === 'form',
   });
 
-  const siswaSelected = (siswaList as any[]).find((s: any) => s.id === siswaId);
-  const kelasSelected = (kelasList as any[]).find((k: any) => k.id === kelasId);
-  const stats = riwayat?.stats || { hadir: 0, sakit: 0, izin: 0, alfa: 0 };
-  const total = riwayat?.total || 0;
-  const records: any[] = riwayat?.data || [];
+  const setRow = (siswaId: string, field: 'kehadiran' | 'catatan', val: string) => {
+    setRows(prev => ({ ...prev, [siswaId]: { kehadiran: prev[siswaId]?.kehadiran || 'hadir', catatan: prev[siswaId]?.catatan || '', [field]: val } }));
+  };
 
-  const pctHadir = total > 0 ? Math.round((stats.hadir / total) * 100) : 0;
+  const f = (field: string, val: string) => setForm(p => ({ ...p, [field]: val }));
+
+  const simpan = useMutation({
+    mutationFn: async () => {
+      let jurnalId = editId;
+      if (!jurnalId) {
+        const res = await api.post('/jurnal-guru', {
+          ...form,
+          topik_pelajaran: form.topik_pelajaran || '-',
+          status: 'draft',
+        });
+        jurnalId = res.data.data.id;
+      } else {
+        await api.put(`/jurnal-guru/${jurnalId}`, {
+          topik_pelajaran: form.topik_pelajaran || '-',
+          hasil_pembelajaran: form.hasil_pembelajaran,
+        });
+      }
+      if ((siswaList as any[]).length > 0) {
+        const items = (siswaList as any[]).map((s: any) => ({
+          siswa_id: s.id,
+          kehadiran: rows[s.id]?.kehadiran || 'hadir',
+          catatan: rows[s.id]?.catatan || '',
+        }));
+        await api.put(`/jurnal-guru/${jurnalId}/siswa`, { items });
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['catatan-siswa-list'] });
+      setSavedMsg('Tersimpan!');
+      setTimeout(() => {
+        setSavedMsg('');
+        setView('list');
+        setForm(emptyForm);
+        setEditId(null);
+        setRows({});
+      }, 1000);
+    },
+  });
+
+  const hapus = useMutation({
+    mutationFn: (id: string) => api.delete(`/jurnal-guru/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['catatan-siswa-list'] }),
+  });
+
+  const openEdit = (j: any) => {
+    setForm({
+      kelas_id: j.kelas_id, mata_pelajaran_id: j.mata_pelajaran_id,
+      tanggal: j.tanggal?.split('T')[0] || '',
+      topik_pelajaran: j.topik_pelajaran === '-' ? '' : (j.topik_pelajaran || ''),
+      hasil_pembelajaran: j.hasil_pembelajaran || '',
+    });
+    setRows({});
+    setEditId(j.id);
+    setView('form');
+  };
+
+  const openNew = () => {
+    setForm(emptyForm);
+    setEditId(null);
+    setRows({});
+    setView('form');
+  };
+
+  const filtered = filterTgl
+    ? (jurnalList as any[]).filter((j: any) => j.tanggal?.split('T')[0] === filterTgl)
+    : (jurnalList as any[]);
+
+  const kelasSelected = (kelasList as any[]).find((k: any) => k.id === form.kelas_id);
+  const mapelSelected = (mapelListRaw as any[]).find((m: any) => m.id === form.mata_pelajaran_id);
+
+  const hadir = (siswaList as any[]).filter(s => (rows[(s as any).id]?.kehadiran || 'hadir') === 'hadir').length;
+  const sakit = (siswaList as any[]).filter(s => rows[(s as any).id]?.kehadiran === 'sakit').length;
+  const izin  = (siswaList as any[]).filter(s => rows[(s as any).id]?.kehadiran === 'izin').length;
+  const alfa  = (siswaList as any[]).filter(s => rows[(s as any).id]?.kehadiran === 'alfa').length;
 
   return (
     <div>
       <Header title="Catatan Siswa" />
-      <div className="p-6 max-w-4xl">
+      <div className="p-6">
 
-        {/* Filter */}
-        <div className="bg-white rounded-xl shadow-sm p-5 mb-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Kelas</label>
-              <div className="relative">
-                <select
-                  value={kelasId}
-                  onChange={e => { setKelasId(e.target.value); setSiswaId(''); }}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] appearance-none bg-white pr-8"
-                >
-                  <option value="">-- Pilih Kelas --</option>
-                  {(kelasList as any[]).map((k: any) => (
-                    <option key={k.id} value={k.id}>{k.nama}</option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="absolute right-2.5 top-3 text-gray-400 pointer-events-none" />
+        {/* ===== LIST ===== */}
+        {view === 'list' && (
+          <>
+            <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-gray-500">{filtered.length} catatan</p>
+                <div className="flex items-center gap-2">
+                  <input type="date" value={filterTgl} onChange={e => setFilterTgl(e.target.value)}
+                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]" />
+                  {filterTgl && (
+                    <button onClick={() => setFilterTgl('')} className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1">
+                      <X size={12} /> Reset
+                    </button>
+                  )}
+                </div>
               </div>
+              <button onClick={openNew}
+                className="px-4 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-medium hover:bg-[#156f6c]">
+                + Buat Catatan Baru
+              </button>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Siswa</label>
-              <div className="relative">
-                <select
-                  value={siswaId}
-                  onChange={e => setSiswaId(e.target.value)}
-                  disabled={!kelasId}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] appearance-none bg-white pr-8 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <option value="">-- Pilih Siswa --</option>
-                  {(siswaList as any[]).map((s: any) => (
-                    <option key={s.id} value={s.id}>{s.user?.nama || s.nama}</option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="absolute right-2.5 top-3 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Student profile card */}
-        {siswaSelected && (
-          <div className="bg-white rounded-xl shadow-sm p-5 mb-5">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-[#1B8B87]/10 flex items-center justify-center text-[#1B8B87] text-xl font-bold flex-shrink-0">
-                {(siswaSelected.user?.nama || siswaSelected.nama || '?')[0].toUpperCase()}
-              </div>
-              <div className="flex-1">
-                <h2 className="text-lg font-bold text-gray-900">{siswaSelected.user?.nama || siswaSelected.nama}</h2>
-                <p className="text-sm text-gray-500">{kelasSelected?.nama} · NIS {siswaSelected.nis || '-'}</p>
-              </div>
-              {total > 0 && (
-                <div className="text-right hidden sm:block">
-                  <p className="text-2xl font-bold text-[#1B8B87]">{pctHadir}%</p>
-                  <p className="text-xs text-gray-400">kehadiran</p>
+            <div className="space-y-3">
+              {isLoading && <div className="text-center py-12 text-gray-400 text-sm">Memuat...</div>}
+              {!isLoading && filtered.length === 0 && (
+                <div className="bg-white rounded-xl p-12 text-center shadow-sm">
+                  <p className="text-gray-400 text-sm">{filterTgl ? 'Tidak ada catatan pada tanggal ini.' : 'Belum ada catatan. Klik tombol di atas untuk membuat.'}</p>
                 </div>
               )}
-            </div>
-
-            {total > 0 && (
-              <div className="mt-4 grid grid-cols-4 gap-3">
-                {(['hadir', 'sakit', 'izin', 'alfa'] as const).map(k => (
-                  <div key={k} className={`rounded-lg p-3 text-center ${BADGE[k].replace('border', '').trim()} bg-opacity-50`}
-                    style={{ backgroundColor: k === 'hadir' ? '#f0fdf4' : k === 'sakit' ? '#fefce8' : k === 'izin' ? '#eff6ff' : '#fef2f2' }}>
-                    <p className="text-xl font-bold" style={{ color: k === 'hadir' ? '#15803d' : k === 'sakit' ? '#a16207' : k === 'izin' ? '#1d4ed8' : '#b91c1c' }}>
-                      {stats[k]}
-                    </p>
-                    <p className="text-xs font-medium mt-0.5" style={{ color: k === 'hadir' ? '#15803d' : k === 'sakit' ? '#a16207' : k === 'izin' ? '#1d4ed8' : '#b91c1c' }}>
-                      {LABEL[k]}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Riwayat */}
-        {siswaId && (
-          isLoading ? (
-            <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-              <p className="text-gray-400 text-sm">Memuat riwayat...</p>
-            </div>
-          ) : records.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-              <BookUser size={40} className="mx-auto text-gray-200 mb-3" />
-              <p className="text-gray-500 font-medium">Belum ada catatan untuk siswa ini</p>
-              <p className="text-xs text-gray-400 mt-1">Catatan akan muncul setelah guru mengisi jurnal dan detail siswa</p>
-            </div>
-          ) : (
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-                <TrendingUp size={16} className="text-[#1B8B87]" />
-                <h3 className="font-semibold text-gray-800 text-sm">Riwayat Catatan ({total} pertemuan)</h3>
-              </div>
-              <div className="divide-y divide-gray-50">
-                {records.map((r: any, i: number) => {
-                  const j = r.jurnal;
-                  const tgl = j?.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID', {
-                    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
-                  }) : '-';
-                  return (
-                    <div key={r.id || i} className="px-5 py-4 hover:bg-gray-50/60 flex gap-4">
-                      {/* Tanggal */}
-                      <div className="w-28 flex-shrink-0">
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
-                          <Calendar size={11} />
-                          {tgl}
+              {filtered.map((j: any) => (
+                <div key={j.id} className="bg-white rounded-xl shadow-sm p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-[#1A2332]">{j.topik_pelajaran && j.topik_pelajaran !== '-' ? j.topik_pelajaran : 'Catatan Siswa'}</h3>
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        {j.kelas?.nama} · {j.mata_pelajaran?.nama || '—'} · {j.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                      </p>
+                      {(j.jumlah_siswa_hadir > 0 || j.jumlah_siswa_sakit > 0 || j.jumlah_siswa_izin > 0 || j.jumlah_siswa_alfa > 0) && (
+                        <div className="flex gap-3 mt-2 text-xs font-medium">
+                          <span className="text-green-600">H: {j.jumlah_siswa_hadir}</span>
+                          <span className="text-yellow-600">S: {j.jumlah_siswa_sakit}</span>
+                          <span className="text-blue-600">I: {j.jumlah_siswa_izin}</span>
+                          <span className="text-red-600">A: {j.jumlah_siswa_alfa}</span>
                         </div>
-                      </div>
-
-                      {/* Mapel & topik */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <BookOpen size={12} className="text-gray-400 flex-shrink-0" />
-                          <span className="text-sm font-semibold text-gray-800 truncate">
-                            {j?.mata_pelajaran?.nama || '-'}
-                          </span>
-                        </div>
-                        {j?.topik_pelajaran && j.topik_pelajaran !== '-' && (
-                          <p className="text-xs text-gray-500 truncate">{j.topik_pelajaran}</p>
-                        )}
-                        {r.catatan && (
-                          <p className="text-xs text-gray-600 mt-1.5 bg-yellow-50 border border-yellow-100 rounded px-2 py-1">
-                            {r.catatan}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Status kehadiran */}
-                      <div className="flex-shrink-0 flex items-start pt-0.5">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${BADGE[r.kehadiran] || BADGE.hadir}`}>
-                          {LABEL[r.kehadiran] || 'Hadir'}
-                        </span>
-                      </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button onClick={() => openEdit(j)}
+                        className="text-xs px-3 py-1.5 bg-teal-50 text-[#1B8B87] border border-[#1B8B87]/30 rounded-lg hover:bg-teal-100">
+                        Edit & Isi Siswa
+                      </button>
+                      <button onClick={() => { if (confirm('Hapus catatan ini?')) hapus.mutate(j.id); }}
+                        className="text-xs px-3 py-1.5 border border-gray-200 text-gray-500 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200">
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          )
+          </>
         )}
 
-        {!kelasId && (
-          <div className="bg-white rounded-xl p-16 text-center shadow-sm">
-            <User size={40} className="mx-auto text-gray-200 mb-3" />
-            <p className="text-gray-500 font-medium">Pilih kelas dan siswa</p>
-            <p className="text-xs text-gray-400 mt-1">untuk melihat riwayat catatan dan kehadiran siswa</p>
+        {/* ===== FORM ===== */}
+        {view === 'form' && (
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-semibold text-[#1A2332]">{editId ? 'Edit Catatan Siswa' : 'Buat Catatan Baru'}</h2>
+              <button onClick={() => { setView('list'); setForm(emptyForm); setEditId(null); setRows({}); }}
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800">
+                <ChevronLeft size={14} /> Kembali
+              </button>
+            </div>
+
+            {/* Form fields */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Kelas *</label>
+                <select value={form.kelas_id} onChange={e => { f('kelas_id', e.target.value); setRows({}); }}
+                  disabled={!!editId}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] disabled:opacity-60">
+                  <option value="">-- Kelas --</option>
+                  {(kelasList as any[]).map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Mata Pelajaran *</label>
+                <select value={form.mata_pelajaran_id} onChange={e => f('mata_pelajaran_id', e.target.value)}
+                  disabled={!!editId}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] disabled:opacity-60">
+                  <option value="">-- Mapel --</option>
+                  {(mapelListRaw as any[]).map((m: any) => <option key={m.id} value={m.id}>{m.nama}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Tanggal *</label>
+                <input type="date" value={form.tanggal} onChange={e => f('tanggal', e.target.value)}
+                  disabled={!!editId}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] disabled:opacity-60" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Topik Pelajaran</label>
+                <input value={form.topik_pelajaran} onChange={e => f('topik_pelajaran', e.target.value)}
+                  placeholder="Topik pelajaran hari ini..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Catatan Kelas</label>
+                <input value={form.hasil_pembelajaran} onChange={e => f('hasil_pembelajaran', e.target.value)}
+                  placeholder="Catatan kondisi kelas secara umum..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]" />
+              </div>
+            </div>
+
+            {/* Tabel siswa */}
+            {form.kelas_id && form.mata_pelajaran_id && (
+              (siswaList as any[]).length === 0 ? (
+                <div className="text-center py-8 text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl mb-6">
+                  Tidak ada siswa di kelas ini
+                </div>
+              ) : (
+                <div className="border border-gray-100 rounded-xl overflow-hidden mb-6">
+                  <div className="px-5 py-3 bg-[#1B8B87]/5 border-b border-[#1B8B87]/10 flex items-center justify-between">
+                    <h3 className="font-semibold text-sm text-[#1A2332]">
+                      {kelasSelected?.nama} · {mapelSelected?.nama}
+                    </h3>
+                    <div className="flex gap-3 text-xs font-semibold">
+                      <span className="text-green-700">H: {hadir}</span>
+                      <span className="text-yellow-600">S: {sakit}</span>
+                      <span className="text-blue-600">I: {izin}</span>
+                      <span className="text-red-600">A: {alfa}</span>
+                      <span className="text-gray-400 font-normal">/ {(siswaList as any[]).length}</span>
+                    </div>
+                  </div>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-50 text-xs text-gray-400 uppercase">
+                        <th className="px-4 py-2.5 text-left w-10">No</th>
+                        <th className="px-4 py-2.5 text-left">Nama Siswa</th>
+                        <th className="px-4 py-2.5 text-center w-44">Kehadiran</th>
+                        <th className="px-4 py-2.5 text-left">Catatan Siswa</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {(siswaList as any[]).map((s: any, idx: number) => {
+                        const row = rows[s.id] || { kehadiran: 'hadir', catatan: '' };
+                        return (
+                          <tr key={s.id} className="hover:bg-gray-50/60">
+                            <td className="px-4 py-3 text-gray-400 text-xs tabular-nums">{idx + 1}</td>
+                            <td className="px-4 py-3 font-medium text-gray-800">{s.user?.nama || s.nama}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex gap-1 justify-center">
+                                {KEHADIRAN_OPTS.map(k => (
+                                  <button key={k} onClick={() => setRow(s.id, 'kehadiran', k)}
+                                    className={`w-8 h-8 rounded-lg border text-xs font-bold transition-all ${row.kehadiran === k ? K_ACTIVE[k] : K_PASSIVE}`}>
+                                    {K_LABEL[k]}
+                                  </button>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <input value={row.catatan} onChange={e => setRow(s.id, 'catatan', e.target.value)}
+                                placeholder="Catatan untuk siswa ini..."
+                                className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#1B8B87] placeholder-gray-300" />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            )}
+
+            <div className="flex items-center gap-3">
+              <button onClick={() => simpan.mutate()}
+                disabled={simpan.isPending || !form.kelas_id || !form.mata_pelajaran_id}
+                className="flex items-center gap-2 px-5 py-2 bg-[#1B8B87] text-white rounded-lg text-sm font-semibold hover:bg-[#156f6c] disabled:opacity-50">
+                <Save size={15} />
+                {simpan.isPending ? 'Menyimpan...' : 'Simpan sebagai Draft'}
+              </button>
+              {savedMsg && <span className="text-sm text-green-600 font-medium">{savedMsg}</span>}
+              {simpan.isError && <span className="text-sm text-red-500">Gagal menyimpan. Coba lagi.</span>}
+            </div>
           </div>
         )}
       </div>
