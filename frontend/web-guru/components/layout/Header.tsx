@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
@@ -73,7 +73,7 @@ export default function Header({ title }: HeaderProps) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const iconFor = (type: string) => type === 'ok' ? '✅' : type === 'err' ? '❌' : type === 'warn' ? '⚠️' : type === 'pending' ? '🕐' : '📅';
+  const iconFor = (type: string) => type === 'ok' ? '✓' : type === 'err' ? '✕' : type === 'warn' ? '!' : type === 'pending' ? '…' : '·';
 
   return (
     <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-30">
@@ -83,8 +83,8 @@ export default function Header({ title }: HeaderProps) {
         {/* Bell */}
         <div className="relative" ref={ref}>
           <button onClick={() => setOpen(v => !v)}
-            className="relative text-gray-500 hover:text-gray-700 text-xl p-1">
-            🔔
+            className="relative text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+            <Bell size={18} />
             {unread > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-0.5">
                 {unread > 9 ? '9+' : unread}
