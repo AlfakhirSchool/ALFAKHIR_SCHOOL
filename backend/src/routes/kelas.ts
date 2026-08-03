@@ -67,6 +67,7 @@ router.post('/', authorize('admin'), async (req: AuthRequest, res: Response): Pr
     res.status(409).json({ success: false, message: `Kelas "${req.body.nama}" sudah ada di sekolah ini untuk tahun ajaran ${req.body.tahun_ajaran}` });
     return;
   }
+  if (!req.body.wali_kelas_id) req.body.wali_kelas_id = null;
   const kelas = await Kelas.create(req.body);
   res.status(201).json({ success: true, data: kelas });
 });
