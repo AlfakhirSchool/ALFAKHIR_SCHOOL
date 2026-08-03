@@ -26,7 +26,8 @@ export default function JadwalPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [hapusId, setHapusId] = useState<string | null>(null);
   const [err, setErr] = useState('');
-  const [activeJenjang, setActiveJenjang] = useState<string>('Semua');
+  const defaultJenjang = user?.school_levels?.length === 1 ? user.school_levels[0] : 'Semua';
+  const [activeJenjang, setActiveJenjang] = useState<string>(defaultJenjang);
 
   const { data: jadwalList = [], isLoading } = useQuery({
     queryKey: ['jadwal-guru-all'],
