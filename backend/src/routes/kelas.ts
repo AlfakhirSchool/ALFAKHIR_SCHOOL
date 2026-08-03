@@ -55,6 +55,13 @@ router.post('/', authorize('admin'), async (req: AuthRequest, res: Response): Pr
     const sid = await getSekolahIdForLevel(req.user.school_level);
     req.body.sekolah_id = sid;
   }
+  // Auto-resolve sekolah_id dari tingkat jika tidak dikirim
+  if (!req.body.sekolah_id && req.body.tingkat) {
+    const tingkat = parseInt(req.body.tingkat);
+    const level = tingkat <= 6 ? 'SD' : tingkat <= 9 ? 'SMP' : 'SMA';
+    const sekolah = await Sekolah.findOne({ where: { level } });
+    if (sekolah) req.body.sekolah_id = (sekolah as any).id;
+  }
   const existing = await Kelas.findOne({ where: { nama: req.body.nama, sekolah_id: req.body.sekolah_id, tahun_ajaran: req.body.tahun_ajaran } });
   if (existing) {
     res.status(409).json({ success: false, message: `Kelas "${req.body.nama}" sudah ada di sekolah ini untuk tahun ajaran ${req.body.tahun_ajaran}` });
