@@ -7,7 +7,7 @@ import { createError } from '../middleware/errorHandler';
 import { kelasIdFilter } from '../utils/levelFilter';
 
 export const getSekolahList = async (_req: AuthRequest, res: Response): Promise<void> => {
-  const list = await Sekolah.findAll({ attributes: ['id', 'nama', 'jenjang'], order: [['nama', 'ASC']] });
+  const list = await Sekolah.findAll({ attributes: ['id', 'nama', 'level'], order: [['nama', 'ASC']] });
   res.json({ success: true, data: list });
 };
 

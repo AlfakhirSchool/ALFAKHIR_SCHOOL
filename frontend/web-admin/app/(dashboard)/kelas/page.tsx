@@ -135,7 +135,7 @@ export default function KelasPage() {
 
         <div className="flex justify-end mb-4">
           <button onClick={() => {
-            const sekolah = (sekolahList || []).find((s: any) => s.jenjang === activeJenjang);
+            const sekolah = (sekolahList || []).find((s: any) => s.level === activeJenjang);
             setShowForm(!showForm);
             setEditTarget(null);
             setForm({ ...BLANK_FORM, sekolah_id: sekolah?.id || '' });
