@@ -379,11 +379,11 @@ export default function CatatanSiswaPage() {
                               </select>
                             </td>
                             {/* Catatan */}
-                            <td className="px-3 py-3">
+                            <td className="px-3 py-3 min-w-[280px]">
                               <textarea value={row.catatan} onChange={e => setRow(s.id, 'catatan', e.target.value)}
-                                placeholder="Catatan tambahan..."
-                                rows={2}
-                                className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#1B8B87] placeholder-gray-300 resize-y min-h-[40px]" />
+                                placeholder="Catatan untuk siswa ini..."
+                                rows={3}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#1B8B87] placeholder-gray-300 resize-y min-h-[64px]" />
                             </td>
                           </tr>
                         );
