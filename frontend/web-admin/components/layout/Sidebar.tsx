@@ -9,7 +9,7 @@ import {
   LayoutDashboard, Users, GraduationCap, School, BookOpen, Calendar,
   DoorOpen, CreditCard, ClipboardCheck, FileText, Wallet, BookMarked,
   BarChart3, UserCog, Search, Settings, Bell, MessageSquare, QrCode, Printer,
-  PanelLeftClose, PanelLeftOpen, ClipboardList, ChevronRight,
+  PanelLeftClose, PanelLeftOpen, ClipboardList, ChevronRight, NotebookPen,
 } from 'lucide-react';
 
 type MenuItem  = { href: string; icon: React.ReactNode; label: string };
@@ -64,8 +64,9 @@ const masterMenu: SidebarEntry[] = [
     items: [
       { href: '/nilai',       icon: <FileText size={15} />,   label: 'Nilai' },
       { href: '/pembayaran',  icon: <Wallet size={15} />,     label: 'Pembayaran' },
-      { href: '/jurnal-guru', icon: <BookMarked size={15} />, label: 'Jurnal Guru' },
-      { href: '/laporan',     icon: <BarChart3 size={15} />,  label: 'Laporan' },
+      { href: '/jurnal-guru',   icon: <BookMarked size={15} />,  label: 'Jurnal Guru' },
+      { href: '/catatan-siswa', icon: <NotebookPen size={15} />, label: 'Catatan Siswa' },
+      { href: '/laporan',       icon: <BarChart3 size={15} />,  label: 'Laporan' },
     ],
   },
   {
@@ -117,8 +118,9 @@ const levelMenu = (level: string): SidebarEntry[] => [
     items: [
       { href: '/nilai',       icon: <FileText size={15} />,   label: 'Nilai' },
       { href: '/pembayaran',  icon: <Wallet size={15} />,     label: 'Pembayaran' },
-      { href: '/jurnal-guru', icon: <BookMarked size={15} />, label: 'Jurnal Guru' },
-      { href: '/laporan',     icon: <BarChart3 size={15} />,  label: 'Laporan' },
+      { href: '/jurnal-guru',   icon: <BookMarked size={15} />,  label: 'Jurnal Guru' },
+      { href: '/catatan-siswa', icon: <NotebookPen size={15} />, label: 'Catatan Siswa' },
+      { href: '/laporan',       icon: <BarChart3 size={15} />,  label: 'Laporan' },
     ],
   },
   {
