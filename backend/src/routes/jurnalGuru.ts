@@ -13,6 +13,8 @@ router.get('/download/excel', authorize('admin', 'guru'), jurnalController.downl
 router.get('/:id', authorize('admin', 'guru', 'ortu'), jurnalController.getById);
 router.put('/:id', authorize('guru', 'admin'), jurnalController.update);
 router.delete('/:id', authorize('admin', 'guru'), jurnalController.remove);
+router.get('/:id/siswa', authorize('guru', 'admin'), jurnalController.getSiswaDetail);
+router.put('/:id/siswa', authorize('guru', 'admin'), jurnalController.saveSiswaDetail);
 router.post('/:id/submit', authorize('guru'), jurnalController.submit);
 router.post('/:id/review', authorize('admin', 'guru'), jurnalController.review);
 router.get('/:id/export/pdf', authorize('admin', 'guru'), jurnalController.exportPdf);

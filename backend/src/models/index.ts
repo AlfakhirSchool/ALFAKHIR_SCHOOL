@@ -13,6 +13,7 @@ import Pembayaran from './Pembayaran';
 import PembayaranDetail from './PembayaranDetail';
 import Rapor from './Rapor';
 import JurnalGuru from './JurnalGuru';
+import JurnalSiswa from './JurnalSiswa';
 import ActivityLog from './ActivityLog';
 import PendingChange from './PendingChange';
 import { Feedback } from './Feedback';
@@ -103,6 +104,11 @@ JurnalGuru.belongsTo(Kelas, { foreignKey: 'kelas_id', as: 'kelas' });
 MataPelajaran.hasMany(JurnalGuru, { foreignKey: 'mata_pelajaran_id', as: 'jurnal_list' });
 JurnalGuru.belongsTo(MataPelajaran, { foreignKey: 'mata_pelajaran_id', as: 'mata_pelajaran' });
 
+JurnalGuru.hasMany(JurnalSiswa, { foreignKey: 'jurnal_id', as: 'detail_siswa' });
+JurnalSiswa.belongsTo(JurnalGuru, { foreignKey: 'jurnal_id', as: 'jurnal' });
+Siswa.hasMany(JurnalSiswa, { foreignKey: 'siswa_id', as: 'jurnal_detail' });
+JurnalSiswa.belongsTo(Siswa, { foreignKey: 'siswa_id', as: 'siswa' });
+
 // Activity Log
 ActivityLog.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 User.hasMany(ActivityLog, { foreignKey: 'user_id', as: 'activity_logs' });
@@ -143,6 +149,6 @@ export {
   Siswa, Guru, OrangTua,
   JadwalPelajaran, Absensi, QrCodeSession,
   Nilai, Pembayaran, PembayaranDetail,
-  Rapor, JurnalGuru, ActivityLog, PendingChange, Feedback,
+  Rapor, JurnalGuru, JurnalSiswa, ActivityLog, PendingChange, Feedback,
   Kandidat, CatatanPewawancara, SoalAkademik, HasilTesAkademik, JawabanAkademik, RingkasanAI, JawabanForm, PertanyaanForm,
 };

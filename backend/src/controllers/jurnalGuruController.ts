@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
 import * as XLSX from 'xlsx';
-import { JurnalGuru, Guru, Kelas, MataPelajaran, User } from '../models';
+import { JurnalGuru, JurnalSiswa, Guru, Kelas, MataPelajaran, User, Siswa } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 import { kelasIdFilter } from '../utils/levelFilter';
@@ -212,4 +212,41 @@ export const downloadExcel = async (req: AuthRequest, res: Response): Promise<vo
   res.setHeader('Content-Disposition', `attachment; filename="JurnalGuru_${new Date().toISOString().split('T')[0]}.xlsx"`);
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.send(buf);
+};
+
+export const getSiswaDetail = async (req: AuthRequest, res: Response): Promise<void> => {
+  const jurnal = await JurnalGuru.findByPk(req.params.id as string);
+  if (!jurnal) throw createError('Jurnal tidak ditemukan', 404);
+
+  const detail = await JurnalSiswa.findAll({
+    where: { jurnal_id: jurnal.id },
+    include: [{ model: Siswa, as: 'siswa', include: [{ model: User, as: 'user', attributes: ['nama'] }] }],
+  });
+  res.json({ success: true, data: detail });
+};
+
+export const saveSiswaDetail = async (req: AuthRequest, res: Response): Promise<void> => {
+  const jurnal = await JurnalGuru.findByPk(req.params.id as string);
+  if (!jurnal) throw createError('Jurnal tidak ditemukan', 404);
+
+  const items: { siswa_id: string; kehadiran: string; catatan?: string }[] = req.body.items || [];
+
+  // Upsert per siswa
+  for (const item of items) {
+    await JurnalSiswa.upsert({
+      jurnal_id: jurnal.id,
+      siswa_id: item.siswa_id,
+      kehadiran: (item.kehadiran as any) || 'hadir',
+      catatan: item.catatan || null,
+    });
+  }
+
+  // Update aggregate counts di jurnal
+  const hadir = items.filter(i => i.kehadiran === 'hadir').length;
+  const sakit = items.filter(i => i.kehadiran === 'sakit').length;
+  const izin  = items.filter(i => i.kehadiran === 'izin').length;
+  const alfa  = items.filter(i => i.kehadiran === 'alfa').length;
+  await jurnal.update({ jumlah_siswa_hadir: hadir, jumlah_siswa_sakit: sakit, jumlah_siswa_izin: izin, jumlah_siswa_alfa: alfa });
+
+  res.json({ success: true, message: 'Detail siswa berhasil disimpan' });
 };
