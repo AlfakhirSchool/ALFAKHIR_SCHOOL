@@ -43,9 +43,7 @@ export default function JurnalPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const schoolLevels: string[] = (user as any)?.school_levels?.length
-    ? (user as any).school_levels
-    : profileData?.guru?.school_levels || [];
+  const guruId = profileData?.guru?.id;
 
   const [view, setView] = useState<'list' | 'form' | 'siswa'>('list');
   const [form, setForm] = useState(emptyForm);
@@ -62,20 +60,19 @@ export default function JurnalPage() {
     queryFn: () => api.get('/jurnal-guru').then(r => r.data.data || []),
   });
 
-  const { data: kelasList } = useQuery({
-    queryKey: ['kelas-list'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+  const { data: jadwalGuru = [] } = useQuery({
+    queryKey: ['jadwal-guru', guruId],
+    queryFn: () => api.get('/jadwal', { params: { guru_id: guruId } }).then(r => r.data.data || []),
+    enabled: !!guruId,
   });
 
-  const { data: mapelListRaw } = useQuery({
-    queryKey: ['mapel-list', schoolLevels],
-    queryFn: async () => {
-      if (schoolLevels.length === 0) return api.get('/mata-pelajaran').then(r => r.data.data || []);
-      const results = await Promise.all(schoolLevels.map(lvl => api.get('/mata-pelajaran', { params: { jenjang: lvl } }).then(r => r.data.data || [])));
-      return results.flat();
-    },
-  });
-  const mapelList = mapelListRaw || [];
+  // Kelas unik dari jadwal
+  const kelasList = [...new Map((jadwalGuru as any[]).filter(j => j.kelas).map(j => [j.kelas.id, j.kelas])).values()];
+  // Mapel unik: semua (tanpa filter kelas) atau filter per kelas
+  const mapelAll = [...new Map((jadwalGuru as any[]).filter(j => j.mata_pelajaran).map(j => [j.mata_pelajaran.id, j.mata_pelajaran])).values()];
+  const mapelList = form.kelas_id
+    ? [...new Map((jadwalGuru as any[]).filter(j => j.kelas_id === form.kelas_id && j.mata_pelajaran).map(j => [j.mata_pelajaran.id, j.mata_pelajaran])).values()]
+    : mapelAll;
 
   // Siswa untuk jurnal yang aktif
   const { data: siswaKelas } = useQuery({
