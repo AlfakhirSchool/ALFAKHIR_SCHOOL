@@ -7,7 +7,16 @@ import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
 const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const JENJANG_LIST = ['Semua', 'SD', 'SMP', 'SMA'] as const;
 const emptyForm = { kelas_id: '', mata_pelajaran_id: '', hari: 'Senin', jam_mulai: '', jam_selesai: '' };
+
+function getJenjang(j: any): string {
+  const t = j.kelas?.tingkat;
+  if (!t) return '';
+  if (t <= 6) return 'SD';
+  if (t <= 9) return 'SMP';
+  return 'SMA';
+}
 
 export default function JadwalPage() {
   const qc = useQueryClient();
@@ -17,6 +26,7 @@ export default function JadwalPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [hapusId, setHapusId] = useState<string | null>(null);
   const [err, setErr] = useState('');
+  const [activeJenjang, setActiveJenjang] = useState<string>('Semua');
 
   const { data: jadwalList = [], isLoading } = useQuery({
     queryKey: ['jadwal-guru-all'],
@@ -64,8 +74,12 @@ export default function JadwalPage() {
     setEditId(j.id); setShowForm(true); setErr('');
   };
 
+  const filteredJadwal = activeJenjang === 'Semua'
+    ? (jadwalList as any[])
+    : (jadwalList as any[]).filter(j => getJenjang(j) === activeJenjang);
+
   const byDay = DAYS.reduce((acc, day) => {
-    acc[day] = (jadwalList as any[]).filter((j: any) => j.hari === day);
+    acc[day] = filteredJadwal.filter((j: any) => j.hari === day);
     return acc;
   }, {} as Record<string, any[]>);
 
@@ -73,6 +87,16 @@ export default function JadwalPage() {
     <div>
       <Header title="Jadwal Mengajar" />
       <div className="p-6">
+
+        {/* Tab jenjang */}
+        <div className="flex gap-2 mb-4">
+          {JENJANG_LIST.map(j => (
+            <button key={j} onClick={() => setActiveJenjang(j)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${activeJenjang === j ? 'bg-[#1B8B87] text-white' : 'bg-teal-50 text-teal-700 hover:bg-teal-100'}`}>
+              {j}
+            </button>
+          ))}
+        </div>
 
         <div className="flex justify-end mb-4">
           <button onClick={() => { setShowForm(true); setEditId(null); setForm(emptyForm); setErr(''); }}
