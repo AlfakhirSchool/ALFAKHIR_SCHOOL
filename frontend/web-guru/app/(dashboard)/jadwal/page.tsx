@@ -15,7 +15,21 @@ function getJenjang(j: any): string {
 
 export default function JadwalPage() {
   const qc = useQueryClient();
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
+
+  // Pastikan school_levels ada di store (handle session lama)
+  useQuery({
+    queryKey: ['guru-profile-jadwal'],
+    queryFn: () => api.get('/auth/me').then(r => {
+      const d = r.data.data;
+      if (d?.guru && !((user as any)?.school_levels)?.length) {
+        updateUser({ school_levels: d.guru.school_levels || [] });
+      }
+      return d;
+    }),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
@@ -44,14 +58,18 @@ export default function JadwalPage() {
     queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []),
   });
 
-  // Derive jenjang tabs dari jadwal guru sendiri
+  // Derive jenjang tabs dari jadwal guru sendiri, fallback ke school_levels user
   const myJadwal = (jadwalList as any[]).filter((j: any) => j.guru?.user?.nama === user?.nama);
-  const myJenjangSet = new Set(myJadwal.map(getJenjang).filter(Boolean));
+  const myJenjangFromJadwal = new Set(myJadwal.map(getJenjang).filter(Boolean));
+  const myJenjangFromProfile = new Set<string>((user as any)?.school_levels || []);
+  // Gabung keduanya — jadwal aktual prioritas, school_levels sebagai fallback
+  const myJenjangSet = myJenjangFromJadwal.size > 0 ? myJenjangFromJadwal : myJenjangFromProfile;
   const availableTabs = ['Semua', 'SD', 'SMP', 'SMA'].filter(j => j === 'Semua' || myJenjangSet.has(j));
 
   // Set default tab sekali setelah data load
-  if (!jenjangInit && !isLoading && myJenjangSet.size > 0) {
-    const single = myJenjangSet.size === 1 ? [...myJenjangSet][0] : 'Semua';
+  if (!jenjangInit && !isLoading && (myJenjangSet.size > 0 || myJenjangFromProfile.size > 0)) {
+    const effective = myJenjangFromProfile.size > 0 ? myJenjangFromProfile : myJenjangSet;
+    const single = effective.size === 1 ? [...effective][0] : 'Semua';
     setActiveJenjang(single);
     setJenjangInit(true);
   }
@@ -83,7 +101,7 @@ export default function JadwalPage() {
   };
 
   const filteredJadwal = activeJenjang === 'Semua'
-    ? (jadwalList as any[]).filter(j => myJenjangSet.size === 0 || myJenjangSet.has(getJenjang(j)))
+    ? (jadwalList as any[]).filter(j => myJenjangSet.size === 0 || myJenjangSet.has(getJenjang(j)) || myJenjangFromProfile.has(getJenjang(j)))
     : (jadwalList as any[]).filter(j => getJenjang(j) === activeJenjang);
 
   const byDay = DAYS.reduce((acc, day) => {
