@@ -214,6 +214,35 @@ export const downloadExcel = async (req: AuthRequest, res: Response): Promise<vo
   res.send(buf);
 };
 
+export const getRiwayatSiswa = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { siswa_id } = req.params;
+  const { kelas_id } = req.query;
+
+  const where: any = { siswa_id };
+  const jurnalWhere: any = {};
+  if (kelas_id) jurnalWhere.kelas_id = kelas_id;
+
+  const detail = await JurnalSiswa.findAll({
+    where,
+    include: [{
+      model: JurnalGuru, as: 'jurnal',
+      where: Object.keys(jurnalWhere).length ? jurnalWhere : undefined,
+      include: [
+        { model: Kelas, as: 'kelas' },
+        { model: MataPelajaran, as: 'mata_pelajaran' },
+        { model: Guru, as: 'guru', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
+      ],
+    }],
+    order: [[{ model: JurnalGuru, as: 'jurnal' }, 'tanggal', 'DESC']],
+  });
+
+  const total = detail.length;
+  const stats = { hadir: 0, sakit: 0, izin: 0, alfa: 0 };
+  detail.forEach(d => { if (stats[d.kehadiran as keyof typeof stats] !== undefined) stats[d.kehadiran as keyof typeof stats]++; });
+
+  res.json({ success: true, data: detail, stats, total });
+};
+
 export const getSiswaDetail = async (req: AuthRequest, res: Response): Promise<void> => {
   const jurnal = await JurnalGuru.findByPk(req.params.id as string);
   if (!jurnal) throw createError('Jurnal tidak ditemukan', 404);
