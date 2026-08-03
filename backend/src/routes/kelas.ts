@@ -99,7 +99,7 @@ router.delete('/:id', authorize('admin'), async (req: AuthRequest, res: Response
   res.json({ success: true, message: 'Kelas berhasil dihapus' });
 });
 
-router.get('/:id/siswa', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/:id/siswa', authorize('admin', 'guru'), async (req: AuthRequest, res: Response): Promise<void> => {
   const siswaList = await Siswa.findAll({
     where: { kelas_id: req.params.id },
     include: [{ model: User, as: 'user', attributes: { exclude: ['password_hash'] } }],

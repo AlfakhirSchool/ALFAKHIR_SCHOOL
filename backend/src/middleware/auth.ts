@@ -31,7 +31,8 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       return;
     }
 
-    req.user = { id: decoded.id, email: decoded.email, nama: decoded.nama, role: decoded.role, school_level: user.school_level };
+    // Role diambil dari DB, bukan token — mencegah token-tampering untuk eskalasi privilege
+    req.user = { id: user.id, email: user.email, nama: user.nama, role: user.role, school_level: user.school_level };
     next();
   } catch {
     res.status(401).json({ success: false, message: 'Token tidak valid atau sudah kadaluarsa' });

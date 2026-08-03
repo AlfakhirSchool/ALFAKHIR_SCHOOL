@@ -42,7 +42,16 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
 export const update = async (req: AuthRequest, res: Response): Promise<void> => {
   const c = await CatatanPewawancara.findByPk(req.params.id as string);
   if (!c) { res.status(404).json({ success: false, message: 'Catatan tidak ditemukan' }); return; }
-  if (c.is_locked && (req.user as any)?.role !== 'admin') {
+
+  const role = (req.user as any)?.role;
+  const email = (req.user as any)?.email;
+
+  // Pewawancara hanya bisa edit catatan miliknya sendiri
+  if (role === 'pewawancara' && c.pewawancara_email && c.pewawancara_email !== email) {
+    res.status(403).json({ success: false, message: 'Tidak berhak mengubah catatan pewawancara lain' }); return;
+  }
+
+  if (c.is_locked && role !== 'admin') {
     res.status(403).json({ success: false, message: 'Catatan sudah dikunci' }); return;
   }
   const allowed = ['pewawancara_email', 'pewawancara_nama', 'observasi', 'penilaian_akademik',

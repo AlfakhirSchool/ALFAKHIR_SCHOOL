@@ -19,9 +19,9 @@ router.post('/webhook/mandiri', webhookAuth, pembayaranController.webhookMandiri
 
 router.use(authenticate);
 
-router.get('/', authorize('admin', 'ortu', 'siswa'), pembayaranController.getAll);
-router.post('/', authorize('admin'), pembayaranController.create);
-router.get('/laporan', authorize('admin'), pembayaranController.getLaporan);
+router.get('/', authorize('admin', 'keuangan', 'ortu', 'siswa'), pembayaranController.getAll);
+router.post('/', authorize('admin', 'keuangan'), pembayaranController.create);
+router.get('/laporan', authorize('admin', 'keuangan'), pembayaranController.getLaporan);
 router.put('/:id', authorize('admin'), pembayaranController.update);
 router.delete('/:id', authorize('admin'), pembayaranController.remove);
 router.post('/:id/bayar', authorize('admin'), pembayaranController.bayar);

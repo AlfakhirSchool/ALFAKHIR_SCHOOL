@@ -222,6 +222,12 @@ export const getRiwayatSiswa = async (req: AuthRequest, res: Response): Promise<
   const jurnalWhere: any = {};
   if (kelas_id) jurnalWhere.kelas_id = kelas_id;
 
+  // Guru hanya bisa lihat riwayat dari jurnal miliknya sendiri
+  if (req.user?.role === 'guru') {
+    const guru = await Guru.findOne({ where: { user_id: req.user.id } });
+    if (guru) jurnalWhere.guru_id = guru.id;
+  }
+
   const detail = await JurnalSiswa.findAll({
     where,
     include: [{
