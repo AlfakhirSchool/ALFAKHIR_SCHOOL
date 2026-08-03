@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { Sparkles } from 'lucide-react';
 import api from '@/lib/api';
 
 const QUICK_CHIPS = [
@@ -64,7 +65,7 @@ export default function AiChat() {
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#1B8B87] text-white shadow-lg hover:bg-[#156f6c] transition-all flex items-center justify-center text-2xl"
         title="Asisten AI Al Fakhir"
       >
-        {open ? '×' : '🎓'}
+        {open ? <span className="text-xl font-light">×</span> : <Sparkles size={22} />}
       </button>
 
       {/* Chat panel */}
@@ -72,7 +73,7 @@ export default function AiChat() {
         <div className="fixed bottom-24 right-6 z-50 w-[360px] max-h-[520px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 bg-[#1B8B87] text-white flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-lg">🎓</div>
+            <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center"><Sparkles size={18} /></div>
             <div>
               <p className="font-semibold text-sm leading-tight">Asisten AI Al Fakhir</p>
               <p className="text-xs text-white/70">Pendidikan · Online</p>
