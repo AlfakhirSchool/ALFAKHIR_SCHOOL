@@ -56,3 +56,4 @@ n8n_data/
 # Keystores
 *.keystore
 *.p12
+.last_deploy_commit

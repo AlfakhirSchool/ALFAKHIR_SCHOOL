@@ -206,7 +206,7 @@ services:
 
   web-admin:
     build:
-      context: ./web-admin
+      context: ./frontend/web-admin
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
@@ -228,7 +228,7 @@ services:
 
   web-guru:
     build:
-      context: ./web-guru
+      context: ./frontend/web-guru
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
