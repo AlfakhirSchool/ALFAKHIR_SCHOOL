@@ -8,17 +8,21 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
-  const { guru_id, kelas_id } = req.query;
+  const { guru_id, kelas_id, jenjang } = req.query;
   const levelWhere = await kelasIdFilter(req.user?.school_level);
   const where: Record<string, unknown> = { ...levelWhere };
   if (guru_id) where.guru_id = guru_id;
   if (kelas_id) where.kelas_id = kelas_id;
 
+  // Filter jenjang via sekolah.level pada kelas
+  const sekolahWhere: Record<string, unknown> = {};
+  if (jenjang) sekolahWhere.level = jenjang;
+
   const jadwalList = await JadwalPelajaran.findAll({
     where,
     include: [
       { model: Guru, as: 'guru', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
-      { model: Kelas, as: 'kelas', include: [{ model: Sekolah, as: 'sekolah', attributes: ['level'] }] },
+      { model: Kelas, as: 'kelas', required: !!jenjang, include: [{ model: Sekolah, as: 'sekolah', attributes: ['level'], where: Object.keys(sekolahWhere).length ? sekolahWhere : undefined }] },
       { model: MataPelajaran, as: 'mata_pelajaran' },
     ],
     order: [['hari', 'ASC'], ['jam_mulai', 'ASC']],
