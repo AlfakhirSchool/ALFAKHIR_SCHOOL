@@ -83,6 +83,7 @@ router.put('/:id', authorize('admin'), async (req: AuthRequest, res: Response): 
   const { sekolah_id, ...rest } = req.body;
   const updateData: any = { ...rest };
   if (sekolah_id) updateData.sekolah_id = sekolah_id;
+  if (!updateData.wali_kelas_id) updateData.wali_kelas_id = null;
   await kelas.update(updateData);
   res.json({ success: true, data: kelas });
 });
