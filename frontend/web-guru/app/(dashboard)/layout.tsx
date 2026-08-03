@@ -7,6 +7,7 @@ import LoadingScreen from '@/components/LoadingScreen';
 import PageTransition from '@/components/PageTransition';
 import WelcomePopup from '@/components/WelcomePopup';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
+import AiChat from '@/components/AiChat';
 import { useAuthStore } from '@/store/authStore';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -36,6 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <>
       <LoadingScreen show={loading} />
       <WelcomePopup nama={user?.nama || 'Guru'} />
+      <AiChat />
       <div className="flex">
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(v => !v)} />
         <main
