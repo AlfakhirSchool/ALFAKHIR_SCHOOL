@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import { JadwalPelajaran, Guru, Kelas, MataPelajaran, User, Absensi, QrCodeSession } from '../models';
+import { JadwalPelajaran, Guru, Kelas, Sekolah, MataPelajaran, User, Absensi, QrCodeSession } from '../models';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 import { kelasIdFilter } from '../utils/levelFilter';
@@ -18,7 +18,7 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
     where,
     include: [
       { model: Guru, as: 'guru', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
-      { model: Kelas, as: 'kelas' },
+      { model: Kelas, as: 'kelas', include: [{ model: Sekolah, as: 'sekolah', attributes: ['level'] }] },
       { model: MataPelajaran, as: 'mata_pelajaran' },
     ],
     order: [['hari', 'ASC'], ['jam_mulai', 'ASC']],

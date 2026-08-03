@@ -7,15 +7,10 @@ import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
 const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-const JENJANG_LIST = ['Semua', 'SD', 'SMP', 'SMA'] as const;
 const emptyForm = { kelas_id: '', mata_pelajaran_id: '', hari: 'Senin', jam_mulai: '', jam_selesai: '' };
 
 function getJenjang(j: any): string {
-  const t = j.kelas?.tingkat;
-  if (!t) return '';
-  if (t <= 6) return 'SD';
-  if (t <= 9) return 'SMP';
-  return 'SMA';
+  return j.kelas?.sekolah?.level || '';
 }
 
 export default function JadwalPage() {
@@ -26,8 +21,8 @@ export default function JadwalPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [hapusId, setHapusId] = useState<string | null>(null);
   const [err, setErr] = useState('');
-  const defaultJenjang = user?.school_levels?.length === 1 ? user.school_levels[0] : 'Semua';
-  const [activeJenjang, setActiveJenjang] = useState<string>(defaultJenjang);
+  const [activeJenjang, setActiveJenjang] = useState<string>('Semua');
+  const [jenjangInit, setJenjangInit] = useState(false);
 
   const { data: jadwalList = [], isLoading } = useQuery({
     queryKey: ['jadwal-guru-all'],
@@ -49,8 +44,20 @@ export default function JadwalPage() {
     queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []),
   });
 
+  // Derive jenjang tabs dari jadwal guru sendiri
+  const myJadwal = (jadwalList as any[]).filter((j: any) => j.guru?.user?.nama === user?.nama);
+  const myJenjangSet = new Set(myJadwal.map(getJenjang).filter(Boolean));
+  const availableTabs = ['Semua', 'SD', 'SMP', 'SMA'].filter(j => j === 'Semua' || myJenjangSet.has(j));
+
+  // Set default tab sekali setelah data load
+  if (!jenjangInit && !isLoading && myJenjangSet.size > 0) {
+    const single = myJenjangSet.size === 1 ? [...myJenjangSet][0] : 'Semua';
+    setActiveJenjang(single);
+    setJenjangInit(true);
+  }
+
   // Guru_id milik sendiri — dari jadwal yang sudah ada atau dari profile
-  const myGuruId = (jadwalList as any[]).find((j: any) => j.guru?.user?.nama === user?.nama)?.guru_id || null;
+  const myGuruId = myJadwal[0]?.guru_id || null;
 
   const isMyJadwal = (j: any) => j.guru?.user?.nama === user?.nama;
 
@@ -76,7 +83,7 @@ export default function JadwalPage() {
   };
 
   const filteredJadwal = activeJenjang === 'Semua'
-    ? (jadwalList as any[])
+    ? (jadwalList as any[]).filter(j => myJenjangSet.size === 0 || myJenjangSet.has(getJenjang(j)))
     : (jadwalList as any[]).filter(j => getJenjang(j) === activeJenjang);
 
   const byDay = DAYS.reduce((acc, day) => {
@@ -91,7 +98,7 @@ export default function JadwalPage() {
 
         {/* Tab jenjang */}
         <div className="flex gap-2 mb-4">
-          {JENJANG_LIST.map(j => (
+          {availableTabs.map(j => (
             <button key={j} onClick={() => setActiveJenjang(j)}
               className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${activeJenjang === j ? 'bg-[#1B8B87] text-white' : 'bg-teal-50 text-teal-700 hover:bg-teal-100'}`}>
               {j}
