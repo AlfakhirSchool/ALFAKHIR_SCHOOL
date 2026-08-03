@@ -7,7 +7,8 @@ import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
-const BLANK_FORM = { nama: '', tingkat: '', sekolah_id: '', wali_kelas_id: '', tahun_ajaran: '2025/2026' };
+const BLANK_FORM = { nama: '', tingkat: '7', sekolah_id: '', wali_kelas_id: '', tahun_ajaran: '2025/2026' };
+const TINGKAT_OPTS: Record<string, number[]> = { SD: [1,2,3,4,5,6], SMP: [7,8,9], SMA: [10,11,12] };
 
 const JENJANG_LIST = ['SD', 'SMP', 'SMA'] as const;
 const JENJANG_COLOR: Record<string, { active: string; passive: string; badge: string; card: string }> = {
@@ -53,22 +54,28 @@ export default function KelasPage() {
     enabled: showForm || !!editTarget,
   });
 
+  const [formError, setFormError] = useState('');
+
   const addKelas = useMutation({
-    mutationFn: () => api.post('/kelas', form),
+    mutationFn: () => api.post('/kelas', { ...form, tingkat: parseInt(form.tingkat) || 7 }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['kelas-admin'] });
       setShowForm(false);
       setForm({ ...BLANK_FORM });
+      setFormError('');
     },
+    onError: (err: any) => setFormError(err.response?.data?.message || 'Gagal menyimpan kelas'),
   });
 
   const editKelas = useMutation({
-    mutationFn: () => api.put(`/kelas/${editTarget.id}`, form),
+    mutationFn: () => api.put(`/kelas/${editTarget.id}`, { ...form, tingkat: parseInt(form.tingkat) || 7 }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['kelas-admin'] });
       setEditTarget(null);
       setForm({ ...BLANK_FORM });
+      setFormError('');
     },
+    onError: (err: any) => setFormError(err.response?.data?.message || 'Gagal menyimpan kelas'),
   });
 
   const deleteKelas = useMutation({
@@ -136,9 +143,11 @@ export default function KelasPage() {
         <div className="flex justify-end mb-4">
           <button onClick={() => {
             const sekolah = (sekolahList || []).find((s: any) => s.level === activeJenjang);
+            const defaultTingkat = String(TINGKAT_OPTS[activeJenjang]?.[0] || 7);
             setShowForm(!showForm);
             setEditTarget(null);
-            setForm({ ...BLANK_FORM, sekolah_id: sekolah?.id || '' });
+            setFormError('');
+            setForm({ ...BLANK_FORM, sekolah_id: sekolah?.id || '', tingkat: defaultTingkat });
           }}
             className="px-4 py-2.5 bg-[#3B7FD1] text-white rounded-lg hover:bg-[#2d6ab5] font-medium text-sm">
             + Tambah Kelas {activeJenjang}
@@ -149,7 +158,8 @@ export default function KelasPage() {
         {showForm && !editTarget && (
           <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-[#3B7FD1]/20">
             <h3 className="font-semibold text-[#1A2332] mb-4">Tambah Kelas Baru</h3>
-            <KelasForm form={form} setForm={setForm} guruList={guruList || []} />
+            <KelasForm form={form} setForm={setForm} guruList={guruList || []} activeJenjang={activeJenjang} />
+            {formError && <p className="text-sm text-red-600 mt-2">{formError}</p>}
             <div className="flex gap-3 mt-4">
               <button onClick={() => addKelas.mutate()} disabled={!form.nama || addKelas.isPending}
                 className="px-5 py-2 bg-[#3B7FD1] text-white rounded-lg text-sm font-medium hover:bg-[#2d6ab5] disabled:opacity-50">
@@ -167,7 +177,8 @@ export default function KelasPage() {
               <Pencil size={16} className="text-amber-500" />
               <h3 className="font-semibold text-[#1A2332]">Edit Kelas: {editTarget.nama}</h3>
             </div>
-            <KelasForm form={form} setForm={setForm} guruList={guruList || []} />
+            <KelasForm form={form} setForm={setForm} guruList={guruList || []} activeJenjang={activeJenjang} />
+            {formError && <p className="text-sm text-red-600 mt-2">{formError}</p>}
             <div className="flex gap-3 mt-4">
               <button onClick={() => editKelas.mutate()} disabled={!form.nama || editKelas.isPending}
                 className="px-5 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600 disabled:opacity-50">
@@ -327,10 +338,11 @@ export default function KelasPage() {
   );
 }
 
-function KelasForm({ form, setForm, guruList }: { form: any; setForm: any; guruList: any[] }) {
+function KelasForm({ form, setForm, guruList, activeJenjang }: { form: any; setForm: any; guruList: any[]; activeJenjang: string }) {
+  const tingkatOpts = TINGKAT_OPTS[activeJenjang] || TINGKAT_OPTS.SMP;
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      <div>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="col-span-2">
         <label className="block text-xs font-medium text-gray-600 mb-1">Nama Kelas</label>
         <input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value.toUpperCase() })}
           placeholder="Contoh: AN NA'IM"
@@ -338,11 +350,18 @@ function KelasForm({ form, setForm, guruList }: { form: any; setForm: any; guruL
         <p className="text-xs text-blue-500 mt-0.5">Otomatis HURUF BESAR — contoh: AN NA'IM, DARUSSALAM</p>
       </div>
       <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">Tingkat</label>
+        <select value={form.tingkat} onChange={(e) => setForm({ ...form, tingkat: e.target.value })}
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]">
+          {tingkatOpts.map(t => <option key={t} value={t}>Kelas {t}</option>)}
+        </select>
+      </div>
+      <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Tahun Ajaran</label>
         <input value={form.tahun_ajaran} onChange={(e) => setForm({ ...form, tahun_ajaran: e.target.value })}
           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
       </div>
-      <div className="col-span-2 md:col-span-3">
+      <div className="col-span-2 md:col-span-4">
         <label className="block text-xs font-medium text-gray-600 mb-1">Wali Kelas</label>
         <select value={form.wali_kelas_id} onChange={(e) => setForm({ ...form, wali_kelas_id: e.target.value })}
           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
