@@ -8,6 +8,16 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
 const KEHADIRAN_OPTS = ['hadir', 'sakit', 'izin', 'alfa'] as const;
+
+const RATING_OPTS = ['kurang', 'cukup', 'baik', 'sangat_baik'] as const;
+const RATING_LABEL: Record<string, string> = { kurang: 'Kurang', cukup: 'Cukup', baik: 'Baik', sangat_baik: 'Sangat Baik' };
+const RATING_COLOR: Record<string, string> = {
+  kurang:     'bg-red-100 text-red-700 border-red-300',
+  cukup:      'bg-yellow-100 text-yellow-700 border-yellow-300',
+  baik:       'bg-blue-100 text-blue-700 border-blue-300',
+  sangat_baik:'bg-green-100 text-green-700 border-green-300',
+};
+
 const K_ACTIVE: Record<string, string> = {
   hadir: 'bg-green-500 text-white border-green-500',
   sakit: 'bg-yellow-400 text-white border-yellow-400',
@@ -45,7 +55,7 @@ export default function CatatanSiswaPage() {
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
   const [filterTgl, setFilterTgl] = useState('');
-  const [rows, setRows] = useState<Record<string, { kehadiran: string; catatan: string }>>({});
+  const [rows, setRows] = useState<Record<string, { kehadiran: string; partisipasi: string; pemahaman_materi: string; sikap_perilaku: string; catatan: string }>>({});
   const [savedMsg, setSavedMsg] = useState('');
 
   const { data: jurnalList = [], isLoading } = useQuery({
@@ -74,16 +84,26 @@ export default function CatatanSiswaPage() {
   useQuery({
     queryKey: ['catatan-siswa-detail-edit', editId],
     queryFn: () => api.get(`/jurnal-guru/${editId}/siswa`).then(r => {
-      const map: Record<string, { kehadiran: string; catatan: string }> = {};
-      (r.data.data || []).forEach((d: any) => { map[d.siswa_id] = { kehadiran: d.kehadiran, catatan: d.catatan || '' }; });
+      const map: Record<string, any> = {};
+      (r.data.data || []).forEach((d: any) => {
+        map[d.siswa_id] = {
+          kehadiran: d.kehadiran || 'hadir',
+          partisipasi: d.partisipasi || 'baik',
+          pemahaman_materi: d.pemahaman_materi || 'baik',
+          sikap_perilaku: d.sikap_perilaku || 'baik',
+          catatan: d.catatan || '',
+        };
+      });
       setRows(map);
       return r.data.data;
     }),
     enabled: !!editId && view === 'form',
   });
 
-  const setRow = (siswaId: string, field: 'kehadiran' | 'catatan', val: string) => {
-    setRows(prev => ({ ...prev, [siswaId]: { kehadiran: prev[siswaId]?.kehadiran || 'hadir', catatan: prev[siswaId]?.catatan || '', [field]: val } }));
+  const defaultRow = () => ({ kehadiran: 'hadir', partisipasi: 'baik', pemahaman_materi: 'baik', sikap_perilaku: 'baik', catatan: '' });
+
+  const setRow = (siswaId: string, field: string, val: string) => {
+    setRows(prev => ({ ...prev, [siswaId]: { ...defaultRow(), ...prev[siswaId], [field]: val } }));
   };
 
   const f = (field: string, val: string) => setForm(p => ({ ...p, [field]: val }));
@@ -108,6 +128,9 @@ export default function CatatanSiswaPage() {
         const items = (siswaList as any[]).map((s: any) => ({
           siswa_id: s.id,
           kehadiran: rows[s.id]?.kehadiran || 'hadir',
+          partisipasi: rows[s.id]?.partisipasi || 'baik',
+          pemahaman_materi: rows[s.id]?.pemahaman_materi || 'baik',
+          sikap_perilaku: rows[s.id]?.sikap_perilaku || 'baik',
           catatan: rows[s.id]?.catatan || '',
         }));
         await api.put(`/jurnal-guru/${jurnalId}/siswa`, { items });
@@ -303,35 +326,62 @@ export default function CatatanSiswaPage() {
                       <span className="text-gray-400 font-normal">/ {(siswaList as any[]).length}</span>
                     </div>
                   </div>
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[900px]">
                     <thead>
-                      <tr className="bg-gray-50 text-xs text-gray-400 uppercase">
-                        <th className="px-4 py-2.5 text-left w-10">No</th>
-                        <th className="px-4 py-2.5 text-left">Nama Siswa</th>
-                        <th className="px-4 py-2.5 text-center w-44">Kehadiran</th>
-                        <th className="px-4 py-2.5 text-left">Catatan Siswa</th>
+                      <tr className="bg-gray-50 text-xs text-gray-400 uppercase tracking-wide">
+                        <th className="px-3 py-2.5 text-left w-8">No</th>
+                        <th className="px-3 py-2.5 text-left min-w-[160px]">Nama Siswa</th>
+                        <th className="px-3 py-2.5 text-center w-36">Kehadiran</th>
+                        <th className="px-3 py-2.5 text-center w-44">Partisipasi</th>
+                        <th className="px-3 py-2.5 text-center w-44">Pemahaman Materi</th>
+                        <th className="px-3 py-2.5 text-center w-44">Sikap/Perilaku</th>
+                        <th className="px-3 py-2.5 text-left min-w-[180px]">Catatan</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
                       {(siswaList as any[]).map((s: any, idx: number) => {
-                        const row = rows[s.id] || { kehadiran: 'hadir', catatan: '' };
+                        const row = { ...defaultRow(), ...rows[s.id] };
                         return (
-                          <tr key={s.id} className="hover:bg-gray-50/60">
-                            <td className="px-4 py-3 text-gray-400 text-xs tabular-nums">{idx + 1}</td>
-                            <td className="px-4 py-3 font-medium text-gray-800">{s.user?.nama || s.nama}</td>
-                            <td className="px-4 py-3">
+                          <tr key={s.id} className="hover:bg-gray-50/50">
+                            <td className="px-3 py-3 text-gray-400 text-xs tabular-nums">{idx + 1}</td>
+                            <td className="px-3 py-3 font-medium text-gray-800 text-sm">{s.user?.nama || s.nama}</td>
+                            {/* Kehadiran */}
+                            <td className="px-3 py-3">
                               <div className="flex gap-1 justify-center">
                                 {KEHADIRAN_OPTS.map(k => (
                                   <button key={k} onClick={() => setRow(s.id, 'kehadiran', k)}
-                                    className={`w-8 h-8 rounded-lg border text-xs font-bold transition-all ${row.kehadiran === k ? K_ACTIVE[k] : K_PASSIVE}`}>
+                                    className={`w-7 h-7 rounded-md border text-xs font-bold transition-all ${row.kehadiran === k ? K_ACTIVE[k] : K_PASSIVE}`}>
                                     {K_LABEL[k]}
                                   </button>
                                 ))}
                               </div>
                             </td>
-                            <td className="px-4 py-3">
+                            {/* Partisipasi */}
+                            <td className="px-3 py-3">
+                              <select value={row.partisipasi} onChange={e => setRow(s.id, 'partisipasi', e.target.value)}
+                                className={`w-full px-2 py-1.5 rounded-lg border text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#1B8B87] ${RATING_COLOR[row.partisipasi] || ''}`}>
+                                {RATING_OPTS.map(r => <option key={r} value={r}>{RATING_LABEL[r]}</option>)}
+                              </select>
+                            </td>
+                            {/* Pemahaman Materi */}
+                            <td className="px-3 py-3">
+                              <select value={row.pemahaman_materi} onChange={e => setRow(s.id, 'pemahaman_materi', e.target.value)}
+                                className={`w-full px-2 py-1.5 rounded-lg border text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#1B8B87] ${RATING_COLOR[row.pemahaman_materi] || ''}`}>
+                                {RATING_OPTS.map(r => <option key={r} value={r}>{RATING_LABEL[r]}</option>)}
+                              </select>
+                            </td>
+                            {/* Sikap */}
+                            <td className="px-3 py-3">
+                              <select value={row.sikap_perilaku} onChange={e => setRow(s.id, 'sikap_perilaku', e.target.value)}
+                                className={`w-full px-2 py-1.5 rounded-lg border text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#1B8B87] ${RATING_COLOR[row.sikap_perilaku] || ''}`}>
+                                {RATING_OPTS.map(r => <option key={r} value={r}>{RATING_LABEL[r]}</option>)}
+                              </select>
+                            </td>
+                            {/* Catatan */}
+                            <td className="px-3 py-3">
                               <input value={row.catatan} onChange={e => setRow(s.id, 'catatan', e.target.value)}
-                                placeholder="Catatan untuk siswa ini..."
+                                placeholder="Catatan tambahan..."
                                 className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#1B8B87] placeholder-gray-300" />
                             </td>
                           </tr>
@@ -339,6 +389,7 @@ export default function CatatanSiswaPage() {
                       })}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               )
             )}

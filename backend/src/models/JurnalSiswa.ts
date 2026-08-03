@@ -6,18 +6,24 @@ interface JurnalSiswaAttributes {
   jurnal_id: string;
   siswa_id: string;
   kehadiran: 'hadir' | 'sakit' | 'izin' | 'alfa';
+  partisipasi: string | null;
+  pemahaman_materi: string | null;
+  sikap_perilaku: string | null;
   catatan: string | null;
   created_at?: Date;
   updated_at?: Date;
 }
 
-interface JurnalSiswaCreation extends Optional<JurnalSiswaAttributes, 'id' | 'catatan'> {}
+interface JurnalSiswaCreation extends Optional<JurnalSiswaAttributes, 'id' | 'catatan' | 'partisipasi' | 'pemahaman_materi' | 'sikap_perilaku'> {}
 
 class JurnalSiswa extends Model<JurnalSiswaAttributes, JurnalSiswaCreation> implements JurnalSiswaAttributes {
   declare id: string;
   declare jurnal_id: string;
   declare siswa_id: string;
   declare kehadiran: 'hadir' | 'sakit' | 'izin' | 'alfa';
+  declare partisipasi: string | null;
+  declare pemahaman_materi: string | null;
+  declare sikap_perilaku: string | null;
   declare catatan: string | null;
 }
 
@@ -27,6 +33,9 @@ JurnalSiswa.init(
     jurnal_id: { type: DataTypes.UUID, allowNull: false },
     siswa_id: { type: DataTypes.UUID, allowNull: false },
     kehadiran: { type: DataTypes.ENUM('hadir', 'sakit', 'izin', 'alfa'), defaultValue: 'hadir', allowNull: false },
+    partisipasi: { type: DataTypes.STRING(20), allowNull: true, defaultValue: 'baik' },
+    pemahaman_materi: { type: DataTypes.STRING(20), allowNull: true, defaultValue: 'baik' },
+    sikap_perilaku: { type: DataTypes.STRING(20), allowNull: true, defaultValue: 'baik' },
     catatan: { type: DataTypes.TEXT, allowNull: true },
   },
   {

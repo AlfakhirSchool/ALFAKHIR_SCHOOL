@@ -1,0 +1,4 @@
+ALTER TABLE jurnal_siswa
+  ADD COLUMN IF NOT EXISTS partisipasi VARCHAR(20) DEFAULT 'baik',
+  ADD COLUMN IF NOT EXISTS pemahaman_materi VARCHAR(20) DEFAULT 'baik',
+  ADD COLUMN IF NOT EXISTS sikap_perilaku VARCHAR(20) DEFAULT 'baik';
