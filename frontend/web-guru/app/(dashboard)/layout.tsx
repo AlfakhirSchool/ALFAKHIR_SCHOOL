@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import Sidebar from '@/components/layout/Sidebar';
 import LoadingScreen from '@/components/LoadingScreen';
 import PageTransition from '@/components/PageTransition';
@@ -14,6 +15,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { isAuthenticated, user } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
+  const qc = useQueryClient();
+  const prevUserId = useRef<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
@@ -23,6 +26,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const t = setTimeout(() => setLoading(false), 1800);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    const currentId = user?.id ?? null;
+    if (prevUserId.current !== null && prevUserId.current !== currentId) {
+      qc.clear();
+    }
+    prevUserId.current = currentId;
+  }, [user?.id, qc]);
 
   useEffect(() => {
     if (hydrated && !isAuthenticated) {
