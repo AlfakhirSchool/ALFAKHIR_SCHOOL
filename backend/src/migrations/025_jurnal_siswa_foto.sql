@@ -1,0 +1,2 @@
+ALTER TABLE jurnal_siswa
+  ADD COLUMN IF NOT EXISTS foto_url VARCHAR(500);

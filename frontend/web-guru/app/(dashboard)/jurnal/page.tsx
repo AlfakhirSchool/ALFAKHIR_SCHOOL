@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Download, Users, ChevronLeft } from 'lucide-react';
+import { X, Download, Users, ChevronLeft, Camera, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -52,7 +52,8 @@ export default function JurnalPage() {
   const [activeJurnal, setActiveJurnal] = useState<any>(null);
 
   // State tabel siswa
-  const [siswaRows, setSiswaRows] = useState<Record<string, { kehadiran: string; catatan: string }>>({});
+  const [siswaRows, setSiswaRows] = useState<Record<string, { kehadiran: string; catatan: string; foto_url?: string }>>({});
+  const [uploadingFoto, setUploadingFoto] = useState<string | null>(null);
   const [siswaMsg, setSiswaMsg] = useState('');
 
   const { data: jurnalList, isLoading } = useQuery({
@@ -87,8 +88,8 @@ export default function JurnalPage() {
     queryFn: () => api.get(`/jurnal-guru/${activeJurnal.id}/siswa`).then(r => r.data.data || []),
     enabled: !!activeJurnal?.id && view === 'siswa',
     onSuccess: (data: any[]) => {
-      const map: Record<string, { kehadiran: string; catatan: string }> = {};
-      data.forEach(d => { map[d.siswa_id] = { kehadiran: d.kehadiran, catatan: d.catatan || '' }; });
+      const map: Record<string, { kehadiran: string; catatan: string; foto_url?: string }> = {};
+      data.forEach(d => { map[d.siswa_id] = { kehadiran: d.kehadiran, catatan: d.catatan || '', foto_url: d.foto_url || undefined }; });
       setSiswaRows(map);
     },
   } as any);
@@ -189,6 +190,21 @@ export default function JurnalPage() {
   };
 
   const f = (field: string, val: string) => setForm(p => ({ ...p, [field]: val }));
+
+  const uploadFotoSiswa = async (siswaId: string, file: File) => {
+    if (!activeJurnal?.id) return;
+    setUploadingFoto(siswaId);
+    try {
+      const fd = new FormData();
+      fd.append('foto', file);
+      const r = await api.post(`/jurnal-guru/${activeJurnal.id}/siswa/${siswaId}/foto`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setSiswaRows(prev => ({ ...prev, [siswaId]: { ...prev[siswaId], foto_url: r.data.data.foto_url } }));
+    } finally {
+      setUploadingFoto(null);
+    }
+  };
 
   const setRow = (siswaId: string, field: 'kehadiran' | 'catatan', val: string) => {
     setSiswaRows(prev => ({
@@ -423,6 +439,7 @@ export default function JurnalPage() {
                       <th className="px-4 py-3 text-left">Nama Siswa</th>
                       <th className="px-4 py-3 text-center w-56">Kehadiran</th>
                       <th className="px-4 py-3 text-left">Catatan</th>
+                      <th className="px-4 py-3 text-center w-24">Foto</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -456,6 +473,24 @@ export default function JurnalPage() {
                               placeholder="Catatan untuk siswa ini..."
                               className="w-full px-2 py-1 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#1B8B87]"
                             />
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {row.foto_url ? (
+                              <div className="flex flex-col items-center gap-1">
+                                <a href={`${(process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '')}${row.foto_url}`} target="_blank" rel="noreferrer">
+                                  <img src={`${(process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '')}${row.foto_url}`} alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-200 hover:opacity-80" />
+                                </a>
+                                <button onClick={() => setSiswaRows(prev => ({ ...prev, [s.id]: { ...prev[s.id], foto_url: undefined } }))}
+                                  className="text-red-400 hover:text-red-600"><Trash2 size={11} /></button>
+                              </div>
+                            ) : (
+                              <label className={`cursor-pointer flex flex-col items-center gap-0.5 text-gray-400 hover:text-[#1B8B87] ${uploadingFoto === s.id ? 'opacity-50 pointer-events-none' : ''}`}>
+                                <Camera size={18} />
+                                <span className="text-[10px]">{uploadingFoto === s.id ? '...' : 'Upload'}</span>
+                                <input type="file" accept="image/*" className="hidden"
+                                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadFotoSiswa(s.id, f); e.target.value = ''; }} />
+                              </label>
+                            )}
                           </td>
                         </tr>
                       );
@@ -548,6 +583,11 @@ export default function JurnalPage() {
                         </div>
                         {d.catatan && (
                           <p className="mt-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2">{d.catatan}</p>
+                        )}
+                        {d.foto_url && (
+                          <a href={`${(process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '')}${d.foto_url}`} target="_blank" rel="noreferrer" className="mt-2 inline-block">
+                            <img src={`${(process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '')}${d.foto_url}`} alt="foto" className="h-20 rounded-lg object-cover border border-gray-200 hover:opacity-80" />
+                          </a>
                         )}
                       </div>
                     );

@@ -10,11 +10,12 @@ interface JurnalSiswaAttributes {
   pemahaman_materi: string | null;
   sikap_perilaku: string | null;
   catatan: string | null;
+  foto_url: string | null;
   created_at?: Date;
   updated_at?: Date;
 }
 
-interface JurnalSiswaCreation extends Optional<JurnalSiswaAttributes, 'id' | 'catatan' | 'partisipasi' | 'pemahaman_materi' | 'sikap_perilaku'> {}
+interface JurnalSiswaCreation extends Optional<JurnalSiswaAttributes, 'id' | 'catatan' | 'foto_url' | 'partisipasi' | 'pemahaman_materi' | 'sikap_perilaku'> {}
 
 class JurnalSiswa extends Model<JurnalSiswaAttributes, JurnalSiswaCreation> implements JurnalSiswaAttributes {
   declare id: string;
@@ -25,6 +26,7 @@ class JurnalSiswa extends Model<JurnalSiswaAttributes, JurnalSiswaCreation> impl
   declare pemahaman_materi: string | null;
   declare sikap_perilaku: string | null;
   declare catatan: string | null;
+  declare foto_url: string | null;
 }
 
 JurnalSiswa.init(
@@ -37,6 +39,7 @@ JurnalSiswa.init(
     pemahaman_materi: { type: DataTypes.STRING(20), allowNull: true, defaultValue: 'baik' },
     sikap_perilaku: { type: DataTypes.STRING(20), allowNull: true, defaultValue: 'baik' },
     catatan: { type: DataTypes.TEXT, allowNull: true },
+    foto_url: { type: DataTypes.STRING(500), allowNull: true },
   },
   {
     sequelize,

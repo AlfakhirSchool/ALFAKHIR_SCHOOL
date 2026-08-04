@@ -264,7 +264,7 @@ export const saveSiswaDetail = async (req: AuthRequest, res: Response): Promise<
   const jurnal = await JurnalGuru.findByPk(req.params.id as string);
   if (!jurnal) throw createError('Jurnal tidak ditemukan', 404);
 
-  const items: { siswa_id: string; kehadiran: string; catatan?: string }[] = req.body.items || [];
+  const items: { siswa_id: string; kehadiran: string; catatan?: string; foto_url?: string }[] = req.body.items || [];
 
   // Upsert per siswa
   for (const item of items) {
@@ -273,6 +273,7 @@ export const saveSiswaDetail = async (req: AuthRequest, res: Response): Promise<
       siswa_id: item.siswa_id,
       kehadiran: (item.kehadiran as any) || 'hadir',
       catatan: item.catatan || null,
+      ...(item.foto_url !== undefined ? { foto_url: item.foto_url } : {}),
     });
   }
 
