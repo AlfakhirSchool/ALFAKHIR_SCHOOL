@@ -79,21 +79,28 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
     where.guru_id = guru_id;
   }
 
-  const { count, rows } = await JurnalGuru.findAndCountAll({
-    where,
-    include: [
-      { model: Guru, as: 'guru', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
-      { model: Kelas, as: 'kelas' },
-      { model: MataPelajaran, as: 'mata_pelajaran' },
-    ],
-    limit: parseInt(limit as string),
-    offset,
-    order: [['tanggal', 'DESC']],
-  });
+  const [{ count, rows }, statsRows] = await Promise.all([
+    JurnalGuru.findAndCountAll({
+      where,
+      include: [
+        { model: Guru, as: 'guru', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
+        { model: Kelas, as: 'kelas' },
+        { model: MataPelajaran, as: 'mata_pelajaran' },
+      ],
+      limit: parseInt(limit as string),
+      offset,
+      order: [['tanggal', 'DESC']],
+    }),
+    JurnalGuru.findAll({ where, attributes: ['status'], raw: true }),
+  ]);
+
+  const summary = { draft: 0, submitted: 0, reviewed: 0, approved: 0 };
+  (statsRows as any[]).forEach((r: any) => { if (r.status in summary) summary[r.status as keyof typeof summary]++; });
 
   res.json({
     success: true,
     data: rows,
+    summary,
     pagination: { total: count, page: parseInt(page as string), limit: parseInt(limit as string), totalPages: Math.ceil(count / parseInt(limit as string)) },
   });
 };

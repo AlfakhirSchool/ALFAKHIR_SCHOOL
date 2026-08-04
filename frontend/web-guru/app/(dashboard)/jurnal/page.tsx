@@ -71,9 +71,10 @@ export default function JurnalPage() {
   const kelasList = [...new Map((jadwalGuru as any[]).filter(j => j.kelas).map(j => [j.kelas.id, j.kelas])).values()];
   // Mapel unik: semua (tanpa filter kelas) atau filter per kelas
   const mapelAll = [...new Map((jadwalGuru as any[]).filter(j => j.mata_pelajaran).map(j => [j.mata_pelajaran.id, j.mata_pelajaran])).values()];
-  const mapelList = form.kelas_id
+  const mapelFromJadwal = form.kelas_id
     ? [...new Map((jadwalGuru as any[]).filter(j => j.kelas_id === form.kelas_id && j.mata_pelajaran).map(j => [j.mata_pelajaran.id, j.mata_pelajaran])).values()]
     : mapelAll;
+  const mapelList = mapelFromJadwal.length > 0 ? mapelFromJadwal : (allMapelList as any[]);
 
   // Siswa untuk jurnal yang aktif
   const { data: siswaKelas } = useQuery({
@@ -142,6 +143,12 @@ export default function JurnalPage() {
     queryKey: ['kelas-all'],
     queryFn: () => api.get('/kelas').then(r => r.data.data || []),
     enabled: !!guruId,
+  });
+
+  const { data: allMapelList = [] } = useQuery({
+    queryKey: ['mapel-all'],
+    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []),
+    enabled: !!guruId && (jadwalGuru as any[]).length === 0,
   });
 
   const [psKelasId, setPsKelasId] = useState('');
