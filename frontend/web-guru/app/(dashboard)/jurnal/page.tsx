@@ -45,7 +45,7 @@ export default function JurnalPage() {
 
   const guruId = profileData?.guru?.id;
 
-  const [view, setView] = useState<'list' | 'form' | 'siswa'>('list');
+  const [view, setView] = useState<'list' | 'form' | 'siswa' | 'per-siswa'>('list');
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState<string | null>(null);
   const [filterTgl, setFilterTgl] = useState('');
@@ -136,6 +136,34 @@ export default function JurnalPage() {
   const [submitError, setSubmitError] = useState('');
   const [detailJurnal, setDetailJurnal] = useState<any>(null);
 
+  // State untuk view per-siswa
+  const [psKelasId, setPsKelasId] = useState('');
+  const [psSiswaId, setPsSiswaId] = useState('');
+  const [psTahunAjaran, setPsTahunAjaran] = useState('');
+
+  const { data: psSiswaList = [] } = useQuery({
+    queryKey: ['siswa-kelas-ps', psKelasId],
+    queryFn: () => api.get(`/kelas/${psKelasId}/siswa`).then(r => r.data.data || []),
+    enabled: !!psKelasId && view === 'per-siswa',
+  });
+
+  const { data: psRiwayat, isLoading: psLoading } = useQuery({
+    queryKey: ['jurnal-riwayat-siswa', psSiswaId, psTahunAjaran],
+    queryFn: async () => {
+      const r = await api.get(`/jurnal-guru/siswa-riwayat/${psSiswaId}`);
+      const items: any[] = r.data.data || [];
+      if (!psTahunAjaran) return items;
+      return items.filter((d: any) => {
+        const tgl = d.jurnal?.tanggal;
+        if (!tgl) return false;
+        const year = new Date(tgl).getFullYear();
+        const [y1, y2] = psTahunAjaran.split('/');
+        return String(year) === y1 || String(year) === y2;
+      });
+    },
+    enabled: !!psSiswaId && view === 'per-siswa',
+  });
+
   const submitJurnal = useMutation({
     mutationFn: (id: string) => api.post(`/jurnal-guru/${id}/submit`),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['jurnal-guru'] }); setSubmitError(''); },
@@ -215,6 +243,12 @@ export default function JurnalPage() {
                   className="px-4 py-2 border border-[#1B8B87] text-[#1B8B87] rounded-lg text-sm font-medium hover:bg-teal-50 flex items-center gap-1.5"
                 >
                   <Download size={14} /> Download XLSX
+                </button>
+                <button
+                  onClick={() => { setPsKelasId(''); setPsSiswaId(''); setPsTahunAjaran(''); setView('per-siswa'); }}
+                  className="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-1.5"
+                >
+                  <Users size={14} /> Per Siswa
                 </button>
                 <button
                   onClick={() => { setForm(emptyForm); setEditId(null); setView('form'); }}
@@ -445,6 +479,84 @@ export default function JurnalPage() {
           </div>
         )}
       </div>
+
+        {/* VIEW: PER SISWA */}
+        {view === 'per-siswa' && (
+          <div>
+            <button onClick={() => setView('list')} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-4">
+              <ChevronLeft size={16} /> Kembali ke Daftar Jurnal
+            </button>
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h2 className="font-semibold text-[#1A2332] mb-4">Riwayat Jurnal Per Siswa</h2>
+
+              {/* Filter */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div>
+                  <label className="text-xs font-medium text-gray-600 mb-1 block">Kelas</label>
+                  <select value={psKelasId} onChange={e => { setPsKelasId(e.target.value); setPsSiswaId(''); }}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]">
+                    <option value="">-- Pilih Kelas --</option>
+                    {kelasList.map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 mb-1 block">Siswa</label>
+                  <select value={psSiswaId} onChange={e => setPsSiswaId(e.target.value)}
+                    disabled={!psKelasId}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87] disabled:bg-gray-50 disabled:text-gray-400">
+                    <option value="">-- Pilih Siswa --</option>
+                    {(psSiswaList as any[]).map((s: any) => <option key={s.id} value={s.id}>{s.user?.nama}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 mb-1 block">Tahun Ajaran (opsional)</label>
+                  <select value={psTahunAjaran} onChange={e => setPsTahunAjaran(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]">
+                    <option value="">Semua Tahun</option>
+                    {['2025/2026', '2026/2027', '2024/2025'].map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Hasil */}
+              {!psSiswaId && (
+                <div className="text-center py-12 text-gray-400 text-sm">Pilih kelas dan siswa untuk melihat riwayat catatan</div>
+              )}
+              {psSiswaId && psLoading && (
+                <div className="text-center py-8 text-gray-400 text-sm">Memuat riwayat...</div>
+              )}
+              {psSiswaId && !psLoading && (psRiwayat as any[] || []).length === 0 && (
+                <div className="text-center py-8 text-gray-400 text-sm">Belum ada catatan jurnal untuk siswa ini</div>
+              )}
+              {psSiswaId && !psLoading && (psRiwayat as any[] || []).length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-xs text-gray-500 mb-3">{(psRiwayat as any[]).length} catatan ditemukan</p>
+                  {(psRiwayat as any[]).map((d: any) => {
+                    const j = d.jurnal;
+                    const tgl = j?.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+                    const kehadiranColor: Record<string, string> = { hadir: 'bg-green-100 text-green-700', sakit: 'bg-yellow-100 text-yellow-700', izin: 'bg-blue-100 text-blue-700', alfa: 'bg-red-100 text-red-700' };
+                    return (
+                      <div key={d.id} className="border border-gray-100 rounded-xl p-4 hover:bg-gray-50/50">
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">{j?.topik_pelajaran || '—'}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{tgl} · {j?.mata_pelajaran?.nama || '—'}</p>
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold capitalize ${kehadiranColor[d.kehadiran] || 'bg-gray-100 text-gray-600'}`}>
+                            {d.kehadiran}
+                          </span>
+                        </div>
+                        {d.catatan && (
+                          <p className="mt-2 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2">{d.catatan}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
       {/* Modal Detail Jurnal */}
       {detailJurnal && (
