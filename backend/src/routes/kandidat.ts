@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import * as kandidatController from '../controllers/kandidatController';
+import { rateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-// Public routes — TODO: tambah express-rate-limit (max 20 req/mnt per IP) sebelum launch production
-router.post('/daftar-publik', kandidatController.daftarPublik);
-router.get('/publik/cari', kandidatController.cariPublik);
-router.get('/publik/:id', kandidatController.infoPublik);
+// Public routes — rate limit 20 req/15mnt per IP
+router.post('/daftar-publik', rateLimiter(20, 15 * 60 * 1000), kandidatController.daftarPublik);
+router.get('/publik/cari', rateLimiter(60, 60 * 1000), kandidatController.cariPublik);
+router.get('/publik/:id', rateLimiter(60, 60 * 1000), kandidatController.infoPublik);
 
 // All routes below require auth
 router.use(authenticate);

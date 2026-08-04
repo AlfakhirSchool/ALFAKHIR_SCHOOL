@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import * as authController from '../controllers/authController';
 import { authenticate, authorize } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-router.post('/login', authController.login);
+// Max 20 percobaan login per 15 menit per IP
+router.post('/login', rateLimiter(20, 15 * 60 * 1000), authController.login);
 router.post('/logout', authenticate, authController.logout);
 router.post('/refresh', authController.refreshToken);
 router.get('/profile', authenticate, authController.getProfile);

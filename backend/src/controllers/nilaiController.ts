@@ -75,6 +75,14 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
   const nilai = await Nilai.findByPk(req.params.id as string);
   if (!nilai) throw createError('Nilai tidak ditemukan', 404);
 
+  // Guru hanya bisa edit nilai yang dia input sendiri
+  if (req.user!.role === 'guru') {
+    const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
+    if (!guru || nilai.guru_id !== (guru as any).id) {
+      throw createError('Tidak berhak mengubah nilai guru lain', 403);
+    }
+  }
+
   const { kuis, tugas, uts, uas, catatan } = req.body;
 
   let nilaiAkhir = nilai.nilai_akhir;

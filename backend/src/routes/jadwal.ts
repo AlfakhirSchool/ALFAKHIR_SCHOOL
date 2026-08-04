@@ -7,10 +7,17 @@ import { kelasIdFilter } from '../utils/levelFilter';
 const router = Router();
 router.use(authenticate);
 
-router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
-  const { guru_id, kelas_id, jenjang } = req.query;
+router.get('/', authorize('admin', 'guru', 'siswa', 'ortu'), async (req: AuthRequest, res: Response): Promise<void> => {
+  let { guru_id, kelas_id, jenjang } = req.query;
   const levelWhere = await kelasIdFilter(req.user?.school_level);
   const where: Record<string, unknown> = { ...levelWhere };
+
+  // Guru hanya bisa lihat jadwal miliknya sendiri
+  if (req.user!.role === 'guru') {
+    const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
+    if (guru) guru_id = (guru as any).id;
+  }
+
   if (guru_id) where.guru_id = guru_id;
   if (kelas_id) where.kelas_id = kelas_id;
 

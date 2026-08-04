@@ -26,11 +26,6 @@ router.get('/hari-ini', async (req: AuthRequest, res: Response): Promise<void> =
   const { sekolah_id } = req.query;
   const today = new Date().toISOString().split('T')[0];
 
-  let sekolahFilter = '';
-  if (sekolah_id) {
-    sekolahFilter = `AND ag.sekolah_id = '${sekolah_id}'`;
-  }
-
   const rows = await sequelize.query(
     `SELECT ag.*, u.nama AS nama_siswa, s.nisn, s.nis,
             k.nama AS nama_kelas, sch.nama AS nama_sekolah, sch.level AS jenjang
@@ -39,9 +34,9 @@ router.get('/hari-ini', async (req: AuthRequest, res: Response): Promise<void> =
      JOIN users u ON s.user_id = u.id
      JOIN kelas k ON s.kelas_id = k.id
      JOIN sekolah sch ON ag.sekolah_id = sch.id
-     WHERE ag.tanggal = :today ${sekolahFilter}
+     WHERE ag.tanggal = :today ${sekolah_id ? 'AND ag.sekolah_id = :sekolahId' : ''}
      ORDER BY COALESCE(ag.waktu_masuk, ag.waktu_pulang) DESC`,
-    { replacements: { today }, type: QueryTypes.SELECT }
+    { replacements: { today, sekolahId: sekolah_id || null }, type: QueryTypes.SELECT }
   );
 
   res.json({ success: true, data: rows });

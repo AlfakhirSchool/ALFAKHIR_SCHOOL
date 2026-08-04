@@ -24,6 +24,6 @@ router.post('/', authorize('admin', 'keuangan'), pembayaranController.create);
 router.get('/laporan', authorize('admin', 'keuangan'), pembayaranController.getLaporan);
 router.put('/:id', authorize('admin'), pembayaranController.update);
 router.delete('/:id', authorize('admin'), pembayaranController.remove);
-router.post('/:id/bayar', authorize('admin'), pembayaranController.bayar);
+router.post('/:id/bayar', authorize('admin', 'keuangan'), pembayaranController.bayar);
 
 export default router;

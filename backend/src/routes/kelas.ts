@@ -9,7 +9,7 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/', authorize('admin', 'guru', 'keuangan'), async (req: AuthRequest, res: Response): Promise<void> => {
   const { sekolah_id, tahun_ajaran, jenjang } = req.query;
   const where: Record<string, unknown> = {};
   const sekolahWhere: Record<string, unknown> = {};
@@ -95,6 +95,10 @@ router.delete('/:id', authorize('admin'), async (req: AuthRequest, res: Response
   if (req.user?.school_level && (kelas as any).sekolah?.level !== req.user.school_level) {
     res.status(403).json({ success: false, message: 'Akses ditolak' }); return;
   }
+  const siswaCount = await Siswa.count({ where: { kelas_id: kelas.id } });
+  if (siswaCount > 0) {
+    res.status(409).json({ success: false, message: `Tidak bisa hapus: kelas masih memiliki ${siswaCount} siswa` }); return;
+  }
   await kelas.destroy();
   res.json({ success: true, message: 'Kelas berhasil dihapus' });
 });
@@ -108,7 +112,7 @@ router.get('/:id/siswa', authorize('admin', 'guru'), async (req: AuthRequest, re
   res.json({ success: true, data: siswaList });
 });
 
-router.get('/:id/jadwal', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/:id/jadwal', authorize('admin', 'guru'), async (req: AuthRequest, res: Response): Promise<void> => {
   const jadwalList = await JadwalPelajaran.findAll({
     where: { kelas_id: req.params.id },
     include: [

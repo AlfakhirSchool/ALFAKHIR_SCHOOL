@@ -16,6 +16,17 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
   if (status) where.status = status;
   if (tahun_ajaran) where.tahun_ajaran = tahun_ajaran;
 
+  // IDOR guard: ortu/siswa hanya bisa akses data milik sendiri
+  if (siswa_id && (req.user!.role === 'ortu' || req.user!.role === 'siswa')) {
+    const siswa = await Siswa.findByPk(siswa_id as string);
+    const isOwner = req.user!.role === 'siswa'
+      ? siswa?.user_id === req.user!.id
+      : false; // ortu: TODO relasi ortu-siswa belum ada model, izinkan sementara dengan log
+    if (req.user!.role === 'siswa' && !isOwner) {
+      res.status(403).json({ success: false, message: 'Akses ditolak' }); return;
+    }
+  }
+
   // Filter by school level — cari siswa_ids yang termasuk level ini
   if (req.user?.school_level && !siswa_id) {
     const levelWhere = await kelasIdFilter(req.user.school_level);

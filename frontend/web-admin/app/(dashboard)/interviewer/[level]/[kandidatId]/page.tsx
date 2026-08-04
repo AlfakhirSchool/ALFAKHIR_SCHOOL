@@ -46,9 +46,13 @@ function getPredikat(skor: number) {
   return             { grade: 'D', desc: 'Kurang',      color: 'text-red-600',     bar: 'bg-red-500' };
 }
 
-// Simple markdown renderer
+// Simple markdown renderer — sanitasi HTML sebelum inject ke DOM
+function escapeHtml(s: string) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 function renderMarkdown(text: string) {
-  return text
+  const safe = escapeHtml(text);
+  return safe
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/^## (.+)$/gm, '<h3 class="font-black text-slate-800 text-base mt-4 mb-1">$1</h3>')
     .replace(/^- (.+)$/gm, '<li class="ml-4 text-slate-600 text-sm">• $1</li>')
