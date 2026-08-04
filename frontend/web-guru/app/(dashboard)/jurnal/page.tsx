@@ -313,13 +313,7 @@ export default function JurnalPage() {
                       )}
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => openDetailSiswa(j)}
-                        className="text-xs px-3 py-1.5 bg-teal-50 text-[#1B8B87] border border-[#1B8B87]/30 rounded-lg hover:bg-teal-100 flex items-center gap-1"
-                      >
-                        <Users size={12} /> Isi Siswa
-                      </button>
-                      {j.status !== 'approved' && (
+{j.status !== 'approved' && (
                         <>
                           <button onClick={() => openEdit(j)} className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50">Edit</button>
                           {j.status === 'draft' && (
