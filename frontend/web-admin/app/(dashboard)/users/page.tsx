@@ -523,6 +523,7 @@ export default function UsersPage() {
                   onChange={e => setCreateForm(f => ({ ...f, email: e.target.value.trim().toLowerCase().replace(/[@\s]/g, '') }))}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                   placeholder="nama.admin"
+                  autoComplete="off"
                 />
                 <p className="text-xs text-blue-500 mt-1">Otomatis huruf kecil — cth: admin.sd</p>
               </div>
@@ -532,7 +533,8 @@ export default function UsersPage() {
                   <input type={showCreatePw ? 'text' : 'password'} value={createForm.password}
                     onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))}
                     className="w-full px-4 py-2.5 pr-20 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316] font-mono"
-                    placeholder="Min. 6 karakter" />
+                    placeholder="Min. 6 karakter"
+                    autoComplete="new-password" />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
                     <button type="button" onClick={() => setShowCreatePw(s => !s)} className="p-1.5 text-gray-400 hover:text-gray-600 text-sm">
                       {showCreatePw ? '🙈' : '👁️'}

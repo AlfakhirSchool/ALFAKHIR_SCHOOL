@@ -48,6 +48,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <PageTransition key={pathname}>
             {children}
           </PageTransition>
+          <footer className="text-center py-3 text-xs text-gray-400 border-t border-gray-100">
+            Developed by <span className="font-semibold text-gray-500">Feri</span> · Al-Fakhir School
+          </footer>
         </main>
       </div>
     </>
