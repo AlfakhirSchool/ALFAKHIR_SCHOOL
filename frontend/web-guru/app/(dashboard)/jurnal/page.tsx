@@ -65,7 +65,7 @@ export default function JurnalPage() {
 
   const { data: jadwalGuru = [] } = useQuery({
     queryKey: ['jadwal-guru', guruId],
-    queryFn: () => api.get('/jadwal', { params: { guru_id: guruId } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/jadwal-pelajaran', { params: { guru_id: guruId } }).then(r => r.data.data || []),
     enabled: !!guruId,
   });
 
