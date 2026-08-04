@@ -484,12 +484,22 @@ export default function JurnalPage() {
                                   className="text-red-400 hover:text-red-600"><Trash2 size={11} /></button>
                               </div>
                             ) : (
-                              <label className={`cursor-pointer flex flex-col items-center gap-0.5 text-gray-400 hover:text-[#1B8B87] ${uploadingFoto === s.id ? 'opacity-50 pointer-events-none' : ''}`}>
-                                <Camera size={18} />
-                                <span className="text-[10px]">{uploadingFoto === s.id ? '...' : 'Upload'}</span>
-                                <input type="file" accept="image/*" className="hidden"
-                                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadFotoSiswa(s.id, f); e.target.value = ''; }} />
-                              </label>
+                              <div className={`flex flex-col items-center gap-1 ${uploadingFoto === s.id ? 'opacity-50 pointer-events-none' : ''}`}>
+                                {/* Kamera langsung (HP) */}
+                                <label className="cursor-pointer flex flex-col items-center gap-0.5 text-[#1B8B87] hover:text-[#156f6c]" title="Ambil foto dari kamera">
+                                  <Camera size={18} />
+                                  <span className="text-[10px]">Kamera</span>
+                                  <input type="file" accept="image/*" capture="environment" className="hidden"
+                                    onChange={e => { const f = e.target.files?.[0]; if (f) uploadFotoSiswa(s.id, f); e.target.value = ''; }} />
+                                </label>
+                                {/* Pilih dari galeri */}
+                                <label className="cursor-pointer text-[10px] text-gray-400 hover:text-gray-600 underline underline-offset-1" title="Pilih dari galeri">
+                                  Galeri
+                                  <input type="file" accept="image/*" className="hidden"
+                                    onChange={e => { const f = e.target.files?.[0]; if (f) uploadFotoSiswa(s.id, f); e.target.value = ''; }} />
+                                </label>
+                                {uploadingFoto === s.id && <span className="text-[10px] text-gray-400">Upload...</span>}
+                              </div>
                             )}
                           </td>
                         </tr>
