@@ -27,7 +27,7 @@ const getSiswaByRfid = async (rfid_uid: string) => {
   }
 
   const [siswa] = await sequelize.query<any>(
-    `SELECT s.id AS siswa_id, u.nama AS nama_siswa, u.foto_url,
+    `SELECT s.id AS siswa_id, u.nama AS nama_siswa, u.profile_pic AS foto_url,
             s.nis, k.nama AS nama_kelas, k.sekolah_id,
             sch.nama AS nama_sekolah,
             array_agg(ot.no_telp) FILTER (WHERE ot.no_telp IS NOT NULL) AS ortu_phones
@@ -37,7 +37,7 @@ const getSiswaByRfid = async (rfid_uid: string) => {
      JOIN sekolah sch ON k.sekolah_id = sch.id
      LEFT JOIN orang_tua ot ON ot.siswa_id = s.id
      WHERE s.rfid_uid = :uid
-     GROUP BY s.id, u.nama, u.foto_url, s.nis, k.nama, k.sekolah_id, sch.nama`,
+     GROUP BY s.id, u.nama, u.profile_pic, s.nis, k.nama, k.sekolah_id, sch.nama`,
     { replacements: { uid: rfid_uid }, type: QueryTypes.SELECT }
   );
 

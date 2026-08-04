@@ -6,6 +6,7 @@ interface JawabanFormAttributes {
   kandidat_id: string;
   role: 'ortu' | 'siswa';
   jawaban: object;
+  is_final: boolean;
   created_at?: Date;
   updated_at?: Date;
 }
@@ -18,6 +19,7 @@ class JawabanForm extends Model<JawabanFormAttributes, JawabanFormCreationAttrib
   declare kandidat_id: string;
   declare role: 'ortu' | 'siswa';
   declare jawaban: object;
+  declare is_final: boolean;
 }
 
 JawabanForm.init(
@@ -26,6 +28,7 @@ JawabanForm.init(
     kandidat_id: { type: DataTypes.UUID, allowNull: false },
     role: { type: DataTypes.ENUM('ortu', 'siswa'), allowNull: false },
     jawaban: { type: DataTypes.JSONB, allowNull: false, defaultValue: {} },
+    is_final: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   },
   {
     sequelize,

@@ -82,7 +82,7 @@ app.get(`${PREFIX}/health`, (_req, res) => {
 
 app.get(`${PREFIX}/health/email`, async (_req, res) => {
   const ok = await testEmailConnection();
-  res.json({ smtp: ok ? 'connected' : 'not configured', user: process.env.SMTP_USER || null });
+  res.json({ smtp: ok ? 'connected' : 'not configured' });
 });
 
 app.use(`${PREFIX}/auth`, authRoutes);

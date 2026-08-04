@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import {
   LayoutDashboard, ClipboardList, ClipboardCheck, BookOpen, FileText,
   BarChart3, BookMarked, Users, Calendar, MessageSquare, NotebookPen,
-  PanelLeftClose, PanelLeftOpen, ChevronRight, ChevronDown,
+  PanelLeftClose, PanelLeftOpen, ChevronRight, ChevronDown, Settings,
 } from 'lucide-react';
 
 type MenuItem  = { href: string; icon: React.ReactNode; label: string };
@@ -41,6 +41,7 @@ const menuEntries: Entry[] = [
     ],
   },
   { href: '/feedback', icon: <MessageSquare size={16} />, label: 'Saran & Pertanyaan' },
+  { href: '/settings', icon: <Settings size={16} />, label: 'Pengaturan' },
 ];
 
 function GroupItem({ group, collapsed }: { group: MenuGroup; collapsed: boolean }) {

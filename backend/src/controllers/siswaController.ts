@@ -49,6 +49,11 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
 };
 
 export const getById = async (req: AuthRequest, res: Response): Promise<void> => {
+  if (req.user!.role === 'siswa') {
+    const ownSiswa = await Siswa.findOne({ where: { user_id: req.user!.id } });
+    if (!ownSiswa || (ownSiswa as any).id !== req.params.id) throw createError('Akses ditolak', 403);
+  }
+
   const siswa = await Siswa.findByPk(req.params.id as string, {
     include: [
       { model: User, as: 'user', attributes: { exclude: ['password_hash'] } },

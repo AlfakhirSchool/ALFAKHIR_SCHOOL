@@ -185,6 +185,29 @@ export default function PembayaranPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {(() => {
+          const pagination = (data as any)?.pagination;
+          if (!pagination || pagination.totalPages <= 1) return null;
+          return (
+            <div className="flex items-center justify-between mt-4 px-1">
+              <p className="text-sm text-gray-500">
+                Halaman {pagination.page} dari {pagination.totalPages} · Total {pagination.total} data
+              </p>
+              <div className="flex gap-2">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-40">
+                  ← Sebelumnya
+                </button>
+                <button onClick={() => setPage(p => p + 1)} disabled={page >= pagination.totalPages}
+                  className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-40">
+                  Selanjutnya →
+                </button>
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Modal Buat Tagihan */}

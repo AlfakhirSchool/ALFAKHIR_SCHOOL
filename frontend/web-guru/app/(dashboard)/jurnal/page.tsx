@@ -141,7 +141,7 @@ export default function JurnalPage() {
   const { data: allKelasList = [] } = useQuery({
     queryKey: ['kelas-all'],
     queryFn: () => api.get('/kelas').then(r => r.data.data || []),
-    enabled: view === 'per-siswa',
+    enabled: !!guruId,
   });
 
   const [psKelasId, setPsKelasId] = useState('');
@@ -351,7 +351,7 @@ export default function JurnalPage() {
                   <select value={form.kelas_id} onChange={(e) => f('kelas_id', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]">
                     <option value="">-- Kelas --</option>
-                    {(kelasList || []).map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                    {(kelasList.length > 0 ? kelasList : allKelasList as any[]).map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
                   </select>
                 </div>
                 <div>

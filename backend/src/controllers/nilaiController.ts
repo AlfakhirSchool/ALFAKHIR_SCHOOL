@@ -52,6 +52,11 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
 };
 
 export const getSiswa = async (req: AuthRequest, res: Response): Promise<void> => {
+  if (req.user!.role === 'siswa') {
+    const siswa = await Siswa.findOne({ where: { user_id: req.user!.id } });
+    if (!siswa || (siswa as any).id !== req.params.siswa_id) throw createError('Akses ditolak', 403);
+  }
+
   const { semester, tahun_ajaran } = req.query;
   const where: Record<string, unknown> = { siswa_id: req.params.siswa_id };
   if (semester) where.semester = semester;

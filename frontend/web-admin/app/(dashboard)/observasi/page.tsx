@@ -75,7 +75,7 @@ export default function ObservasiPage() {
   // ── Queries ──
   const { data, isLoading } = useQuery({
     queryKey: ['kandidat', filterStatus, filterLevel],
-    queryFn: () => api.get('/kandidat', { params: { status: filterStatus || undefined, level: filterLevel || undefined, limit: 200 } }).then(r => r.data),
+    queryFn: () => api.get('/kandidat', { params: { status: filterStatus || undefined, level: filterLevel || undefined, limit: 500 } }).then(r => r.data),
   });
   const kandidatList: Kandidat[] = data?.data || [];
   const stats = data?.stats || { total: 0, pending: 0, review: 0, diterima: 0, ditolak: 0 };

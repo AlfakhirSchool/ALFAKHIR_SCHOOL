@@ -2,6 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 
 const store = new Map<string, { count: number; resetAt: number }>();
 
+// Bersihkan entri expired setiap 60 detik agar map tidak tumbuh tak terbatas
+setInterval(() => {
+  const now = Date.now();
+  store.forEach((v, k) => { if (now > v.resetAt) store.delete(k); });
+}, 60 * 1000);
+
 export function rateLimiter(maxRequests: number, windowMs: number) {
   return (req: Request, res: Response, next: NextFunction): void => {
     const key = req.ip || 'unknown';

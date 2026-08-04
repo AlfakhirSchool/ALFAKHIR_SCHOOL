@@ -84,7 +84,7 @@ export default function NilaiPage() {
           uas: parseFloat(r.uas) || 0,
         }));
       for (const p of payloads) {
-        await api.post('/nilai', p).catch(() => api.put('/nilai/0', p));
+        await api.post('/nilai', p);
       }
     },
     onSuccess: () => setSaveStatus('Nilai berhasil disimpan!'),

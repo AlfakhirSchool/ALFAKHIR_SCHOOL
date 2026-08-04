@@ -22,7 +22,7 @@ const haversineMeters = (lat1: number, lng1: number, lat2: number, lng2: number)
 };
 
 // Daftar absensi gerbang hari ini
-router.get('/hari-ini', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/hari-ini', authorize('admin', 'guru'), async (req: AuthRequest, res: Response): Promise<void> => {
   const { sekolah_id } = req.query;
   const today = new Date().toISOString().split('T')[0];
 
@@ -187,19 +187,16 @@ router.get('/cari-siswa', authorize('admin'), async (req: AuthRequest, res: Resp
   const { q, sekolah_id } = req.query;
   if (!q || String(q).length < 2) { res.json({ success: true, data: [] }); return; }
 
-  let skolahFilter = '';
-  if (sekolah_id) skolahFilter = `AND k.sekolah_id = '${sekolah_id}'`;
-
   const rows = await sequelize.query<any>(
     `SELECT s.id, u.nama, s.nisn, s.nis, k.nama AS nama_kelas, sch.nama AS nama_sekolah, sch.level
      FROM siswa s
      JOIN users u ON s.user_id = u.id
      JOIN kelas k ON s.kelas_id = k.id
      JOIN sekolah sch ON k.sekolah_id = sch.id
-     WHERE u.nama ILIKE :q ${skolahFilter}
+     WHERE u.nama ILIKE :q ${sekolah_id ? 'AND k.sekolah_id = :sekolahId' : ''}
      ORDER BY u.nama
      LIMIT 15`,
-    { replacements: { q: `%${q}%` }, type: QueryTypes.SELECT }
+    { replacements: { q: `%${q}%`, ...(sekolah_id ? { sekolahId: String(sekolah_id) } : {}) }, type: QueryTypes.SELECT }
   );
 
   res.json({ success: true, data: rows });
@@ -291,7 +288,8 @@ router.delete('/keterangan', authorize('admin'), async (req: AuthRequest, res: R
 
 // Generate token harian untuk QR gerbang
 const getGateToken = (mode: string, date: string) => {
-  const secret = process.env.GATE_SECRET || 'alfakhir_gate_2025';
+  const secret = process.env.GATE_SECRET;
+  if (!secret) throw new Error('GATE_SECRET env var tidak diset — set di .env sebelum menggunakan fitur absensi gerbang');
   const hash = crypto.createHash('sha256').update(`${date}:${mode}:${secret}`).digest('hex');
   const code = String(parseInt(hash.slice(0, 8), 16) % 1000000).padStart(6, '0');
   const qr_data = `GATE:${mode}:${date}:${code}`;

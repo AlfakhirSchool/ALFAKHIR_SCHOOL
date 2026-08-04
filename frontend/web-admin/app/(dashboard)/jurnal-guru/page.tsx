@@ -57,7 +57,7 @@ export default function JurnalGuruAdminPage() {
   const pagination = data?.pagination || {};
 
   const approveJurnal = useMutation({
-    mutationFn: (id: string) => api.post(`/jurnal-guru/${id}/review`),
+    mutationFn: (id: string) => api.post(`/jurnal-guru/${id}/review`, { action: 'approve' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['jurnal-admin'] }),
   });
 

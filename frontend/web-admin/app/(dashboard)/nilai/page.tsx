@@ -33,7 +33,13 @@ export default function NilaiAdminPage() {
   });
 
   const nilaiList = data?.data || [];
-  const stats = data?.statistics || {};
+  const nilaiAngka = nilaiList.map((n: any) => n.nilai_akhir || 0).filter((v: number) => v > 0);
+  const stats = nilaiAngka.length > 0 ? {
+    rata_rata: nilaiAngka.reduce((a: number, b: number) => a + b, 0) / nilaiAngka.length,
+    tertinggi: Math.max(...nilaiAngka),
+    terendah: Math.min(...nilaiAngka),
+    bawah_kkm: nilaiAngka.filter((v: number) => v < 75).length,
+  } : {};
 
   const gradeColor: Record<string, string> = {
     A: 'bg-green-50 text-green-700', B: 'bg-blue-50 text-blue-700',
