@@ -91,41 +91,45 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
 
       // Absensi gerbang hari ini
       const todayStr = new Date().toISOString().split('T')[0];
-      const gerbangFilter = schoolLevel
-        ? `AND sch.level = '${schoolLevel}'`
-        : '';
-      const [gerbangRow] = await sequelize.query<any>(
-        `SELECT
-           COUNT(*) FILTER (WHERE ag.waktu_masuk IS NOT NULL) AS hadir,
-           COUNT(s.id) AS total
-         FROM siswa s
-         JOIN kelas k ON s.kelas_id = k.id
-         JOIN sekolah sch ON k.sekolah_id = sch.id
-         LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id AND ag.tanggal = :tgl
-         JOIN users u ON s.user_id = u.id AND u.is_active = true
-         WHERE 1=1 ${gerbangFilter}`,
-        { replacements: { tgl: todayStr }, type: QueryTypes.SELECT },
-      );
-      if (gerbangRow && parseInt(gerbangRow.total) > 0) {
-        const hadir = parseInt(gerbangRow.hadir);
-        const total = parseInt(gerbangRow.total);
-        const alfa = total - hadir;
-        notifications.push({
-          id: 'absensi-gerbang',
-          type: 'absensi',
-          message: `${hadir}/${total} siswa sudah hadir hari ini`,
-          created_at: new Date(),
-          read: false,
-        });
-        if (alfa > 0) {
+      try {
+        const gerbangFilter = schoolLevel
+          ? `AND sch.level = '${schoolLevel}'`
+          : '';
+        const [gerbangRow] = await sequelize.query<any>(
+          `SELECT
+             COUNT(*) FILTER (WHERE ag.waktu_masuk IS NOT NULL) AS hadir,
+             COUNT(s.id) AS total
+           FROM siswa s
+           JOIN kelas k ON s.kelas_id = k.id
+           JOIN sekolah sch ON k.sekolah_id = sch.id
+           LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id AND ag.tanggal = :tgl
+           JOIN users u ON s.user_id = u.id AND u.is_active = true
+           WHERE 1=1 ${gerbangFilter}`,
+          { replacements: { tgl: todayStr }, type: QueryTypes.SELECT },
+        );
+        if (gerbangRow && parseInt(gerbangRow.total) > 0) {
+          const hadir = parseInt(gerbangRow.hadir);
+          const total = parseInt(gerbangRow.total);
+          const alfa = total - hadir;
           notifications.push({
-            id: 'absensi-alfa',
-            type: 'alfa',
-            message: `${alfa} siswa belum hadir / tidak ada keterangan`,
+            id: 'absensi-gerbang',
+            type: 'absensi',
+            message: `${hadir}/${total} siswa sudah hadir hari ini`,
             created_at: new Date(),
             read: false,
           });
+          if (alfa > 0) {
+            notifications.push({
+              id: 'absensi-alfa',
+              type: 'alfa',
+              message: `${alfa} siswa belum hadir / tidak ada keterangan`,
+              created_at: new Date(),
+              read: false,
+            });
+          }
         }
+      } catch {
+        // absensi_gerbang table may not exist yet
       }
 
       // Pembayaran tunggakan (belum lunas, jatuh tempo lewat)
