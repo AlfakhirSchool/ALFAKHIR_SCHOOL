@@ -32,7 +32,7 @@ export default function JurnalPage() {
   const { user, updateUser } = useAuthStore();
 
   const { data: profileData } = useQuery({
-    queryKey: ['guru-profile'],
+    queryKey: ['guru-profile', user?.id],
     queryFn: () => api.get('/auth/me').then(r => {
       const d = r.data.data;
       if (d?.guru && !((user as any)?.school_levels)?.length) {
@@ -57,8 +57,10 @@ export default function JurnalPage() {
   const [siswaMsg, setSiswaMsg] = useState('');
 
   const { data: jurnalList, isLoading } = useQuery({
-    queryKey: ['jurnal-guru'],
+    queryKey: ['jurnal-guru', user?.id],
     queryFn: () => api.get('/jurnal-guru').then(r => r.data.data || []),
+    enabled: !!user?.id,
+    staleTime: 0,
   });
 
   const { data: jadwalGuru = [] } = useQuery({
