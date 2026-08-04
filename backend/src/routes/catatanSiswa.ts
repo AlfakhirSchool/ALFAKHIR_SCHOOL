@@ -40,8 +40,8 @@ router.get('/', authorize('guru', 'admin'), async (req: AuthRequest, res: Respon
   const { count, rows } = await CatatanSiswaGuru.findAndCountAll({
     where,
     include: [
-      { model: Siswa, as: 'siswa', include: [{ model: User, as: 'user', attributes: ['nama'] }, { model: Kelas, as: 'kelas', attributes: ['id', 'nama'] }] },
-      { model: Guru, as: 'guru', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
+      { model: Siswa, as: 'siswa', include: [{ model: User, as: 'user', attributes: ['nama'] as any }, { model: Kelas, as: 'kelas', attributes: ['id', 'nama'] as any }] as any },
+      { model: Guru, as: 'guru', include: [{ model: User, as: 'user', attributes: ['nama'] as any }] as any },
     ],
     limit: parseInt(limit as string),
     offset,
@@ -75,7 +75,7 @@ router.post('/', authorize('guru', 'admin'), upload.single('foto'), async (req: 
 
 // PUT /catatan-siswa/:id
 router.put('/:id', authorize('guru', 'admin'), upload.single('foto'), async (req: AuthRequest, res: Response): Promise<void> => {
-  const catatan = await CatatanSiswaGuru.findByPk(req.params.id);
+  const catatan = await CatatanSiswaGuru.findByPk(req.params.id as string);
   if (!catatan) throw createError('Catatan tidak ditemukan', 404);
 
   if (req.user!.role === 'guru') {
@@ -99,7 +99,7 @@ router.put('/:id', authorize('guru', 'admin'), upload.single('foto'), async (req
 
 // DELETE /catatan-siswa/:id
 router.delete('/:id', authorize('guru', 'admin'), async (req: AuthRequest, res: Response): Promise<void> => {
-  const catatan = await CatatanSiswaGuru.findByPk(req.params.id);
+  const catatan = await CatatanSiswaGuru.findByPk(req.params.id as string);
   if (!catatan) throw createError('Catatan tidak ditemukan', 404);
 
   if (req.user!.role === 'guru') {
