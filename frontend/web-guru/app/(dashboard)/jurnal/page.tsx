@@ -138,6 +138,12 @@ export default function JurnalPage() {
   const [detailJurnal, setDetailJurnal] = useState<any>(null);
 
   // State untuk view per-siswa
+  const { data: allKelasList = [] } = useQuery({
+    queryKey: ['kelas-all'],
+    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    enabled: view === 'per-siswa',
+  });
+
   const [psKelasId, setPsKelasId] = useState('');
   const [psSiswaId, setPsSiswaId] = useState('');
   const [psTahunAjaran, setPsTahunAjaran] = useState('');
@@ -541,7 +547,7 @@ export default function JurnalPage() {
                   <select value={psKelasId} onChange={e => { setPsKelasId(e.target.value); setPsSiswaId(''); }}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#1B8B87]">
                     <option value="">-- Pilih Kelas --</option>
-                    {kelasList.map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                    {(allKelasList as any[]).map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
                   </select>
                 </div>
                 <div>
