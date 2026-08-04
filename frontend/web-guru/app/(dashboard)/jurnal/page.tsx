@@ -67,20 +67,13 @@ export default function JurnalPage() {
     enabled: !!guruId,
   });
 
-  const { data: allMapelList = [] } = useQuery({
-    queryKey: ['mapel-all'],
-    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []),
-    enabled: !!guruId,
-  });
-
   // Kelas unik dari jadwal
   const kelasList = [...new Map((jadwalGuru as any[]).filter(j => j.kelas).map(j => [j.kelas.id, j.kelas])).values()];
-  // Mapel unik: dari jadwal, fallback ke semua mapel kalau jadwal kosong
+  // Mapel unik dari jadwal guru — hanya mapel yang diajarkan guru ini
   const mapelAll = [...new Map((jadwalGuru as any[]).filter(j => j.mata_pelajaran).map(j => [j.mata_pelajaran.id, j.mata_pelajaran])).values()];
-  const mapelFromJadwal = form.kelas_id
+  const mapelList = form.kelas_id
     ? [...new Map((jadwalGuru as any[]).filter(j => j.kelas_id === form.kelas_id && j.mata_pelajaran).map(j => [j.mata_pelajaran.id, j.mata_pelajaran])).values()]
     : mapelAll;
-  const mapelList = mapelFromJadwal.length > 0 ? mapelFromJadwal : (allMapelList as any[]);
 
   // Siswa untuk jurnal yang aktif
   const { data: siswaKelas } = useQuery({
