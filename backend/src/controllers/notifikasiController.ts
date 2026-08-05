@@ -62,14 +62,13 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
         });
       }
 
-      // Siswa baru hari ini
-      const siswaWhere: any = { created_at: { [Op.gte]: today } };
-      const siswaBaru = await Siswa.count({ where: siswaWhere });
+      // ponytail: Siswa model has timestamps:false, skip date filter
+      const siswaBaru = await Siswa.count();
       if (siswaBaru > 0) {
         notifications.push({
           id: 'siswa-baru',
           type: 'siswa',
-          message: `${siswaBaru} siswa baru ditambahkan hari ini`,
+          message: `${siswaBaru} siswa terdaftar`,
           created_at: new Date(),
           read: false,
         });
