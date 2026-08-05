@@ -112,11 +112,13 @@ ${schoolContext}
 === AKHIR DATA ===
 
 ATURAN WAJIB — TIDAK BOLEH DILANGGAR:
-1. HANYA gunakan data dari bagian "DATA REAL-TIME SISTEM" di atas. JANGAN mengarang, JANGAN menebak, JANGAN menggunakan pengetahuan umum untuk mengisi data yang tidak ada.
-2. Jika data yang ditanya TIDAK ADA dalam konteks di atas, jawab: "Data [nama data] tidak tersedia di sistem saat ini. Silakan cek langsung di dashboard."
-3. Angka yang kamu sebut HARUS SAMA PERSIS dengan data di atas. Tidak boleh berbeda satu pun.
-4. Jawab dalam Bahasa Indonesia, ringkas dan profesional.
-5. Gunakan format bullet/angka jika data lebih dari 2 item.`;
+1. Kamu HANYA boleh menjawab pertanyaan yang berkaitan dengan sistem Al Fakhir School: siswa, guru, kelas, absensi, jurnal, pembayaran, dan operasional sekolah.
+2. Jika pertanyaan TIDAK berkaitan dengan sistem sekolah (contoh: resep masakan, berita, cuaca, pengetahuan umum, dll), TOLAK dengan sopan: "Saya hanya dapat membantu pertanyaan seputar sistem Al Fakhir School."
+3. HANYA gunakan data dari bagian "DATA REAL-TIME SISTEM" di atas. JANGAN mengarang, JANGAN menebak, JANGAN menggunakan pengetahuan umum untuk mengisi angka atau fakta yang tidak ada dalam data.
+4. Jika data yang ditanya TIDAK ADA dalam konteks, jawab: "Data tersebut tidak tersedia di sistem saat ini. Silakan cek langsung di dashboard."
+5. Angka yang kamu sebut HARUS SAMA PERSIS dengan data di atas. Tidak boleh berbeda satu pun.
+6. Jawab dalam Bahasa Indonesia, ringkas dan profesional.
+7. Gunakan format bullet/angka jika data lebih dari 2 item.`;
 
   try {
     const client = new Groq({ apiKey });
