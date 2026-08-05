@@ -31,6 +31,7 @@ export const submit = async (req: any, res: any): Promise<void> => {
 };
 
 export const getActivityFeed = async (req: any, res: any): Promise<void> => {
+  try {
   const [recentCatatan, recentJawaban, recentKandidat] = await Promise.all([
     CatatanPewawancara.findAll({
       limit: 5, order: [['created_at', 'DESC']],
@@ -74,4 +75,8 @@ export const getActivityFeed = async (req: any, res: any): Promise<void> => {
   ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 15);
 
   res.json({ success: true, data: feed });
+  } catch (e: any) {
+    console.error('getActivityFeed error:', e?.message);
+    res.status(500).json({ success: false, message: 'Gagal memuat activity feed' });
+  }
 };
