@@ -71,10 +71,12 @@ PEDOMAN:
 
     const messages = [
       { role: 'system' as const, content: systemPrompt },
-      ...(history as any[]).map((h: any) => ({
-        role: h.role as 'user' | 'assistant',
-        content: h.content,
-      })),
+      ...(history as any[])
+        .filter((h: any) => h.role === 'user' || h.role === 'assistant')
+        .map((h: any) => ({
+          role: h.role as 'user' | 'assistant',
+          content: String(h.content),
+        })),
       { role: 'user' as const, content: message },
     ];
 
