@@ -16,6 +16,6 @@ router.post('/', authorize('admin'), ctrl.create);
 router.put('/:id', authorize('admin'), ctrl.update);
 router.delete('/:id', authorize('admin'), ctrl.remove);
 
-router.get('/kandidat/:kandidat_id/hasil', authorize('admin', 'guru'), ctrl.getHasil);
+router.get('/kandidat/:kandidat_id/hasil', authorize('admin', 'guru', 'pewawancara'), ctrl.getHasil);
 
 export default router;

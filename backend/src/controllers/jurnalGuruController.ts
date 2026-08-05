@@ -57,6 +57,10 @@ export const getById = async (req: AuthRequest, res: Response): Promise<void> =>
     ],
   });
   if (!jurnal) throw createError('Jurnal tidak ditemukan', 404);
+  if (req.user!.role === 'guru') {
+    const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
+    if (!guru || jurnal.guru_id !== (guru as any).id) throw createError('Akses ditolak', 403);
+  }
   res.json({ success: true, data: jurnal });
 };
 
@@ -108,6 +112,10 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
 export const remove = async (req: AuthRequest, res: Response): Promise<void> => {
   const jurnal = await JurnalGuru.findByPk(req.params.id as string);
   if (!jurnal) throw createError('Jurnal tidak ditemukan', 404);
+  if (req.user!.role === 'guru') {
+    const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
+    if (!guru || jurnal.guru_id !== (guru as any).id) throw createError('Tidak berhak menghapus jurnal ini', 403);
+  }
   await jurnal.destroy();
   res.json({ success: true, message: 'Jurnal berhasil dihapus' });
 };

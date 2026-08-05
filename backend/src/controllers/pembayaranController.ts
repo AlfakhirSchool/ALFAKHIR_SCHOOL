@@ -17,12 +17,20 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
   if (tahun_ajaran) where.tahun_ajaran = tahun_ajaran;
 
   // IDOR guard: ortu/siswa hanya bisa akses data milik sendiri
-  if (siswa_id && (req.user!.role === 'ortu' || req.user!.role === 'siswa')) {
+  if (req.user!.role === 'ortu') {
+    // Ortu wajib kirim siswa_id; relasi ortu-siswa belum ada, blok akses tanpa siswa_id
+    if (!siswa_id) {
+      res.status(403).json({ success: false, message: 'Akses ditolak: siswa_id wajib untuk role ortu' }); return;
+    }
+    // Blok akses: ortu tidak bisa lihat pembayaran semua siswa
+    res.status(403).json({ success: false, message: 'Akses pembayaran via portal wali murid belum tersedia' }); return;
+  }
+  if (req.user!.role === 'siswa') {
+    if (!siswa_id) {
+      res.status(403).json({ success: false, message: 'Akses ditolak: siswa_id wajib' }); return;
+    }
     const siswa = await Siswa.findByPk(siswa_id as string);
-    const isOwner = req.user!.role === 'siswa'
-      ? siswa?.user_id === req.user!.id
-      : false; // ortu: TODO relasi ortu-siswa belum ada model, izinkan sementara dengan log
-    if (req.user!.role === 'siswa' && !isOwner) {
+    if (!siswa || siswa.user_id !== req.user!.id) {
       res.status(403).json({ success: false, message: 'Akses ditolak' }); return;
     }
   }

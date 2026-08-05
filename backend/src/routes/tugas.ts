@@ -30,8 +30,17 @@ const makeStorage = (subfolder: string) =>
     },
   });
 
-const uploadTugas  = multer({ storage: makeStorage('tugas'),  limits: { fileSize: 10 * 1024 * 1024 } });
-const uploadJawaban = multer({ storage: makeStorage('jawaban'), limits: { fileSize: 10 * 1024 * 1024 } });
+const allowedMime = ['image/', 'application/pdf', 'application/msword',
+  'application/vnd.openxmlformats', 'application/vnd.ms-excel',
+  'application/vnd.ms-powerpoint', 'text/plain'];
+
+const fileFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (allowedMime.some(m => file.mimetype.startsWith(m))) cb(null, true);
+  else cb(new Error('Tipe file tidak diizinkan. Gunakan PDF, gambar, Word, Excel, atau teks.'));
+};
+
+const uploadTugas   = multer({ storage: makeStorage('tugas'),   limits: { fileSize: 10 * 1024 * 1024 }, fileFilter });
+const uploadJawaban = multer({ storage: makeStorage('jawaban'), limits: { fileSize: 10 * 1024 * 1024 }, fileFilter });
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 

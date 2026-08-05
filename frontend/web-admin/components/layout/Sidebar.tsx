@@ -244,7 +244,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
   const { user } = useAuthStore();
   const level = user?.school_level as SchoolLevel;
 
-  const isPewawancara = user?.role === 'pewawancara' || user?.role === 'guru';
+  const isPewawancara = user?.role === 'pewawancara';
   const isKeuangan    = user?.role === 'keuangan';
   const entries: SidebarEntry[] = isKeuangan
     ? keuanganMenu

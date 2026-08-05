@@ -39,7 +39,7 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
   const hasWhere = Object.keys(guruWhere).length > 0 || Object.getOwnPropertySymbols(guruWhere).length > 0;
   const { count, rows } = await Guru.findAndCountAll({
     where: hasWhere ? guruWhere : undefined,
-    include: [{ model: User, as: 'user', where: userWhere, attributes: { exclude: ['password_hash'] } }],
+    include: [{ model: User, as: 'user', where: userWhere, attributes: { exclude: ['password_hash', 'password_default'] } }],
     limit: parseInt(limit as string),
     offset,
   });
@@ -53,7 +53,7 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
 
 export const getById = async (req: AuthRequest, res: Response): Promise<void> => {
   const guru = await Guru.findByPk(req.params.id as string, {
-    include: [{ model: User, as: 'user', attributes: { exclude: ['password_hash'] } }],
+    include: [{ model: User, as: 'user', attributes: { exclude: ['password_hash', 'password_default'] } }],
   });
   if (!guru) throw createError('Guru tidak ditemukan', 404);
   res.json({ success: true, data: guru });

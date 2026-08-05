@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import Groq from 'groq-sdk';
 import { authenticate, AuthRequest } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 import { User, Siswa, Guru, Kelas, JurnalGuru, Sekolah } from '../models';
 import { QueryTypes } from 'sequelize';
 import sequelize from '../config/database';
@@ -48,13 +49,13 @@ async function getSchoolContext(): Promise<string> {
 
   // Siswa per kelas
   const siswaPerKelas = await sequelize.query<any>(
-    `SELECT k.nama_kelas, sch.level, COUNT(s.id) AS jumlah
+    `SELECT k.nama AS nama_kelas, sch.level, COUNT(s.id) AS jumlah
      FROM kelas k
      JOIN sekolah sch ON k.sekolah_id = sch.id
      LEFT JOIN siswa s ON s.kelas_id = k.id
      LEFT JOIN users u ON s.user_id = u.id AND u.is_active = true
-     GROUP BY k.id, k.nama_kelas, sch.level
-     ORDER BY sch.level, k.nama_kelas`,
+     GROUP BY k.id, k.nama, sch.level
+     ORDER BY sch.level, k.nama`,
     { type: QueryTypes.SELECT }
   ).catch(() => []);
   if ((siswaPerKelas as any[]).length > 0) {
@@ -112,7 +113,7 @@ async function getSchoolContext(): Promise<string> {
   return lines.join('\n');
 }
 
-router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/', rateLimiter(20, 60 * 1000), async (req: AuthRequest, res: Response): Promise<void> => {
   const { message, history = [] } = req.body;
   if (!message) { res.status(400).json({ success: false, message: 'Pesan kosong' }); return; }
 

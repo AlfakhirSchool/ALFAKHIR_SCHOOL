@@ -33,8 +33,8 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
   const { count, rows } = await Siswa.findAndCountAll({
     where,
     include: [
-      { model: User, as: 'user', where: userWhere, attributes: { exclude: ['password_hash'] } },
-      { model: Kelas, as: 'kelas', where: kelasWhere, required: true, include: [{ model: Sekolah, as: 'sekolah', where: Object.keys(sekolahWhere).length ? sekolahWhere : undefined }] },
+      { model: User, as: 'user', where: userWhere, attributes: { exclude: ['password_hash', 'password_default'] } },
+      { model: Kelas, as: 'kelas', where: kelasWhere, required: false, include: [{ model: Sekolah, as: 'sekolah', where: Object.keys(sekolahWhere).length ? sekolahWhere : undefined }] },
     ],
     limit: parseInt(limit as string),
     offset,
@@ -56,7 +56,7 @@ export const getById = async (req: AuthRequest, res: Response): Promise<void> =>
 
   const siswa = await Siswa.findByPk(req.params.id as string, {
     include: [
-      { model: User, as: 'user', attributes: { exclude: ['password_hash'] } },
+      { model: User, as: 'user', attributes: { exclude: ['password_hash', 'password_default'] } },
       { model: Kelas, as: 'kelas', include: [{ model: Sekolah, as: 'sekolah' }] },
     ],
   });
