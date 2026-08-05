@@ -1,54 +1,99 @@
 import { Router, Response } from 'express';
 import Groq from 'groq-sdk';
 import { authenticate, AuthRequest } from '../middleware/auth';
-import { User, Siswa, Guru, Kelas, JurnalGuru, Absensi, Sekolah } from '../models';
-import { Op } from 'sequelize';
+import { User, Siswa, Guru, Kelas, JurnalGuru, Sekolah } from '../models';
 import sequelize from '../config/database';
 
 const router = Router();
 router.use(authenticate);
 
 async function getSchoolContext(): Promise<string> {
-  try {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const lines: string[] = [];
 
-    const [totalSiswa, totalGuru, totalKelas, sekolahList, jurnalPending] = await Promise.all([
-      Siswa.count({ include: [{ model: User, as: 'user', where: { is_active: true } }] }).catch(() => 0),
-      Guru.count().catch(() => 0),
-      Kelas.count().catch(() => 0),
-      Sekolah.findAll({ attributes: ['nama', 'level'] }).catch(() => []),
-      JurnalGuru.count({ where: { status: 'draft' } }).catch(() => 0),
-    ]);
+  lines.push(`TANGGAL: ${today.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`);
 
-    // Absensi gerbang (gate scanner) — same source as dashboard
-    const gerbangStats = await sequelize.query<any>(
-      `SELECT
-         COUNT(*) FILTER (WHERE ag.waktu_masuk IS NOT NULL) AS hadir,
-         COUNT(s.id) AS total
-       FROM siswa s
-       JOIN users u ON s.user_id = u.id AND u.is_active = true
-       LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id AND ag.tanggal = :tgl`,
-      { replacements: { tgl: todayStr }, type: 'SELECT' }
-    ).catch(() => [{ hadir: 0, total: 0 }]);
+  // Unit sekolah
+  const sekolahList = await Sekolah.findAll({ attributes: ['nama', 'level'] }).catch(() => []);
+  lines.push(`UNIT SEKOLAH: ${(sekolahList as any[]).map((s: any) => `${s.nama} (${s.level})`).join(', ')}`);
 
-    const gRow = (gerbangStats as any[])[0] || { hadir: 0, total: 0 };
-    const hadirGerbang = parseInt(gRow.hadir) || 0;
-    const totalSiswaAktif = parseInt(gRow.total) || 0;
-    const belumHadir = totalSiswaAktif - hadirGerbang;
+  // Ringkasan siswa
+  const totalSiswa = await Siswa.count({ include: [{ model: User, as: 'user', where: { is_active: true } }] }).catch(() => null);
+  lines.push(`TOTAL SISWA AKTIF: ${totalSiswa ?? 'data tidak tersedia'}`);
 
-    return `
-DATA SEKOLAH AL FAKHIR (${today.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}):
-- Unit sekolah: ${(sekolahList as any[]).map((s: any) => `${s.nama} (${s.level})`).join(', ')}
-- Total siswa aktif terdaftar: ${totalSiswa}
-- Total guru: ${totalGuru}
-- Total kelas: ${totalKelas}
-- Kehadiran hari ini (absensi gerbang): ${hadirGerbang} hadir dari ${totalSiswaAktif} siswa aktif (${belumHadir} belum hadir)
-- Jurnal guru belum submit: ${jurnalPending}
-    `.trim();
-  } catch {
-    return 'Data sekolah Al Fakhir School (SD & SMP Islam Modern, Sawangan, Depok, Yayasan Prestasi Belia Indonesia).';
+  // Siswa per kelas
+  const siswaPerKelas = await sequelize.query<any>(
+    `SELECT k.nama_kelas, sch.level, COUNT(s.id) AS jumlah
+     FROM kelas k
+     JOIN sekolah sch ON k.sekolah_id = sch.id
+     LEFT JOIN siswa s ON s.kelas_id = k.id
+     LEFT JOIN users u ON s.user_id = u.id AND u.is_active = true
+     GROUP BY k.id, k.nama_kelas, sch.level
+     ORDER BY sch.level, k.nama_kelas`,
+    { type: 'SELECT' }
+  ).catch(() => []);
+  if ((siswaPerKelas as any[]).length > 0) {
+    lines.push('SISWA PER KELAS:');
+    for (const r of siswaPerKelas as any[]) {
+      lines.push(`  - ${r.nama_kelas} (${r.level}): ${r.jumlah} siswa`);
+    }
   }
+
+  // Total guru & kelas
+  const [totalGuru, totalKelas] = await Promise.all([
+    Guru.count().catch(() => null),
+    Kelas.count().catch(() => null),
+  ]);
+  lines.push(`TOTAL GURU: ${totalGuru ?? 'data tidak tersedia'}`);
+  lines.push(`TOTAL KELAS: ${totalKelas ?? 'data tidak tersedia'}`);
+
+  // Absensi gerbang hari ini (sumber sama dengan dashboard)
+  const gerbang = await sequelize.query<any>(
+    `SELECT
+       COUNT(*) FILTER (WHERE ag.waktu_masuk IS NOT NULL) AS hadir,
+       COUNT(s.id) AS total
+     FROM siswa s
+     JOIN users u ON s.user_id = u.id AND u.is_active = true
+     LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id AND ag.tanggal = :tgl`,
+    { replacements: { tgl: todayStr }, type: 'SELECT' }
+  ).catch(() => null);
+
+  if (gerbang && (gerbang as any[])[0]) {
+    const g = (gerbang as any[])[0];
+    const hadir = parseInt(g.hadir) || 0;
+    const total = parseInt(g.total) || 0;
+    lines.push(`KEHADIRAN HARI INI (absensi gerbang): ${hadir} hadir, ${total - hadir} belum hadir, dari ${total} siswa aktif`);
+  } else {
+    lines.push('KEHADIRAN HARI INI: data absensi gerbang tidak tersedia');
+  }
+
+  // Absensi guru-input hari ini (per status)
+  const absensiGuru = await sequelize.query<any>(
+    `SELECT status, COUNT(*) AS total FROM absensi WHERE tanggal = :tgl GROUP BY status`,
+    { replacements: { tgl: todayStr }, type: 'SELECT' }
+  ).catch(() => []);
+  if ((absensiGuru as any[]).length > 0) {
+    const stat = (absensiGuru as any[]).reduce((acc: any, r: any) => { acc[r.status] = parseInt(r.total); return acc; }, {});
+    lines.push(`ABSENSI GURU-INPUT HARI INI: Hadir ${stat.hadir || 0}, Sakit ${stat.sakit || 0}, Izin ${stat.izin || 0}, Alfa ${stat.alfa || 0}`);
+  }
+
+  // Jurnal guru
+  const jurnalDraft = await JurnalGuru.count({ where: { status: 'draft' } }).catch(() => null);
+  const jurnalSubmitted = await JurnalGuru.count({ where: { status: 'submitted' } }).catch(() => null);
+  lines.push(`JURNAL GURU: ${jurnalDraft ?? '?'} draft belum submit, ${jurnalSubmitted ?? '?'} menunggu approval`);
+
+  // Pembayaran
+  const pembayaran = await sequelize.query<any>(
+    `SELECT status, COUNT(*) AS total FROM pembayaran GROUP BY status`,
+    { type: 'SELECT' }
+  ).catch(() => []);
+  if ((pembayaran as any[]).length > 0) {
+    const p = (pembayaran as any[]).reduce((acc: any, r: any) => { acc[r.status] = parseInt(r.total); return acc; }, {});
+    lines.push(`STATUS PEMBAYARAN: Lunas ${p.lunas || 0}, Sebagian ${p.sebagian || 0}, Belum bayar ${p.belum_bayar || 0}`);
+  }
+
+  return lines.join('\n');
 }
 
 router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
@@ -60,16 +105,18 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
 
   const schoolContext = await getSchoolContext();
 
-  const systemPrompt = `Kamu adalah Asisten AI Al Fakhir School — asisten pintar untuk guru, admin, dan staf sekolah Al Fakhir.
+  const systemPrompt = `Kamu adalah Asisten AI Al Fakhir School untuk guru, admin, dan staf.
 
+=== DATA REAL-TIME SISTEM ===
 ${schoolContext}
+=== AKHIR DATA ===
 
-PEDOMAN:
-- Jawab dalam Bahasa Indonesia yang ramah, ringkas, dan profesional
-- Fokus pada konteks sekolah: siswa, absensi, nilai, jadwal, jurnal, dan administrasi
-- Kalau pertanyaan di luar konteks sekolah, tetap bantu tapi ingatkan fokus utama
-- Jangan buat data jika tidak tersedia — katakan data perlu dicek langsung di sistem
-- Gunakan format yang mudah dibaca (bullet, angka) jika perlu`;
+ATURAN WAJIB — TIDAK BOLEH DILANGGAR:
+1. HANYA gunakan data dari bagian "DATA REAL-TIME SISTEM" di atas. JANGAN mengarang, JANGAN menebak, JANGAN menggunakan pengetahuan umum untuk mengisi data yang tidak ada.
+2. Jika data yang ditanya TIDAK ADA dalam konteks di atas, jawab: "Data [nama data] tidak tersedia di sistem saat ini. Silakan cek langsung di dashboard."
+3. Angka yang kamu sebut HARUS SAMA PERSIS dengan data di atas. Tidak boleh berbeda satu pun.
+4. Jawab dalam Bahasa Indonesia, ringkas dan profesional.
+5. Gunakan format bullet/angka jika data lebih dari 2 item.`;
 
   try {
     const client = new Groq({ apiKey });
@@ -88,6 +135,7 @@ PEDOMAN:
     const response = await client.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       max_tokens: 1024,
+      temperature: 0.1,
       messages,
     });
 
