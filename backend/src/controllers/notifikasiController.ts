@@ -133,7 +133,7 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
 
       // Pembayaran tunggakan (belum lunas, jatuh tempo lewat)
       const tunggakan = await Pembayaran.count({
-        where: { status: { [Op.in]: ['pending', 'belum_bayar'] } },
+        where: { status: { [Op.in]: ['belum_bayar', 'sebagian'] } },
       });
       if (tunggakan > 0) {
         notifications.push({
