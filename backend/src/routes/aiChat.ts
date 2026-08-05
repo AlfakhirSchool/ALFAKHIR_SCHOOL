@@ -87,7 +87,11 @@ PEDOMAN:
     res.json({ success: true, data: { reply: text } });
   } catch (e: any) {
     console.error('Gemini error:', e?.message);
-    res.status(500).json({ success: false, message: 'AI gagal merespons, coba lagi' });
+    const status = e?.status === 429 || String(e?.message).includes('429') ? 503 : 500;
+    const msg = status === 503
+      ? 'Kuota AI sedang penuh, coba beberapa menit lagi'
+      : 'AI gagal merespons, coba lagi';
+    res.status(status).json({ success: false, message: msg });
   }
 });
 

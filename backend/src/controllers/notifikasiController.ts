@@ -174,6 +174,7 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
       pagination: { total: notifications.length, page: 1, limit: 20, totalPages: 1 },
     });
   } catch (error) {
+    console.error('Notifikasi error:', error);
     res.status(500).json({ success: false, message: 'Gagal memuat notifikasi' });
   }
 };
