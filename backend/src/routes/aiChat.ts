@@ -13,32 +13,37 @@ async function getSchoolContext(): Promise<string> {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
 
-    const [totalSiswa, totalGuru, totalKelas, sekolahList, absensiHariIni, jurnalPending] = await Promise.all([
-      Siswa.count({ include: [{ model: User, as: 'user', where: { is_active: true } }] }),
-      Guru.count(),
-      Kelas.count(),
-      Sekolah.findAll({ attributes: ['nama', 'level'] }),
-      Absensi.count({ where: { tanggal: todayStr } }),
-      JurnalGuru.count({ where: { status: 'draft' } }),
+    const [totalSiswa, totalGuru, totalKelas, sekolahList, jurnalPending] = await Promise.all([
+      Siswa.count({ include: [{ model: User, as: 'user', where: { is_active: true } }] }).catch(() => 0),
+      Guru.count().catch(() => 0),
+      Kelas.count().catch(() => 0),
+      Sekolah.findAll({ attributes: ['nama', 'level'] }).catch(() => []),
+      JurnalGuru.count({ where: { status: 'draft' } }).catch(() => 0),
     ]);
 
-    const absensiStats = await (sequelize.query as any)(
-      `SELECT status, COUNT(*) as total FROM absensi WHERE tanggal = :today GROUP BY status`,
-      { replacements: { today: todayStr }, type: 'SELECT' }
-    ).catch(() => []);
+    // Absensi gerbang (gate scanner) — same source as dashboard
+    const gerbangStats = await sequelize.query<any>(
+      `SELECT
+         COUNT(*) FILTER (WHERE ag.waktu_masuk IS NOT NULL) AS hadir,
+         COUNT(s.id) AS total
+       FROM siswa s
+       JOIN users u ON s.user_id = u.id AND u.is_active = true
+       LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id AND ag.tanggal = :tgl`,
+      { replacements: { tgl: todayStr }, type: 'SELECT' }
+    ).catch(() => [{ hadir: 0, total: 0 }]);
 
-    const hadir = absensiStats.find((r: any) => r.status === 'hadir')?.total || 0;
-    const sakit = absensiStats.find((r: any) => r.status === 'sakit')?.total || 0;
-    const izin  = absensiStats.find((r: any) => r.status === 'izin')?.total || 0;
-    const alfa  = absensiStats.find((r: any) => r.status === 'alfa')?.total || 0;
+    const gRow = (gerbangStats as any[])[0] || { hadir: 0, total: 0 };
+    const hadirGerbang = parseInt(gRow.hadir) || 0;
+    const totalSiswaAktif = parseInt(gRow.total) || 0;
+    const belumHadir = totalSiswaAktif - hadirGerbang;
 
     return `
 DATA SEKOLAH AL FAKHIR (${today.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}):
-- Unit sekolah: ${sekolahList.map((s: any) => `${s.nama} (${s.level})`).join(', ')}
-- Total siswa aktif: ${totalSiswa}
+- Unit sekolah: ${(sekolahList as any[]).map((s: any) => `${s.nama} (${s.level})`).join(', ')}
+- Total siswa aktif terdaftar: ${totalSiswa}
 - Total guru: ${totalGuru}
 - Total kelas: ${totalKelas}
-- Absensi hari ini: Hadir ${hadir}, Sakit ${sakit}, Izin ${izin}, Alfa ${alfa}, Total tercatat ${absensiHariIni}
+- Kehadiran hari ini (absensi gerbang): ${hadirGerbang} hadir dari ${totalSiswaAktif} siswa aktif (${belumHadir} belum hadir)
 - Jurnal guru belum submit: ${jurnalPending}
     `.trim();
   } catch {
@@ -81,7 +86,7 @@ PEDOMAN:
     ];
 
     const response = await client.chat.completions.create({
-      model: 'llama-3.1-8b-instant',
+      model: 'llama-3.3-70b-versatile',
       max_tokens: 1024,
       messages,
     });
