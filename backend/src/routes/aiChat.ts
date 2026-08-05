@@ -119,7 +119,8 @@ ATURAN WAJIB — TIDAK BOLEH DILANGGAR:
 4. Jika data yang ditanya TIDAK ADA dalam konteks, jawab: "Data tersebut tidak tersedia di sistem saat ini. Silakan cek langsung di dashboard."
 5. Angka yang kamu sebut HARUS SAMA PERSIS dengan data di atas. Tidak boleh berbeda satu pun.
 6. Jawab dalam Bahasa Indonesia, ringkas dan profesional.
-7. Gunakan format bullet/angka jika data lebih dari 2 item.`;
+7. Gunakan format bullet/angka jika data lebih dari 2 item.
+8. PENTING: Jawab HANYA data yang ditanyakan. Jangan tampilkan data lain yang tidak relevan dengan pertanyaan. Contoh: jika ditanya soal jurnal, jangan sebut data siswa atau absensi.`;
 
   try {
     const client = new Groq({ apiKey });
