@@ -19,9 +19,32 @@ async function getSchoolContext(): Promise<string> {
   const sekolahList = await Sekolah.findAll({ attributes: ['nama', 'level'] }).catch(() => []);
   lines.push(`UNIT SEKOLAH: ${(sekolahList as any[]).map((s: any) => `${s.nama} (${s.level})`).join(', ')}`);
 
-  // Ringkasan siswa
-  const totalSiswa = await Siswa.count({ include: [{ model: User, as: 'user', where: { is_active: true } }] }).catch(() => null);
-  lines.push(`TOTAL SISWA AKTIF: ${totalSiswa ?? 'data tidak tersedia'}`);
+  // Statistik per jenjang (sama dengan dashboard adminDashboard)
+  const statsPerJenjang = await sequelize.query<any>(
+    `SELECT
+       sch.level,
+       sch.nama AS nama_sekolah,
+       COUNT(DISTINCT k.id) AS total_kelas,
+       COUNT(DISTINCT s.id) AS total_siswa,
+       COUNT(DISTINCT ab.siswa_id) FILTER (WHERE ab.tanggal = :tgl AND ab.status = 'hadir') AS hadir_hari_ini
+     FROM sekolah sch
+     LEFT JOIN kelas k ON k.sekolah_id = sch.id
+     LEFT JOIN siswa s ON s.kelas_id = k.id
+     LEFT JOIN absensi ab ON ab.siswa_id = s.id
+     GROUP BY sch.id, sch.level, sch.nama
+     ORDER BY sch.level`,
+    { replacements: { tgl: todayStr }, type: QueryTypes.SELECT }
+  ).catch(() => []);
+
+  let totalSiswa = 0, totalKelasAll = 0, totalHadirAll = 0;
+  for (const row of statsPerJenjang as any[]) {
+    const s = parseInt(row.total_siswa) || 0;
+    const k = parseInt(row.total_kelas) || 0;
+    const h = parseInt(row.hadir_hari_ini) || 0;
+    totalSiswa += s; totalKelasAll += k; totalHadirAll += h;
+    lines.push(`UNIT ${row.level} (${row.nama_sekolah}): ${s} siswa, ${k} kelas, hadir hari ini ${h}`);
+  }
+  lines.push(`TOTAL SEMUA UNIT: ${totalSiswa} siswa, ${totalKelasAll} kelas, ${totalHadirAll} hadir hari ini`);
 
   // Siswa per kelas
   const siswaPerKelas = await sequelize.query<any>(
@@ -41,26 +64,18 @@ async function getSchoolContext(): Promise<string> {
     }
   }
 
-  // Total guru & kelas
-  const [totalGuru, totalKelas] = await Promise.all([
-    Guru.count().catch(() => null),
-    Kelas.count().catch(() => null),
-  ]);
+  // Total guru
+  const totalGuru = await Guru.count().catch(() => null);
   lines.push(`TOTAL GURU: ${totalGuru ?? 'data tidak tersedia'}`);
-  lines.push(`TOTAL KELAS: ${totalKelas ?? 'data tidak tersedia'}`);
 
-  // Kehadiran hari ini — sumber sama dengan dashboard (tabel absensi, input guru)
+  // Kehadiran hari ini detail per status (sumber sama dengan dashboard)
   const absensiHariIni = await sequelize.query<any>(
     `SELECT status, COUNT(DISTINCT siswa_id) AS total FROM absensi WHERE tanggal = :tgl GROUP BY status`,
     { replacements: { tgl: todayStr }, type: QueryTypes.SELECT }
   ).catch(() => []);
   if ((absensiHariIni as any[]).length > 0) {
     const stat = (absensiHariIni as any[]).reduce((acc: any, r: any) => { acc[r.status] = parseInt(r.total); return acc; }, {});
-    const hadir = stat.hadir || 0;
-    const sakit = stat.sakit || 0;
-    const izin = stat.izin || 0;
-    const alfa = stat.alfa || 0;
-    lines.push(`KEHADIRAN HARI INI: Hadir ${hadir}, Sakit ${sakit}, Izin ${izin}, Alfa ${alfa}`);
+    lines.push(`KEHADIRAN HARI INI (detail): Hadir ${stat.hadir || 0}, Sakit ${stat.sakit || 0}, Izin ${stat.izin || 0}, Alfa ${stat.alfa || 0}`);
   } else {
     lines.push('KEHADIRAN HARI INI: belum ada data absensi hari ini');
   }
