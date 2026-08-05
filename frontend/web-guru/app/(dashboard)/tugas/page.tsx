@@ -33,10 +33,16 @@ export default function TugasGuruPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // List kelas
+  // List kelas yang diampu guru ini (via jadwal pelajaran)
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-guru'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data ?? []),
+    queryFn: async () => {
+      const jadwal = await api.get('/jadwal-pelajaran').then(r => r.data.data ?? []).catch(() => []);
+      const seen = new Set<string>();
+      return jadwal
+        .map((j: any) => j.kelas)
+        .filter((k: any) => k && !seen.has(k.id) && seen.add(k.id));
+    },
   });
 
   // List mata pelajaran
@@ -192,7 +198,7 @@ export default function TugasGuruPage() {
                 <select value={form.kelas_id} onChange={e => setForm(p => ({ ...p, kelas_id: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500">
                   <option value="">-- Pilih Kelas --</option>
-                  {kelasList.map((k: any) => <option key={k.id} value={k.id}>{k.nama_kelas}</option>)}
+                  {kelasList.map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
                 </select>
               </div>
               <div>
@@ -274,7 +280,7 @@ export default function TugasGuruPage() {
             <select value={kelasId} onChange={e => setKelasId(e.target.value)}
               className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500">
               <option value="">-- Pilih Kelas --</option>
-              {kelasList.map((k: any) => <option key={k.id} value={k.id}>{k.nama_kelas}</option>)}
+              {kelasList.map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
             </select>
           </div>
           <button onClick={() => setView('buat')}
