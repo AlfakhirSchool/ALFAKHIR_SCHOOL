@@ -121,6 +121,7 @@ services:
       WAHA_URL: http://waha:3000
       WAHA_API_KEY: ${WAHA_API_KEY:-alfakhir-waha-2025}
       GROQ_API_KEY: ${GROQ_API_KEY}
+      GATE_SECRET: ${GATE_SECRET}
       FONNTE_TOKEN: ${FONNTE_TOKEN:-}
       FCM_SERVER_KEY: ${FCM_SERVER_KEY}
       DB_HOST: postgres
