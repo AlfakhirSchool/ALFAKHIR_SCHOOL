@@ -120,7 +120,7 @@ services:
       N8N_WEBHOOK_GURU: https://n8n.smpialfakhir.sch.id/webhook/guru-baru
       WAHA_URL: http://waha:3000
       WAHA_API_KEY: ${WAHA_API_KEY:-alfakhir-waha-2025}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY}
       FONNTE_TOKEN: ${FONNTE_TOKEN:-}
       FCM_SERVER_KEY: ${FCM_SERVER_KEY}
       DB_HOST: postgres

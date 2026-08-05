@@ -1,5 +1,5 @@
 import { Router, Response } from 'express';
-import Anthropic from '@anthropic-ai/sdk';
+import Groq from 'groq-sdk';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { User, Siswa, Guru, Kelas, JurnalGuru, Absensi, Sekolah } from '../models';
 import { Op } from 'sequelize';
@@ -50,7 +50,7 @@ router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
   const { message, history = [] } = req.body;
   if (!message) { res.status(400).json({ success: false, message: 'Pesan kosong' }); return; }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) { res.status(500).json({ success: false, message: 'AI belum dikonfigurasi' }); return; }
 
   const schoolContext = await getSchoolContext();
@@ -67,9 +67,10 @@ PEDOMAN:
 - Gunakan format yang mudah dibaca (bullet, angka) jika perlu`;
 
   try {
-    const client = new Anthropic({ apiKey });
+    const client = new Groq({ apiKey });
 
     const messages = [
+      { role: 'system' as const, content: systemPrompt },
       ...(history as any[]).map((h: any) => ({
         role: h.role as 'user' | 'assistant',
         content: h.content,
@@ -77,17 +78,16 @@ PEDOMAN:
       { role: 'user' as const, content: message },
     ];
 
-    const response = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+    const response = await client.chat.completions.create({
+      model: 'llama-3.1-8b-instant',
       max_tokens: 1024,
-      system: systemPrompt,
       messages,
     });
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    const text = response.choices[0]?.message?.content || '';
     res.json({ success: true, data: { reply: text } });
   } catch (e: any) {
-    console.error('Claude AI error:', e?.message);
+    console.error('Groq AI error:', e?.message);
     const status = e?.status === 429 ? 503 : 500;
     const msg = status === 503
       ? 'Kuota AI sedang penuh, coba beberapa menit lagi'
