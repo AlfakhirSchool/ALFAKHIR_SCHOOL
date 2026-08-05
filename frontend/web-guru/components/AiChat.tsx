@@ -5,10 +5,11 @@ import { Sparkles } from 'lucide-react';
 import api from '@/lib/api';
 
 const QUICK_CHIPS = [
-  'Berapa total siswa aktif hari ini?',
-  'Siapa guru yang belum submit jurnal?',
-  'Rekap absensi hari ini',
-  'Kelas mana yang perlu perhatian?',
+  'Buatkan modul ajar Matematika kelas 7',
+  'Buat 10 soal pilihan ganda IPA SD kelas 5',
+  'Bantu buat RPP 1 pertemuan',
+  'Buat rubrik penilaian presentasi',
+  'Rekap absensi siswa hari ini',
   'Apa yang bisa kamu bantu?',
 ];
 
@@ -27,7 +28,7 @@ export default function AiChat() {
 
   useEffect(() => {
     if (open && messages.length === 0) {
-      setMessages([{ role: 'model', content: 'Halo! Saya Asisten AI Al Fakhir School 🎓\nTanya apa saja seputar data siswa, absensi, jadwal, atau operasional sekolah.' }]);
+      setMessages([{ role: 'model', content: 'Halo, Bapak/Ibu Guru! 👋\nSaya Asisten AI Al Fakhir School.\n\nSaya bisa membantu:\n• Membuat modul ajar, RPP, silabus\n• Membuat soal ulangan & kuis\n• Membuat rubrik penilaian\n• Data absensi & operasional sekolah\n\nSilakan tanya apa saja!' }]);
     }
     if (open) setTimeout(() => inputRef.current?.focus(), 100);
   }, [open]);
@@ -70,7 +71,7 @@ export default function AiChat() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-[360px] max-h-[520px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+        <div className="fixed bottom-24 right-6 z-50 w-[480px] max-h-[680px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 bg-[#1B8B87] text-white flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center"><Sparkles size={18} /></div>
