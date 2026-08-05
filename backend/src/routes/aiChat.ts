@@ -49,34 +49,34 @@ async function getSchoolContext(): Promise<string> {
   lines.push(`TOTAL GURU: ${totalGuru ?? 'data tidak tersedia'}`);
   lines.push(`TOTAL KELAS: ${totalKelas ?? 'data tidak tersedia'}`);
 
-  // Absensi gerbang hari ini (sumber sama dengan dashboard)
+  // Kehadiran hari ini — sumber sama dengan dashboard (tabel absensi, input guru)
+  const absensiHariIni = await sequelize.query<any>(
+    `SELECT status, COUNT(DISTINCT siswa_id) AS total FROM absensi WHERE tanggal = :tgl GROUP BY status`,
+    { replacements: { tgl: todayStr }, type: QueryTypes.SELECT }
+  ).catch(() => []);
+  if ((absensiHariIni as any[]).length > 0) {
+    const stat = (absensiHariIni as any[]).reduce((acc: any, r: any) => { acc[r.status] = parseInt(r.total); return acc; }, {});
+    const hadir = stat.hadir || 0;
+    const sakit = stat.sakit || 0;
+    const izin = stat.izin || 0;
+    const alfa = stat.alfa || 0;
+    lines.push(`KEHADIRAN HARI INI: Hadir ${hadir}, Sakit ${sakit}, Izin ${izin}, Alfa ${alfa}`);
+  } else {
+    lines.push('KEHADIRAN HARI INI: belum ada data absensi hari ini');
+  }
+
+  // Absensi gerbang (gate scanner) — data terpisah dari absensi input guru
   const gerbang = await sequelize.query<any>(
-    `SELECT
-       COUNT(*) FILTER (WHERE ag.waktu_masuk IS NOT NULL) AS hadir,
-       COUNT(s.id) AS total
-     FROM siswa s
-     JOIN users u ON s.user_id = u.id AND u.is_active = true
+    `SELECT COUNT(*) FILTER (WHERE ag.waktu_masuk IS NOT NULL) AS hadir, COUNT(s.id) AS total
+     FROM siswa s JOIN users u ON s.user_id = u.id AND u.is_active = true
      LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id AND ag.tanggal = :tgl`,
     { replacements: { tgl: todayStr }, type: QueryTypes.SELECT }
   ).catch(() => null);
-
   if (gerbang && (gerbang as any[])[0]) {
     const g = (gerbang as any[])[0];
     const hadir = parseInt(g.hadir) || 0;
     const total = parseInt(g.total) || 0;
-    lines.push(`KEHADIRAN HARI INI (absensi gerbang): ${hadir} hadir, ${total - hadir} belum hadir, dari ${total} siswa aktif`);
-  } else {
-    lines.push('KEHADIRAN HARI INI: data absensi gerbang tidak tersedia');
-  }
-
-  // Absensi guru-input hari ini (per status)
-  const absensiGuru = await sequelize.query<any>(
-    `SELECT status, COUNT(*) AS total FROM absensi WHERE tanggal = :tgl GROUP BY status`,
-    { replacements: { tgl: todayStr }, type: QueryTypes.SELECT }
-  ).catch(() => []);
-  if ((absensiGuru as any[]).length > 0) {
-    const stat = (absensiGuru as any[]).reduce((acc: any, r: any) => { acc[r.status] = parseInt(r.total); return acc; }, {});
-    lines.push(`ABSENSI GURU-INPUT HARI INI: Hadir ${stat.hadir || 0}, Sakit ${stat.sakit || 0}, Izin ${stat.izin || 0}, Alfa ${stat.alfa || 0}`);
+    lines.push(`ABSENSI GERBANG HARI INI (scan QR): ${hadir} sudah scan masuk, ${total - hadir} belum scan, dari ${total} siswa aktif`);
   }
 
   // Jurnal guru
