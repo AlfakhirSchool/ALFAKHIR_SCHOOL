@@ -26,6 +26,8 @@ import RingkasanAI from './RingkasanAI';
 import JawabanForm from './JawabanForm';
 import PertanyaanForm from './PertanyaanForm';
 import CatatanSiswaGuru from './CatatanSiswaGuru';
+import Tugas from './Tugas';
+import PengumpulanTugas from './PengumpulanTugas';
 
 // User <-> Guru / Siswa / OrangTua
 User.hasOne(Guru, { foreignKey: 'user_id', as: 'guru_detail' });
@@ -150,6 +152,19 @@ CatatanSiswaGuru.belongsTo(Siswa, { foreignKey: 'siswa_id', as: 'siswa' });
 Guru.hasMany(CatatanSiswaGuru, { foreignKey: 'guru_id', as: 'catatan_siswa_list' });
 CatatanSiswaGuru.belongsTo(Guru, { foreignKey: 'guru_id', as: 'guru' });
 
+// Tugas & Pengumpulan
+Guru.hasMany(Tugas, { foreignKey: 'guru_id', as: 'tugas_list' });
+Tugas.belongsTo(Guru, { foreignKey: 'guru_id', as: 'guru' });
+
+Kelas.hasMany(Tugas, { foreignKey: 'kelas_id', as: 'tugas_kelas' });
+Tugas.belongsTo(Kelas, { foreignKey: 'kelas_id', as: 'kelas' });
+
+Tugas.hasMany(PengumpulanTugas, { foreignKey: 'tugas_id', as: 'pengumpulan_list' });
+PengumpulanTugas.belongsTo(Tugas, { foreignKey: 'tugas_id', as: 'tugas' });
+
+Siswa.hasMany(PengumpulanTugas, { foreignKey: 'siswa_id', as: 'pengumpulan_tugas' });
+PengumpulanTugas.belongsTo(Siswa, { foreignKey: 'siswa_id', as: 'siswa' });
+
 export {
   User, Sekolah, Kelas, MataPelajaran,
   Siswa, Guru, OrangTua,
@@ -158,4 +173,5 @@ export {
   Rapor, JurnalGuru, JurnalSiswa, ActivityLog, PendingChange, Feedback,
   Kandidat, CatatanPewawancara, SoalAkademik, HasilTesAkademik, JawabanAkademik, RingkasanAI, JawabanForm, PertanyaanForm,
   CatatanSiswaGuru,
+  Tugas, PengumpulanTugas,
 };

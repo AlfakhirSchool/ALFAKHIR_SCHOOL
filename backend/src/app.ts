@@ -33,6 +33,7 @@ import soalAkademikRoutes from './routes/soalAkademik';
 import jawabanFormRoutes from './routes/jawabanForm';
 import pertanyaanFormRoutes from './routes/pertanyaanForm';
 import aiChatRoutes from './routes/aiChat';
+import tugasRoutes from './routes/tugas';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { globalAuditLogger } from './middleware/auditLog';
 import logger from './config/logger';
@@ -113,6 +114,7 @@ app.use(`${PREFIX}/soal-akademik`, soalAkademikRoutes);
 app.use(`${PREFIX}/jawaban-form`, jawabanFormRoutes);
 app.use(`${PREFIX}/pertanyaan-form`, pertanyaanFormRoutes);
 app.use(`${PREFIX}/ai/chat`, aiChatRoutes);
+app.use(`${PREFIX}/tugas`, tugasRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
