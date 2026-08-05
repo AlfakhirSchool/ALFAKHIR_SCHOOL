@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import Groq from 'groq-sdk';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { User, Siswa, Guru, Kelas, JurnalGuru, Sekolah } from '../models';
+import { QueryTypes } from 'sequelize';
 import sequelize from '../config/database';
 
 const router = Router();
@@ -31,7 +32,7 @@ async function getSchoolContext(): Promise<string> {
      LEFT JOIN users u ON s.user_id = u.id AND u.is_active = true
      GROUP BY k.id, k.nama_kelas, sch.level
      ORDER BY sch.level, k.nama_kelas`,
-    { type: 'SELECT' }
+    { type: QueryTypes.SELECT }
   ).catch(() => []);
   if ((siswaPerKelas as any[]).length > 0) {
     lines.push('SISWA PER KELAS:');
@@ -56,7 +57,7 @@ async function getSchoolContext(): Promise<string> {
      FROM siswa s
      JOIN users u ON s.user_id = u.id AND u.is_active = true
      LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id AND ag.tanggal = :tgl`,
-    { replacements: { tgl: todayStr }, type: 'SELECT' }
+    { replacements: { tgl: todayStr }, type: QueryTypes.SELECT }
   ).catch(() => null);
 
   if (gerbang && (gerbang as any[])[0]) {
@@ -71,7 +72,7 @@ async function getSchoolContext(): Promise<string> {
   // Absensi guru-input hari ini (per status)
   const absensiGuru = await sequelize.query<any>(
     `SELECT status, COUNT(*) AS total FROM absensi WHERE tanggal = :tgl GROUP BY status`,
-    { replacements: { tgl: todayStr }, type: 'SELECT' }
+    { replacements: { tgl: todayStr }, type: QueryTypes.SELECT }
   ).catch(() => []);
   if ((absensiGuru as any[]).length > 0) {
     const stat = (absensiGuru as any[]).reduce((acc: any, r: any) => { acc[r.status] = parseInt(r.total); return acc; }, {});
@@ -86,7 +87,7 @@ async function getSchoolContext(): Promise<string> {
   // Pembayaran
   const pembayaran = await sequelize.query<any>(
     `SELECT status, COUNT(*) AS total FROM pembayaran GROUP BY status`,
-    { type: 'SELECT' }
+    { type: QueryTypes.SELECT }
   ).catch(() => []);
   if ((pembayaran as any[]).length > 0) {
     const p = (pembayaran as any[]).reduce((acc: any, r: any) => { acc[r.status] = parseInt(r.total); return acc; }, {});
