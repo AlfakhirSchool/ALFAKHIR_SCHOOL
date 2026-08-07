@@ -63,7 +63,7 @@ export default function LoginPage() {
                 type="text"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                placeholder="email@sekolah.sch.id"
+                placeholder="Username atau email"
                 required
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
               />
