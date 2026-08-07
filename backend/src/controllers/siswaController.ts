@@ -6,6 +6,15 @@ import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 import { kelasIdFilter } from '../utils/levelFilter';
 
+export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
+  const siswa = await Siswa.findOne({
+    where: { user_id: req.user!.id },
+    include: [{ model: Kelas, as: 'kelas', attributes: ['id', 'nama'] }],
+  });
+  if (!siswa) { res.status(404).json({ success: false, message: 'Data siswa tidak ditemukan' }); return; }
+  res.json({ success: true, data: siswa });
+};
+
 export const getSekolahList = async (_req: AuthRequest, res: Response): Promise<void> => {
   const list = await Sekolah.findAll({ attributes: ['id', 'nama', 'level'], order: [['nama', 'ASC']] });
   res.json({ success: true, data: list });

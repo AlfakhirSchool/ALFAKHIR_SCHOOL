@@ -14,9 +14,18 @@ export default function TugasPage() {
   const [file, setFile] = useState<File | null>(null);
   const [catatan, setCatatan] = useState('');
 
+  const { data: siswaData } = useQuery({
+    queryKey: ['portal-siswa-me'],
+    queryFn: () => api.get('/siswa/me').then(r => r.data.data),
+    enabled: isSiswa,
+  });
+
+  const kelasId = siswaData?.kelas_id;
+
   const { data, isLoading } = useQuery({
-    queryKey: ['portal-tugas'],
-    queryFn: () => api.get('/tugas').then(r => r.data),
+    queryKey: ['portal-tugas', kelasId],
+    queryFn: () => api.get('/tugas', { params: { kelas_id: kelasId } }).then(r => r.data),
+    enabled: isSiswa && !!kelasId,
   });
 
   const tugasList: any[] = data?.data || [];
@@ -40,11 +49,24 @@ export default function TugasPage() {
 
   const now = new Date();
 
+  if (!isSiswa) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-lg font-bold text-gray-800">Tugas & Materi</h1>
+        <div className="text-center py-16 text-gray-400">
+          <BookOpen size={48} className="mx-auto mb-3 opacity-30" />
+          <p className="text-sm font-medium">Fitur tugas siswa</p>
+          <p className="text-xs mt-1">Tersedia untuk akun siswa</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-bold text-gray-800">Tugas & Materi</h1>
 
-      {isLoading ? (
+      {isLoading || (isSiswa && !kelasId) ? (
         <div className="text-center py-10 text-gray-400 text-sm">Memuat...</div>
       ) : tugasList.length === 0 ? (
         <div className="text-center py-10 text-gray-400">
@@ -88,15 +110,13 @@ export default function TugasPage() {
                     </p>
                   )}
 
-                  {/* File tugas dari guru */}
                   {t.file_url && (
                     <a href={t.file_url} target="_blank" rel="noopener"
-                      className="mt-3 flex items-center gap-2 text-xs text-[#1A6B3C] font-medium">
+                      className="mt-3 flex items-center gap-2 text-xs text-[#F97316] font-medium">
                       <FileText size={14} /> Unduh Materi/Soal
                     </a>
                   )}
 
-                  {/* Nilai jika sudah dinilai */}
                   {sudahKumpul && t.submission_saya?.nilai !== null && (
                     <div className="mt-3 p-2 bg-green-50 rounded-lg">
                       <p className="text-xs text-green-700">
@@ -106,11 +126,10 @@ export default function TugasPage() {
                     </div>
                   )}
 
-                  {/* Tombol kumpul */}
                   {isSiswa && !sudahKumpul && !overdue && (
                     <button
                       onClick={() => setSelectedTugas(t)}
-                      className="mt-3 w-full py-2 bg-[#1A6B3C] text-white rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-[#145730] transition-colors"
+                      className="mt-3 w-full py-2 bg-[#F97316] text-white rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-[#ea6b10] transition-colors"
                     >
                       <Upload size={13} /> Kumpulkan Tugas
                     </button>
@@ -122,7 +141,6 @@ export default function TugasPage() {
         </div>
       )}
 
-      {/* Modal kumpul tugas */}
       {selectedTugas && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
           <div className="bg-white rounded-t-2xl w-full p-5 space-y-4">
@@ -133,17 +151,17 @@ export default function TugasPage() {
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Upload File Jawaban</label>
               <input type="file" onChange={e => setFile(e.target.files?.[0] || null)}
-                className="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[#1A6B3C] file:text-white file:text-xs" />
+                className="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[#F97316] file:text-white file:text-xs" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Catatan (opsional)</label>
               <textarea value={catatan} onChange={e => setCatatan(e.target.value)} rows={3}
                 placeholder="Tulis catatan untuk guru..."
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1A6B3C] resize-none" />
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316] resize-none" />
             </div>
             <div className="flex gap-3">
               <button onClick={() => submitMut.mutate()} disabled={submitMut.isPending || (!file && !catatan)}
-                className="flex-1 py-2.5 bg-[#1A6B3C] text-white rounded-lg text-sm font-medium disabled:opacity-50">
+                className="flex-1 py-2.5 bg-[#F97316] text-white rounded-lg text-sm font-medium disabled:opacity-50">
                 {submitMut.isPending ? 'Mengumpulkan...' : 'Kumpulkan'}
               </button>
               <button onClick={() => setSelectedTugas(null)}

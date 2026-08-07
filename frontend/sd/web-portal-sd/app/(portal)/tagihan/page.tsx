@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { CreditCard, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import api from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
@@ -22,10 +23,35 @@ const StatusBadge = ({ status }: { status: string }) => {
 };
 
 export default function TagihanPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['portal-tagihan'],
-    queryFn: () => api.get('/pembayaran').then(r => r.data),
+  const { user } = useAuthStore();
+  const isSiswa = user?.role === 'siswa';
+
+  const { data: siswaData } = useQuery({
+    queryKey: ['portal-siswa-me'],
+    queryFn: () => api.get('/siswa/me').then(r => r.data.data),
+    enabled: isSiswa,
   });
+
+  const siswaId = siswaData?.id;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['portal-tagihan', siswaId],
+    queryFn: () => api.get('/pembayaran', { params: { siswa_id: siswaId } }).then(r => r.data),
+    enabled: isSiswa && !!siswaId,
+  });
+
+  if (!isSiswa) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-lg font-bold text-gray-800">Tagihan</h1>
+        <div className="text-center py-16 text-gray-400">
+          <CreditCard size={48} className="mx-auto mb-3 opacity-30" />
+          <p className="text-sm font-medium">Fitur tagihan siswa</p>
+          <p className="text-xs mt-1">Tersedia untuk akun siswa</p>
+        </div>
+      </div>
+    );
+  }
 
   const tagihan = data?.data || [];
   const total = tagihan.reduce((s: number, t: any) => s + Number(t.nominal_biaya), 0);

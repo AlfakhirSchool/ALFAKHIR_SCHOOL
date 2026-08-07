@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarCheck, CheckCircle, XCircle, AlertCircle, MinusCircle } from 'lucide-react';
 import api from '@/lib/api';
+import { useAuthStore } from '@/store/authStore';
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
   hadir: { label: 'Hadir',  color: '#10B981', icon: CheckCircle },
@@ -13,13 +14,24 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = 
 };
 
 export default function KehadiranPage() {
+  const { user } = useAuthStore();
+  const isSiswa = user?.role === 'siswa';
   const now = new Date();
   const [bulan, setBulan] = useState(now.getMonth() + 1);
   const [tahun, setTahun] = useState(now.getFullYear());
 
+  const { data: siswaData } = useQuery({
+    queryKey: ['portal-siswa-me'],
+    queryFn: () => api.get('/siswa/me').then(r => r.data.data),
+    enabled: isSiswa,
+  });
+
+  const siswaId = siswaData?.id;
+
   const { data, isLoading } = useQuery({
-    queryKey: ['portal-kehadiran', bulan, tahun],
-    queryFn: () => api.get('/absensi', { params: { bulan, tahun, limit: 100 } }).then(r => r.data),
+    queryKey: ['portal-kehadiran', siswaId, bulan, tahun],
+    queryFn: () => api.get(`/absensi/${siswaId}/detail`, { params: { bulan, tahun } }).then(r => r.data),
+    enabled: isSiswa && !!siswaId,
   });
 
   const absensi: any[] = data?.data || [];
@@ -31,6 +43,19 @@ export default function KehadiranPage() {
 
   const bulanNames = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 
+  if (!isSiswa) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-lg font-bold text-gray-800">Kehadiran</h1>
+        <div className="text-center py-16 text-gray-400">
+          <CalendarCheck size={48} className="mx-auto mb-3 opacity-30" />
+          <p className="text-sm font-medium">Fitur kehadiran siswa</p>
+          <p className="text-xs mt-1">Tersedia untuk akun siswa</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-bold text-gray-800">Kehadiran</h1>
@@ -38,11 +63,11 @@ export default function KehadiranPage() {
       {/* Bulan filter */}
       <div className="flex gap-2">
         <select value={bulan} onChange={e => setBulan(Number(e.target.value))}
-          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1A6B3C]">
+          className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]">
           {bulanNames.map((b, i) => <option key={i} value={i + 1}>{b}</option>)}
         </select>
         <select value={tahun} onChange={e => setTahun(Number(e.target.value))}
-          className="w-24 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1A6B3C]">
+          className="w-24 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]">
           {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
         </select>
       </div>
@@ -70,7 +95,6 @@ export default function KehadiranPage() {
         </div>
       </div>
 
-      {/* Detail per hari */}
       {isLoading ? (
         <div className="text-center py-8 text-gray-400 text-sm">Memuat...</div>
       ) : absensi.length === 0 ? (

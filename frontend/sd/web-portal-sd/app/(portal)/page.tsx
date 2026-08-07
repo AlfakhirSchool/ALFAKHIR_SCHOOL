@@ -13,9 +13,16 @@ export default function BerandaPage() {
   const { user } = useAuthStore();
   const isOrtu = user?.role === 'ortu';
 
+  const { data: siswaData } = useQuery({
+    queryKey: ['portal-siswa-me'],
+    queryFn: () => api.get('/siswa/me').then(r => r.data.data),
+    enabled: !isOrtu,
+  });
+
   const { data: tagihanData } = useQuery({
-    queryKey: ['portal-tagihan-summary'],
-    queryFn: () => api.get('/pembayaran').then(r => r.data),
+    queryKey: ['portal-tagihan-summary', siswaData?.id],
+    queryFn: () => api.get('/pembayaran', { params: { siswa_id: siswaData?.id } }).then(r => r.data),
+    enabled: !isOrtu && !!siswaData?.id,
   });
 
   const tagihan = tagihanData?.data || [];
