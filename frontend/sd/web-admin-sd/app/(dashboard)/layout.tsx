@@ -36,8 +36,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [user?.id, qc]);
 
   useEffect(() => {
-    if (hydrated && !isAuthenticated) router.push('/login');
-  }, [hydrated, isAuthenticated, router]);
+    if (!hydrated) return;
+    if (!isAuthenticated) { router.push('/login'); return; }
+    // Hanya admin SD atau admin master (tanpa school_level) yang boleh masuk
+    const allowed = user?.role === 'admin' && (user?.school_level === 'SD' || !user?.school_level);
+    if (!allowed) { router.push('/login'); return; }
+  }, [hydrated, isAuthenticated, user, router]);
 
   useEffect(() => { setMobileOpen(false); }, [pathname]);
 
@@ -86,8 +90,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <Menu size={20} />
             </button>
-            <img src="/logo.png" alt="Logo" className="w-7 h-7 object-contain" />
-            <span className="font-semibold text-sm text-gray-800 truncate">Al-Fakhir School</span>
+            <img src="/logo-sd.png" alt="Logo SD" className="w-7 h-7 object-contain" />
+            <span className="font-semibold text-sm text-gray-800 truncate">SD Al-Fakhir</span>
           </div>
 
           <AnnouncementBanner feedbackPath="/feedback" />
@@ -95,7 +99,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {children}
           </PageTransition>
           <footer className="text-center py-3 text-xs text-gray-400 border-t border-gray-100">
-            Developed by <span className="font-semibold text-gray-500">Feri</span> · Al-Fakhir School
+            Developed by <span className="font-semibold text-gray-500">Feri</span> · SD Islam Al-Fakhir
           </footer>
         </main>
       </div>

@@ -242,20 +242,13 @@ function GroupItem({
 export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const level = user?.school_level as SchoolLevel;
 
-  const isPewawancara = user?.role === 'pewawancara';
-  const isKeuangan    = user?.role === 'keuangan';
-  const entries: SidebarEntry[] = isKeuangan
-    ? keuanganMenu
-    : isPewawancara
-    ? pewawancaraMenu
-    : level ? levelMenu(level) : masterMenu;
-
-  const accentColor = isKeuangan ? '#F59E0B' : isPewawancara ? '#14B8A6' : level ? LEVEL_COLOR[level] : '#60A5FA';
-  const logo       = level ? (LEVEL_LOGO[level] ?? '/logo.png') : '/logo.png';
-  const schoolName = level ? (LEVEL_NAME[level] ?? 'Al Fakhir School') : 'Al Fakhir School';
-  const subtitle   = isKeuangan ? 'Portal Keuangan' : isPewawancara ? 'Portal Pewawancara' : level ? `Admin ${level}` : 'Admin Control Center';
+  // web-admin-sd: selalu konteks SD
+  const entries: SidebarEntry[] = levelMenu('SD');
+  const accentColor = '#FB923C';
+  const logo        = '/logo-sd.png';
+  const schoolName  = 'SD Islam Al-Fakhir';
+  const subtitle    = `Admin SD${user?.role === 'admin' && !user?.school_level ? ' (Master)' : ''}`;
 
   return (
     <motion.aside
