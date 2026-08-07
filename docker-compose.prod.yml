@@ -250,6 +250,28 @@ services:
     networks:
       - alfakhir_net
 
+  web-portal:
+    build:
+      context: ./frontend/web-portal
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
+    container_name: alfakhir_web_portal
+    restart: unless-stopped
+    ports:
+      - "3004:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/',(r)=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - alfakhir_net
+
 volumes:
   n8n_data:
   nginx_logs:
