@@ -22,6 +22,47 @@ const StatusBadge = ({ status }: { status: string }) => {
 const fmt = (v: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
 
+const JENIS_BIAYA_OPTIONS = [
+  'SPP',
+  'Ekskul',
+  'Panahan',
+  'Robotik',
+  'Ekskul Kelas 9',
+  'UKT',
+  'Uang Masuk',
+  'Formulir Pendaftaran',
+  'Pengeluaran Harian',
+  'Pembayaran Kas',
+  'Transfer',
+  'Pengeluaran SD',
+  'Pengeluaran SMP',
+  'Lainnya',
+];
+
+function JenisBiayaSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const isCustom = value !== '' && !JENIS_BIAYA_OPTIONS.includes(value);
+  const [showCustom, setShowCustom] = useState(isCustom);
+  return (
+    <div className="space-y-2">
+      <select
+        value={showCustom ? 'Lainnya' : value}
+        onChange={e => {
+          if (e.target.value === 'Lainnya') { setShowCustom(true); onChange(''); }
+          else { setShowCustom(false); onChange(e.target.value); }
+        }}
+        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]">
+        <option value="">-- Pilih Jenis Biaya --</option>
+        {JENIS_BIAYA_OPTIONS.map(j => <option key={j} value={j}>{j}</option>)}
+      </select>
+      {showCustom && (
+        <input value={value} onChange={e => onChange(e.target.value)}
+          placeholder="Ketik jenis biaya..."
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+      )}
+    </div>
+  );
+}
+
 export default function PembayaranPage() {
   const qc = useQueryClient();
   const [filterStatus, setFilterStatus] = useState('');
@@ -231,9 +272,7 @@ export default function PembayaranPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Jenis Biaya <span className="text-red-500">*</span></label>
-                <input value={addForm.jenis_biaya} onChange={e => setAddForm({ ...addForm, jenis_biaya: e.target.value })}
-                  placeholder="Contoh: SPP Semester 1"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+                <JenisBiayaSelect value={addForm.jenis_biaya} onChange={v => setAddForm({ ...addForm, jenis_biaya: v })} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -277,8 +316,7 @@ export default function PembayaranPage() {
               <p className="text-sm text-gray-500">Siswa: <span className="font-medium text-gray-800">{editItem.siswa?.user?.nama}</span></p>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Jenis Biaya</label>
-                <input value={editForm.jenis_biaya} onChange={e => setEditForm({ ...editForm, jenis_biaya: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+                <JenisBiayaSelect value={editForm.jenis_biaya} onChange={v => setEditForm({ ...editForm, jenis_biaya: v })} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Nominal (Rp)</label>
