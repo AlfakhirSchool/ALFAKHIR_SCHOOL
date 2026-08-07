@@ -34,7 +34,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           </div>
           <div className="text-right">
             <p className="text-sm font-medium truncate max-w-[120px]">{user?.nama}</p>
-            <p className="text-green-200 text-[10px] capitalize">{user?.role}</p>
+            <p className="text-orange-200 text-[10px] capitalize">{user?.role}</p>
           </div>
         </div>
       </header>

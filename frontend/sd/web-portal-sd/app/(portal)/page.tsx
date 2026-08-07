@@ -25,10 +25,10 @@ export default function BerandaPage() {
   return (
     <div className="space-y-4">
       {/* Greeting */}
-      <div className="bg-gradient-to-r from-[#1A6B3C] to-[#228B4E] rounded-2xl p-5 text-white">
-        <p className="text-green-200 text-sm">Selamat datang,</p>
+      <div className="bg-gradient-to-r from-[#F97316] to-[#ea6b10] rounded-2xl p-5 text-white">
+        <p className="text-orange-200 text-sm">Selamat datang,</p>
         <p className="text-xl font-bold mt-0.5">{user?.nama}</p>
-        <p className="text-green-100 text-xs mt-1 capitalize">{isOrtu ? 'Portal Orang Tua' : 'Portal Siswa'}</p>
+        <p className="text-orange-100 text-xs mt-1 capitalize">{isOrtu ? 'Portal Orang Tua' : 'Portal Siswa'}</p>
       </div>
 
       {/* Alert tunggakan */}
@@ -64,7 +64,7 @@ export default function BerandaPage() {
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
             <p className="font-semibold text-sm text-gray-800">Tagihan Terbaru</p>
-            <Link href="/tagihan" className="text-xs text-[#1A6B3C] flex items-center gap-0.5">
+            <Link href="/tagihan" className="text-xs text-[#F97316] flex items-center gap-0.5">
               Lihat semua <ChevronRight size={12} />
             </Link>
           </div>

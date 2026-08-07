@@ -18,12 +18,12 @@ export default function ProfilPage() {
       <h1 className="text-lg font-bold text-gray-800">Profil</h1>
 
       {/* Avatar & nama */}
-      <div className="bg-gradient-to-r from-[#1A6B3C] to-[#228B4E] rounded-2xl p-6 text-white text-center">
+      <div className="bg-gradient-to-r from-[#F97316] to-[#ea6b10] rounded-2xl p-6 text-white text-center">
         <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold mx-auto mb-3">
           {(user?.nama || 'U')[0].toUpperCase()}
         </div>
         <p className="text-lg font-bold">{user?.nama}</p>
-        <p className="text-green-200 text-sm mt-0.5 capitalize">{user?.role === 'ortu' ? 'Orang Tua' : 'Siswa'}</p>
+        <p className="text-orange-200 text-sm mt-0.5 capitalize">{user?.role === 'ortu' ? 'Orang Tua' : 'Siswa'}</p>
       </div>
 
       {/* Info */}
