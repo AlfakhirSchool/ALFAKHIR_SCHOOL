@@ -27,8 +27,9 @@ export default function LoginPage() {
     try {
       const res = await api.post('/auth/login', { email, password });
       const { user, accessToken, refreshToken } = res.data.data;
-      if (!['guru', 'admin'].includes(user.role)) {
-        setError('Akses hanya untuk Guru');
+      const isGuruSD = user.role === 'guru' && (user.school_level === 'SD' || !user.school_level);
+      if (!isGuruSD) {
+        setError('Akses hanya untuk Guru SD');
         setLoading(false);
         return;
       }
@@ -71,7 +72,7 @@ export default function LoginPage() {
             {[0, 1, 2].map(i => (
               <motion.div
                 key={i}
-                className="absolute inset-0 rounded-full border-2 border-[#1B8B87]"
+                className="absolute inset-0 rounded-full border-2 border-[#F97316]"
                 initial={{ scale: 0.6, opacity: 0 }}
                 animate={{ scale: [0.6, 1.6], opacity: [0.6, 0] }}
                 transition={{ duration: 2, repeat: Infinity, delay: i * 0.65, ease: 'easeOut' }}
@@ -79,8 +80,8 @@ export default function LoginPage() {
             ))}
             <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center relative z-10 shadow-lg">
               <motion.img
-                src="/logo.png"
-                alt="Al Fakhir School"
+                src="/logo-sd.png"
+                alt="SD Islam Al-Fakhir"
                 className="w-24 h-24 object-contain"
                 initial={{ scale: 0, rotate: -180, opacity: 0 }}
                 animate={{ scale: 1, rotate: 0, opacity: 1 }}
@@ -96,17 +97,17 @@ export default function LoginPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.6 }}
         >
-          <h2 className="text-2xl font-bold tracking-wide drop-shadow-lg" style={{ color: '#ffffff' }}>Al Fakhir School</h2>
-          <p className="text-sm mt-2 tracking-widest uppercase drop-shadow" style={{ color: '#ffffff' }}>Portal Guru</p>
+          <h2 className="text-2xl font-bold tracking-wide drop-shadow-lg" style={{ color: '#ffffff' }}>SD Islam Al-Fakhir</h2>
+          <p className="text-sm mt-2 tracking-widest uppercase drop-shadow" style={{ color: '#ffffff' }}>Portal Guru SD</p>
           <p className="text-sm mt-6 leading-relaxed max-w-xs drop-shadow" style={{ color: '#ffffff' }}>
-            SD/SMP/SMA Islam Modern Al Fakhir — Membentuk generasi berakhlak dan berprestasi
+            Sistem Informasi Manajemen Sekolah — Al Fakhir School
           </p>
         </motion.div>
 
         {/* Decorative dots */}
         <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-2">
           {[0,1,2].map(i => (
-            <motion.div key={i} className="w-1.5 h-1.5 rounded-full bg-[#1B8B87]"
+            <motion.div key={i} className="w-1.5 h-1.5 rounded-full bg-[#F97316]"
               animate={{ opacity: [0.3, 1, 0.3] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.3 }} />
           ))}
@@ -124,10 +125,10 @@ export default function LoginPage() {
 
           {/* Mobile logo */}
           <div className="lg:hidden flex flex-col items-center mb-6">
-            <div className="w-16 h-16 rounded-full bg-[#1B8B87]/10 flex items-center justify-center mb-3">
-              <img src="/logo.png" alt="Logo" className="w-12 h-12 object-contain" />
+            <div className="w-16 h-16 rounded-full bg-[#F97316]/10 flex items-center justify-center mb-3">
+              <img src="/logo-sd.png" alt="Logo SD" className="w-12 h-12 object-contain" />
             </div>
-            <p className="text-xs font-semibold text-[#1B8B87] tracking-widest uppercase">Al Fakhir School</p>
+            <p className="text-xs font-semibold text-[#F97316] tracking-widest uppercase">SD Islam Al-Fakhir</p>
           </div>
 
           <motion.div
@@ -136,7 +137,7 @@ export default function LoginPage() {
             transition={{ delay: 0.2, duration: 0.5 }}
           >
             <h1 className="text-2xl font-bold text-[#1A2332]">Selamat datang</h1>
-            <p className="text-gray-500 mt-1 text-sm">Masuk ke Portal Guru Al Fakhir</p>
+            <p className="text-gray-500 mt-1 text-sm">Masuk ke Portal Guru SD</p>
           </motion.div>
 
           <AnimatePresence>
@@ -161,7 +162,7 @@ export default function LoginPage() {
           >
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Username</label>
-              <div className={`relative rounded-xl border-2 transition-all duration-200 bg-white ${focused === 'user' ? 'border-[#1B8B87] shadow-md shadow-[#1B8B87]/10' : 'border-gray-200'}`}>
+              <div className={`relative rounded-xl border-2 transition-all duration-200 bg-white ${focused === 'user' ? 'border-[#F97316] shadow-md shadow-[#1B8B87]/10' : 'border-gray-200'}`}>
                 <input
                   type="text"
                   required
@@ -178,7 +179,7 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Password</label>
-              <div className={`relative rounded-xl border-2 transition-all duration-200 bg-white ${focused === 'pw' ? 'border-[#1B8B87] shadow-md shadow-[#1B8B87]/10' : 'border-gray-200'}`}>
+              <div className={`relative rounded-xl border-2 transition-all duration-200 bg-white ${focused === 'pw' ? 'border-[#F97316] shadow-md shadow-[#1B8B87]/10' : 'border-gray-200'}`}>
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
@@ -203,7 +204,7 @@ export default function LoginPage() {
             <motion.button
               type="submit"
               disabled={loading}
-              className="relative w-full bg-[#1B8B87] text-white py-4 rounded-xl font-semibold text-sm tracking-wide overflow-hidden disabled:opacity-60"
+              className="relative w-full bg-[#F97316] text-white py-4 rounded-xl font-semibold text-sm tracking-wide overflow-hidden disabled:opacity-60"
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
             >

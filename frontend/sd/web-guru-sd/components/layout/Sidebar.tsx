@@ -17,7 +17,7 @@ type Entry = MenuItem | MenuGroup;
 
 function isGroup(e: Entry): e is MenuGroup { return 'items' in e; }
 
-const ACCENT = '#1B8B87';
+const ACCENT = '#F97316';
 
 const menuEntries: Entry[] = [
   { href: '/dashboard', icon: <LayoutDashboard size={16} />, label: 'Dashboard' },
@@ -123,12 +123,8 @@ function GroupItem({ group, collapsed }: { group: MenuGroup; collapsed: boolean 
   );
 }
 
-function getSchoolLogo(levels: string[] = []): string {
-  if (levels.length !== 1) return '/logo.png';
-  if (levels[0] === 'SD')  return '/logo-sd.webp';
-  if (levels[0] === 'SMP') return '/logo-smp.png';
-  if (levels[0] === 'SMA') return '/logo-sma.png';
-  return '/logo.png';
+function getSchoolLogo(_levels: string[] = []): string {
+  return '/logo-sd.png';
 }
 
 export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
@@ -168,8 +164,8 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
               <img src={schoolLogo} alt="Logo" className="w-full h-full object-contain" />
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="font-bold text-[13px] text-gray-900 truncate">Al Fakhir School</p>
-              <p className="text-[11px] font-medium truncate" style={{ color: ACCENT }}>Guru Dashboard</p>
+              <p className="font-bold text-[13px] text-gray-900 truncate">SD Al-Fakhir</p>
+              <p className="text-[11px] font-medium truncate" style={{ color: ACCENT }}>Portal Guru SD</p>
             </div>
             <button onClick={onToggle} className="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg text-gray-600 hover:text-black hover:bg-gray-100 transition-colors">
               <PanelLeftClose size={15} />
