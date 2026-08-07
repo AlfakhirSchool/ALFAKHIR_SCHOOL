@@ -176,7 +176,8 @@ export default function PembayaranPage() {
 
         {/* Table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[700px]">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Siswa</th>
@@ -225,6 +226,7 @@ export default function PembayaranPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Pagination */}
