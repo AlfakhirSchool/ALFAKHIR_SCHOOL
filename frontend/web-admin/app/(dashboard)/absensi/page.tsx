@@ -138,7 +138,7 @@ export default function AbsensiKelasPage() {
 
         {/* Summary */}
         {rekap && (
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {(['hadir', 'sakit', 'izin', 'alfa'] as const).map((s) => (
               <div key={s} className={`rounded-xl p-4 border-l-4 shadow-sm bg-white ${
                 s === 'hadir' ? 'border-green-500' : s === 'sakit' ? 'border-blue-500' : s === 'izin' ? 'border-yellow-500' : 'border-red-500'

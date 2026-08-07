@@ -65,7 +65,7 @@ export default function HasilTesPage() {
       <div className="p-6 space-y-6">
 
         {/* KPI */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" mb-6>
           <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center">
               <CheckCircle2 size={22} className="text-teal-600" />

@@ -200,7 +200,8 @@ export default function GuruPage() {
 
         {/* Table */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="min-w-[600px] w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Nama / Email</th>
@@ -269,6 +270,7 @@ export default function GuruPage() {
               ))}
             </tbody>
           </table>
+          </div>
 
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">

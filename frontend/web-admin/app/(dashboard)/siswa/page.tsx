@@ -137,7 +137,7 @@ export default function SiswaPage() {
       <div className="p-6">
         {/* Jenjang tabs — hanya tampil untuk master admin */}
         {isMaster && (
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4">
             {ALL_JENJANG.map(j => {
               const c = JENJANG_COLOR[j];
               return (

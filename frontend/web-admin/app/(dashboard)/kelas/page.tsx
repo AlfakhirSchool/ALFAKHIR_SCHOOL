@@ -127,7 +127,7 @@ export default function KelasPage() {
       <div className="p-6">
         {/* Jenjang tabs — hanya tampil untuk master admin */}
         {isMaster && (
-          <div className="flex gap-2 mb-5">
+          <div className="flex flex-wrap gap-2 mb-5">
             {JENJANG_LIST.map(j => {
               const c = JENJANG_COLOR[j];
               return (
@@ -238,7 +238,8 @@ export default function KelasPage() {
             <div className="px-6 py-4 border-b border-gray-100">
               <h3 className="font-semibold text-[#1A2332]">Siswa Kelas {selectedKelas.nama} ({(siswaData || []).length} siswa)</h3>
             </div>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="min-w-[600px] w-full text-sm">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="text-left px-6 py-3 font-semibold text-gray-600">No</th>
@@ -262,6 +263,7 @@ export default function KelasPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>
@@ -341,7 +343,7 @@ export default function KelasPage() {
 function KelasForm({ form, setForm, guruList, activeJenjang }: { form: any; setForm: any; guruList: any[]; activeJenjang: string }) {
   const tingkatOpts = TINGKAT_OPTS[activeJenjang] || TINGKAT_OPTS.SMP;
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4" mb-6>
       <div className="col-span-2">
         <label className="block text-xs font-medium text-gray-600 mb-1">Nama Kelas</label>
         <input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value.toUpperCase() })}

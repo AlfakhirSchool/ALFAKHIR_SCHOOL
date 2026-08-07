@@ -62,7 +62,7 @@ export default function AuditLogPage() {
       <div className="p-6 space-y-6">
 
         {/* Stats bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4" mb-6>
           <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-[#F97316]">
             <p className="text-xs text-gray-500 font-medium uppercase">Total Log</p>
             <p className="text-2xl font-bold text-[#1A2332]">{(stats?.total || 0).toLocaleString()}</p>
@@ -121,7 +121,8 @@ export default function AuditLogPage() {
 
         {/* Table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="min-w-[600px] w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Waktu</th>
@@ -196,6 +197,7 @@ export default function AuditLogPage() {
               ))}
             </tbody>
           </table>
+          </div>
 
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">

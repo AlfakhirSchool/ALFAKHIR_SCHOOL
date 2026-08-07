@@ -51,7 +51,7 @@ export default function NilaiAdminPage() {
       <Header title="Data Nilai" />
       <div className="p-6">
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4" mb-6>
           <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-[#3B7FD1]">
             <p className="text-sm text-gray-500">Rata-rata Kelas</p>
             <p className="text-xl font-bold text-[#3B7FD1]">{stats.rata_rata?.toFixed(1) || '-'}</p>
@@ -96,7 +96,8 @@ export default function NilaiAdminPage() {
 
         {/* Table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="min-w-[600px] w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Siswa</th>
@@ -143,6 +144,7 @@ export default function NilaiAdminPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 

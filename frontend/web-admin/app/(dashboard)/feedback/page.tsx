@@ -84,7 +84,8 @@ export default function FeedbackAdminPage() {
           ) : (list as any[]).length === 0 ? (
             <div className="text-center py-12 text-gray-400">Belum ada feedback</div>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="min-w-[600px] w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   <th className="text-left px-5 py-4 font-semibold text-gray-700">Pengirim</th>
@@ -120,6 +121,7 @@ export default function FeedbackAdminPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

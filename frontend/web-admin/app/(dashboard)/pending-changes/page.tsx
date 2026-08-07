@@ -92,7 +92,8 @@ export default function PendingChangesPage() {
 
         {items.length > 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="min-w-[600px] w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Pengguna</th>
@@ -136,6 +137,7 @@ export default function PendingChangesPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 

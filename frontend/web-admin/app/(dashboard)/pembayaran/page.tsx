@@ -141,7 +141,7 @@ export default function PembayaranPage() {
       <Header title="Manajemen Pembayaran" />
       <div className="p-6">
         {/* Summary */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" mb-6>
           <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-[#3B7FD1]">
             <p className="text-sm text-gray-500">Total Tagihan</p>
             <p className="text-xl font-bold text-[#1A2332]">{fmt(summary.total_tagihan || 0)}</p>
@@ -157,7 +157,7 @@ export default function PembayaranPage() {
         </div>
 
         {/* Filters & Actions */}
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-wrap gap-4 mb-6">
           <select
             value={filterStatus}
             onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}

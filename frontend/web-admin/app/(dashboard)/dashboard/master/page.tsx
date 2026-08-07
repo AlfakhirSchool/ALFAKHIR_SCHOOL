@@ -87,7 +87,7 @@ const LevelRow = ({ label, color, d, delay = 0 }: { label: string; color: string
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-3 text-center text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div><span className="font-bold" style={{ color }}>{d.totalSiswa}</span><br /><span className="text-gray-400 text-xs">Siswa</span></div>
         <div><span className="font-bold" style={{ color }}>{d.totalKelas}</span><br /><span className="text-gray-400 text-xs">Kelas</span></div>
         <div><span className="font-bold text-green-600">{d.absensiHariIni}</span><br /><span className="text-gray-400 text-xs">Hadir</span></div>
@@ -194,7 +194,7 @@ export default function MasterDashboard() {
         {isLoading ? <div className="text-center py-10 text-gray-400">Memuat data...</div> : (
           <>
             {/* KPI */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4" mb-6>
               <StatCard label="Total Siswa"    value={kpi.totalSiswa    ?? 0} icon={<GraduationCap size={28} />} color="#2563EB" delay={0} />
               <StatCard label="Total Guru"     value={kpi.totalGuru     ?? 0} icon={<Users size={28} />}        color="#F97316" delay={100} />
               <StatCard label="Total Kelas"    value={kpi.totalKelas    ?? 0} icon={<School size={28} />}       color="#7C3AED" delay={200} />
@@ -262,7 +262,7 @@ export default function MasterDashboard() {
         )}
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4" mb-6>
           {([
             { href: '/users', icon: <KeyRound size={20} />, label: 'Reset Password', desc: 'Pulihkan akun lupa sandi', color: '#2563EB' },
             { href: '/users', icon: <Plus size={20} />, label: 'Daftar Akun Baru', desc: 'Tambah user guru/siswa', color: '#F97316' },

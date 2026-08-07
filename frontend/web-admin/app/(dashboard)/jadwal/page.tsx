@@ -86,7 +86,7 @@ export default function JadwalPage() {
 
         {/* Tabs jenjang — master admin saja */}
         {isMaster && (
-          <div className="flex gap-2 mb-5">
+          <div className="flex flex-wrap gap-2 mb-5">
             {ALL_JENJANG.map(j => (
               <button key={j} onClick={() => { setActiveJenjang(j); setFilterKelas(''); }}
                 className={`px-5 py-1.5 rounded-lg text-sm font-semibold transition-colors ${activeJenjang === j ? JENJANG_COLOR[j].active : JENJANG_COLOR[j].passive}`}>
@@ -176,7 +176,8 @@ export default function JadwalPage() {
                   <div className="px-6 py-3 border-b border-gray-100" style={{ background: `color-mix(in srgb, currentColor 5%, white)` }}>
                     <h3 className={`font-semibold text-sm ${activeJenjang === 'SD' ? 'text-orange-600' : activeJenjang === 'SMA' ? 'text-blue-600' : 'text-[#1B8B87]'}`}>{day}</h3>
                   </div>
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto">
+                  <table className="min-w-[600px] w-full text-sm">
                     <tbody className="divide-y divide-gray-50">
                       {items.sort((a: any, b: any) => a.jam_mulai.localeCompare(b.jam_mulai)).map((j: any) => (
                         <tr key={j.id} className="hover:bg-gray-50/50">
@@ -193,6 +194,7 @@ export default function JadwalPage() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               );
             })}

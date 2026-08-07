@@ -66,7 +66,7 @@ export default function JurnalGuruAdminPage() {
       <Header title="Monitoring Jurnal Guru" />
       <div className="p-6">
         {/* Summary */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4" mb-6>
           <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-gray-400">
             <p className="text-sm text-gray-500">Draft</p>
             <p className="text-xl font-bold text-gray-600">{summary.draft || 0}</p>
@@ -110,7 +110,8 @@ export default function JurnalGuruAdminPage() {
 
         {/* Table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="min-w-[600px] w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Guru</th>
@@ -153,6 +154,7 @@ export default function JurnalGuruAdminPage() {
               ))}
             </tbody>
           </table>
+          </div>
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
               <p className="text-sm text-gray-500">Halaman {page} dari {pagination.totalPages}</p>

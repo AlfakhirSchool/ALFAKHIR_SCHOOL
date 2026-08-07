@@ -275,7 +275,7 @@ export default function SoalAkademikPage() {
               </div>
 
               {/* Gambar URL + urutan */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="col-span-2">
                   <label className="block text-xs font-semibold text-gray-600 mb-1 flex items-center gap-1"><ImageIcon size={11} /> URL Gambar (opsional)</label>
                   <input value={form.gambar_url} onChange={e => setForm(f => ({ ...f, gambar_url: e.target.value }))}

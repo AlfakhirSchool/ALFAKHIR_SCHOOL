@@ -235,7 +235,7 @@ export default function UsersPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4" mb-6>
           {[
             { role: 'admin', label: 'Admin', icon: '🛡️' },
             { role: 'guru',  label: 'Guru',  icon: '👨‍🏫' },
@@ -280,7 +280,8 @@ export default function UsersPage() {
 
         {/* Table */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="min-w-[600px] w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Nama / Email</th>
@@ -367,6 +368,7 @@ export default function UsersPage() {
               ))}
             </tbody>
           </table>
+          </div>
 
           {pagination.totalPages > 1 && (
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">

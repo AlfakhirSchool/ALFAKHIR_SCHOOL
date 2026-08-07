@@ -188,7 +188,8 @@ export default function RfidRegistrasiPage() {
           ) : filteredSiswa.length === 0 ? (
             <div className="p-10 text-center text-gray-400 text-sm">Tidak ada data siswa</div>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="min-w-[600px] w-full text-sm">
               <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                 <tr>
                   <th className="px-5 py-3 text-left">Nama Siswa</th>
@@ -230,6 +231,7 @@ export default function RfidRegistrasiPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 

@@ -212,7 +212,7 @@ function KandidatTab({ kandidatList, stats, isLoading, filterStatus, setFilterSt
     <div className={detail ? 'grid grid-cols-5 gap-6' : ''}>
       <div className={detail ? 'col-span-2' : ''}>
         {/* Stats */}
-        <div className="grid grid-cols-5 gap-3 mb-5">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {[
             { label: 'Total', value: stats.total, color: '#6B7280' },
             { label: 'Menunggu', value: stats.pending, color: '#D97706' },
@@ -348,7 +348,8 @@ function KandidatTab({ kandidatList, stats, isLoading, filterStatus, setFilterSt
               <p className="text-sm text-gray-500">Belum ada kandidat</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="min-w-[600px] w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   <th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Nama</th>
@@ -416,6 +417,7 @@ function KandidatTab({ kandidatList, stats, isLoading, filterStatus, setFilterSt
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

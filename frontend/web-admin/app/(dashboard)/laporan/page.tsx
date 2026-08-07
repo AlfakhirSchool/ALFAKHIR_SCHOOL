@@ -33,7 +33,7 @@ export default function LaporanPage() {
       <Header title="Laporan & Export" />
       <div className="p-6">
         {/* Tab Nav */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
           {tabs.map(t => (
             <button key={t.key} onClick={() => setActiveTab(t.key)}
               className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === t.key ? 'bg-[#3B7FD1] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>

@@ -74,7 +74,7 @@ export default function MataPelajaranPage() {
       <div className="p-6">
 
         {/* Jenjang tabs */}
-        <div className="flex gap-2 mb-5">
+        <div className="flex flex-wrap gap-2 mb-5">
           {allowedJenjang.map(j => {
             const c = JENJANG_COLOR[j];
             return (
@@ -96,7 +96,7 @@ export default function MataPelajaranPage() {
         {showForm && (
           <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-[#3B7FD1]/20">
             <h3 className="font-semibold text-[#1A2332] mb-4">{editId ? 'Edit' : 'Tambah'} Mata Pelajaran</h3>
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Nama Mata Pelajaran *</label>
                 <input value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })}
@@ -139,7 +139,8 @@ export default function MataPelajaranPage() {
         )}
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="min-w-[600px] w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th className="text-left px-6 py-4 font-semibold text-gray-700">Nama</th>
@@ -188,6 +189,7 @@ export default function MataPelajaranPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 

@@ -112,7 +112,7 @@ export default function AbsensiGerbangPage() {
           {showQrPanel && (
             <div className="p-6">
               {/* Toggle Masuk/Pulang */}
-              <div className="flex gap-3 mb-6">
+              <div className="flex flex-wrap gap-3 mb-6">
                 <button
                   onClick={() => setQrMode('masuk')}
                   className={`flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border-2 transition-colors ${
