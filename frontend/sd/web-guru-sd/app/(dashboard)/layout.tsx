@@ -38,8 +38,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (!hydrated) return;
     if (!isAuthenticated) { router.push('/login'); return; }
-    // Hanya guru SD atau guru tanpa school_level (semua jenjang)
-    const allowed = user?.role === 'guru' && (user?.school_level === 'SD' || !user?.school_level);
+    // Hanya guru SD atau guru tanpa school_levels (semua jenjang)
+    const levels = user?.school_levels ?? [];
+    const allowed = user?.role === 'guru' && (levels.length === 0 || levels.includes('SD'));
     if (!allowed) { router.push('/login'); return; }
   }, [hydrated, isAuthenticated, user, router]);
 

@@ -27,13 +27,14 @@ export default function LoginPage() {
     try {
       const res = await api.post('/auth/login', { email, password });
       const { user, accessToken, refreshToken } = res.data.data;
-      const isGuruSD = user.role === 'guru' && (user.school_level === 'SD' || !user.school_level);
+      const pd = user.profile_detail;
+      const levels: string[] = pd?.school_levels || [];
+      const isGuruSD = user.role === 'guru' && (levels.length === 0 || levels.includes('SD'));
       if (!isGuruSD) {
         setError('Akses hanya untuk Guru SD');
         setLoading(false);
         return;
       }
-      const pd = user.profile_detail;
       const enrichedUser = {
         ...user,
         school_levels: pd?.school_levels || [],
