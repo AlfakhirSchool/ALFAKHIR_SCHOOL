@@ -40,6 +40,6 @@ export const useAuthStore = create<AuthState>()(
       },
       updateUser: (updates) => set((state) => ({ user: state.user ? { ...state.user, ...updates } : null })),
     }),
-    { name: 'alfakhir-guru-auth' }
+    { name: 'alfakhir-portal-sd-auth' }
   )
 );
