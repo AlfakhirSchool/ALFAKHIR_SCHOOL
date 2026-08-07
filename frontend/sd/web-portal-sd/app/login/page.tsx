@@ -21,7 +21,7 @@ export default function LoginPage() {
     setError('');
     try {
       const res = await api.post('/auth/login', { email: username, password });
-      const { user, accessToken, refreshToken } = res.data;
+      const { user, accessToken, refreshToken } = res.data.data;
       if (!['siswa', 'ortu'].includes(user.role)) {
         setError('Akun ini tidak memiliki akses ke portal siswa/orang tua.');
         return;
