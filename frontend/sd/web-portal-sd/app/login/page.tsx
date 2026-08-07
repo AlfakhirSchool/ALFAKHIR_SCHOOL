@@ -36,13 +36,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1A6B3C] to-[#0f4a2a] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#F97316] to-[#0f4a2a] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         {/* Logo & Judul */}
         <div className="text-center mb-8">
-          <img src="/logo.png" alt="Logo" className="w-20 h-20 object-contain mx-auto mb-4 drop-shadow-lg" />
-          <h1 className="text-2xl font-bold text-white">Portal Al-Fakhir</h1>
-          <p className="text-green-200 text-sm mt-1">SD & SMP Islam Modern Al-Fakhir</p>
+          <img src="/logo-sd.png" alt="Logo SD" className="w-20 h-20 object-contain mx-auto mb-4 drop-shadow-lg" />
+          <h1 className="text-2xl font-bold text-white">Portal SD Al-Fakhir</h1>
+          <p className="text-orange-200 text-sm mt-1">SD Islam Modern Al-Fakhir</p>
         </div>
 
         {/* Card */}
@@ -65,7 +65,7 @@ export default function LoginPage() {
                 onChange={e => setUsername(e.target.value)}
                 placeholder="email@sekolah.sch.id"
                 required
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1A6B3C]"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
               />
             </div>
             <div>
@@ -77,7 +77,7 @@ export default function LoginPage() {
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1A6B3C]"
+                  className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                 />
                 <button
                   type="button"
@@ -91,7 +91,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-[#1A6B3C] text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#145730] disabled:opacity-60 transition-colors"
+              className="w-full py-2.5 bg-[#F97316] text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#ea6b10] disabled:opacity-60 transition-colors"
             >
               {loading ? (
                 <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -106,7 +106,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <p className="text-center text-green-300 text-xs mt-6">
+        <p className="text-center text-orange-300 text-xs mt-6">
           © 2025 Al-Fakhir School · Sawangan, Depok
         </p>
       </div>

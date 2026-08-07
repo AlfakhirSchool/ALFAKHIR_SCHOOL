@@ -23,13 +23,13 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Top header */}
-      <header className="bg-[#1A6B3C] text-white px-4 pt-safe-top pb-3 sticky top-0 z-40">
+      <header className="bg-[#F97316] text-white px-4 pt-safe-top pb-3 sticky top-0 z-40">
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <div className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+            <img src="/logo-sd.png" alt="Logo SD" className="w-8 h-8 object-contain" />
             <div>
-              <p className="font-semibold text-sm leading-tight">Al-Fakhir School</p>
-              <p className="text-green-200 text-[10px]">Portal {roleLabel}</p>
+              <p className="font-semibold text-sm leading-tight">SD Al-Fakhir</p>
+              <p className="text-orange-200 text-[10px]">Portal {roleLabel}</p>
             </div>
           </div>
           <div className="text-right">

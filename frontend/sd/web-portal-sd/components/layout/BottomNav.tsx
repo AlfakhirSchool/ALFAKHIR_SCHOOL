@@ -16,7 +16,7 @@ const navItems = [
 export default function BottomNav() {
   const pathname = usePathname();
   const { user } = useAuthStore();
-  const accent = user?.role === 'ortu' ? '#1A6B3C' : '#1A6B3C';
+  const accent = user?.role === 'ortu' ? '#F97316' : '#F97316';
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 safe-area-pb">
