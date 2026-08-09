@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, CreditCard, CalendarCheck, BookOpen, User } from 'lucide-react';
+import { Home, CreditCard, BookOpen, ClipboardList, User } from 'lucide-react';
 
 const navItems = [
   { href: '/',          icon: Home,          label: 'Beranda'  },
   { href: '/tagihan',   icon: CreditCard,    label: 'Tagihan'  },
-  { href: '/kehadiran', icon: CalendarCheck, label: 'Kehadiran' },
-  { href: '/tugas',     icon: BookOpen,      label: 'Tugas'    },
+  { href: '/materi',    icon: BookOpen,      label: 'Mapel'    },
+  { href: '/tugas',     icon: ClipboardList, label: 'Tugas'    },
   { href: '/profil',    icon: User,          label: 'Profil'   },
 ];
 

@@ -34,6 +34,7 @@ import jawabanFormRoutes from './routes/jawabanForm';
 import pertanyaanFormRoutes from './routes/pertanyaanForm';
 import aiChatRoutes from './routes/aiChat';
 import tugasRoutes from './routes/tugas';
+import materiRoutes from './routes/materi';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { globalAuditLogger } from './middleware/auditLog';
 import logger from './config/logger';
@@ -51,6 +52,13 @@ app.use(cors({
       process.env.FRONTEND_GURU_URL,
       'http://localhost:3000',
       'http://localhost:3002',
+      'http://localhost:3004',
+      'http://localhost:3010',
+      'http://localhost:3011',
+      'http://localhost:3012',
+      'http://localhost:3020',
+      'http://localhost:3021',
+      'http://localhost:3022',
       'http://10.10.9.73:3000',
       'http://10.10.9.73:3002',
       // Production Cloudflare domains
@@ -115,6 +123,7 @@ app.use(`${PREFIX}/jawaban-form`, jawabanFormRoutes);
 app.use(`${PREFIX}/pertanyaan-form`, pertanyaanFormRoutes);
 app.use(`${PREFIX}/ai/chat`, aiChatRoutes);
 app.use(`${PREFIX}/tugas`, tugasRoutes);
+app.use(`${PREFIX}/materi`, materiRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

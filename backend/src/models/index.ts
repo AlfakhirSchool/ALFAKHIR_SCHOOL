@@ -28,6 +28,7 @@ import PertanyaanForm from './PertanyaanForm';
 import CatatanSiswaGuru from './CatatanSiswaGuru';
 import Tugas from './Tugas';
 import PengumpulanTugas from './PengumpulanTugas';
+import Materi from './Materi';
 
 // User <-> Guru / Siswa / OrangTua
 User.hasOne(Guru, { foreignKey: 'user_id', as: 'guru_detail' });
@@ -174,4 +175,13 @@ export {
   Kandidat, CatatanPewawancara, SoalAkademik, HasilTesAkademik, JawabanAkademik, RingkasanAI, JawabanForm, PertanyaanForm,
   CatatanSiswaGuru,
   Tugas, PengumpulanTugas,
+  Materi,
 };
+
+// Materi associations
+Guru.hasMany(Materi, { foreignKey: 'guru_id', as: 'materi_list' });
+Materi.belongsTo(Guru, { foreignKey: 'guru_id', as: 'guru' });
+Kelas.hasMany(Materi, { foreignKey: 'kelas_id', as: 'materi_kelas' });
+Materi.belongsTo(Kelas, { foreignKey: 'kelas_id', as: 'kelas' });
+MataPelajaran.hasMany(Materi, { foreignKey: 'mata_pelajaran_id', as: 'materi_list' });
+Materi.belongsTo(MataPelajaran, { foreignKey: 'mata_pelajaran_id', as: 'mata_pelajaran' });

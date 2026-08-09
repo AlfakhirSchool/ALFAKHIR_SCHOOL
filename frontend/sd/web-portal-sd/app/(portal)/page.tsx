@@ -12,15 +12,28 @@ import api from '@/lib/api';
 const fmt = (v: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
 
+const MAPEL_COLORS: Record<string, { bg: string; color: string; icon: string }> = {
+  MTK:  { bg: '#EFF6FF', color: '#3B82F6', icon: '📐' },
+  BIN:  { bg: '#FEF9C3', color: '#CA8A04', icon: '📖' },
+  IPA:  { bg: '#ECFDF5', color: '#10B981', icon: '🔬' },
+  IPS:  { bg: '#FFF7ED', color: '#F97316', icon: '🌍' },
+  PAI:  { bg: '#F5F3FF', color: '#8B5CF6', icon: '☪️' },
+  PKN:  { bg: '#FEF2F2', color: '#EF4444', icon: '🇮🇩' },
+  ENG:  { bg: '#F0F9FF', color: '#0EA5E9', icon: '🗣️' },
+  SBK:  { bg: '#FDF4FF', color: '#A855F7', icon: '🎨' },
+  PJOK: { bg: '#F0FDF4', color: '#16A34A', icon: '⚽' },
+  DEFAULT: { bg: '#F8FAFC', color: '#64748B', icon: '📚' },
+};
+
 const MENU = [
-  { href: '/tagihan',   icon: CreditCard,    label: 'Tagihan',    color: '#F97316', bg: '#FFF7ED' },
-  { href: '/kehadiran', icon: CalendarCheck, label: 'Kehadiran',  color: '#10B981', bg: '#ECFDF5' },
-  { href: '/tugas',     icon: BookOpen,      label: 'Tugas',      color: '#3B7FD1', bg: '#EBF2FF' },
-  { href: '/profil',    icon: User,          label: 'Profil',     color: '#8B5CF6', bg: '#F5F3FF' },
-  { href: '/tagihan',   icon: FileText,      label: 'Kuitansi',   color: '#EF4444', bg: '#FEF2F2' },
-  { href: '/kehadiran', icon: Award,         label: 'Prestasi',   color: '#F59E0B', bg: '#FFFBEB' },
-  { href: '/tugas',     icon: Clock,         label: 'Jadwal',     color: '#06B6D4', bg: '#ECFEFF' },
-  { href: '/profil',    icon: Bell,          label: 'Pengumuman', color: '#64748B', bg: '#F8FAFC' },
+  { href: '/tagihan',   icon: CreditCard,    label: 'Tagihan',       color: '#F97316', bg: '#FFF7ED' },
+  { href: '/kehadiran', icon: CalendarCheck, label: 'Kehadiran',     color: '#10B981', bg: '#ECFDF5' },
+  { href: '/tugas',     icon: FileText,      label: 'Tugas',         color: '#3B7FD1', bg: '#EBF2FF' },
+  { href: '/materi',    icon: BookOpen,      label: 'Mata Pelajaran',color: '#F59E0B', bg: '#FFFBEB' },
+  { href: '/tagihan',   icon: Award,         label: 'Kuitansi',      color: '#EF4444', bg: '#FEF2F2' },
+  { href: '/kehadiran', icon: Clock,         label: 'Jadwal',        color: '#06B6D4', bg: '#ECFEFF' },
+  { href: '/profil',    icon: Bell,          label: 'Pengumuman',    color: '#64748B', bg: '#F8FAFC' },
+  { href: '/profil',    icon: User,          label: 'Profil',        color: '#8B5CF6', bg: '#F5F3FF' },
 ];
 
 export default function BerandaPage() {
@@ -45,6 +58,13 @@ export default function BerandaPage() {
     enabled: !isOrtu && !!siswaData?.kelas_id,
   });
 
+  const { data: mapelData } = useQuery({
+    queryKey: ['portal-mapel'],
+    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data),
+    enabled: !isOrtu,
+  });
+
+
   const tagihan = tagihanData?.data || [];
   const belumBayar = tagihan.filter((t: any) => t.status !== 'lunas');
   const totalTunggakan = belumBayar.reduce(
@@ -61,72 +81,103 @@ export default function BerandaPage() {
     ? Math.ceil((new Date(tugasDeadline.deadline).getTime() - now.getTime()) / 86400000)
     : null;
 
-  const firstName = user?.nama?.split(' ')[0] || 'Pengguna';
+  const namaParts = user?.nama?.split(' ') || [];
+  const firstName = namaParts.length > 1 ? namaParts[0] : (user?.nama || 'Pengguna');
 
   return (
-    <div className="min-h-screen bg-[#F2F2F7]">
+    <div className="min-h-screen bg-[#F0F2F5]">
 
-      {/* Top bar — Qantas style */}
-      <div className="bg-white px-4 pt-12 pb-4 flex items-center justify-between">
-        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-sm text-gray-600">
-          <Bell size={15} />
-          <span>Info</span>
-        </button>
-        <Link href="/profil"
-          className="flex items-center gap-2 bg-[#F97316] text-white px-4 py-1.5 rounded-full text-sm font-semibold">
-          <img src="/logo-sd.png" alt="" className="w-5 h-5 object-contain brightness-0 invert" />
-          Profil
-        </Link>
-      </div>
+      {/* Hero header */}
+      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(145deg, #FF8C38 0%, #E8620D 100%)' }}>
+        {/* Dekorasi */}
+        <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/8" />
+        <div className="absolute top-6 right-2 w-16 h-16 rounded-full bg-white/8" />
 
-      <div className="px-4 pb-28 space-y-5 mt-4">
-
-        {/* Greeting */}
-        <div>
-          <p className="text-gray-500 text-sm">Selamat datang,</p>
-          <h1 className="text-3xl font-bold text-gray-900 mt-0.5">{firstName}</h1>
-        </div>
-
-        {/* Stats card — Points/Status style */}
-        <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-          <div className="flex divide-x divide-gray-100">
-            <div className="flex-1 px-5 py-4">
-              <p className="text-xs text-gray-400 mb-1">Tunggakan</p>
-              <p className="text-xl font-bold text-gray-900">
-                {isOrtu ? '—' : belumBayar.length === 0 ? 'Lunas' : fmt(totalTunggakan)}
-              </p>
+        <div className="px-4 pt-10 pb-6">
+          {/* Top row */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <img src="/logo-sd.png" alt="" className="w-7 h-7 object-contain brightness-0 invert opacity-90" />
+              <p className="text-white/80 text-xs font-semibold tracking-wide">SD AL-FAKHIR</p>
             </div>
-            <div className="flex-1 px-5 py-4">
-              <p className="text-xs text-gray-400 mb-1">Status</p>
-              <p className="text-xl font-bold" style={{
-                color: isOrtu ? '#9CA3AF' : belumBayar.length === 0 ? '#10B981' : '#EF4444'
-              }}>
-                {isOrtu ? '—' : belumBayar.length === 0 ? 'Lunas' : `${belumBayar.length} tagihan`}
-              </p>
+            <Link href="/profil">
+              <div className="w-8 h-8 rounded-full border-2 border-white/40 bg-white/20 flex items-center justify-center">
+                <span className="text-white font-black text-xs">{(user?.nama || 'P')[0].toUpperCase()}</span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Greeting */}
+          <div className="mb-5">
+            <p className="text-white/60 text-xs mb-1">Selamat datang</p>
+            <h1 className="text-white font-black text-[26px] leading-none tracking-tight">{user?.nama || 'Pengguna'}</h1>
+          </div>
+
+          {/* Stats pills */}
+          <div className="flex gap-2">
+            <div className="flex-1 bg-black/15 rounded-2xl px-3 py-2.5">
+              <p className="text-white/50 text-[9px] font-semibold uppercase tracking-widest mb-1">Kelas</p>
+              <div className="flex items-center gap-1.5">
+                <BookOpen size={12} className="text-white/70" />
+                <p className="text-white font-bold text-sm">{siswaData?.kelas?.nama || '—'}</p>
+              </div>
             </div>
-            <div className="w-14 flex items-center justify-center bg-[#FFF7ED]">
-              <div className="w-10 h-10 rounded-full bg-[#F97316] flex items-center justify-center">
-                <img src="/logo-sd.png" alt="" className="w-6 h-6 object-contain brightness-0 invert" />
+            <div className="flex-1 bg-black/15 rounded-2xl px-3 py-2.5">
+              <p className="text-white/50 text-[9px] font-semibold uppercase tracking-widest mb-1">Kehadiran</p>
+              <div className="flex items-center gap-1.5">
+                <CalendarCheck size={12} className="text-white/70" />
+                <p className="text-white font-bold text-sm">—</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Menu grid — "Book and explore" style */}
+        {/* Bottom curve */}
+        <div className="h-6 bg-[#F0F2F5] rounded-t-[28px]" />
+      </div>
+
+      <div className="px-3 pb-28 space-y-4 mt-4">
+
+        {/* Menu grid */}
         <div>
-          <h2 className="text-lg font-bold text-gray-900 mb-3">Menu Layanan</h2>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">Menu Layanan</p>
           <div className="grid grid-cols-4 gap-2">
             {MENU.map(({ href, icon: Icon, label, color, bg }) => (
               <Link key={label} href={href}
-                className="bg-white rounded-2xl p-3 flex flex-col items-center gap-2 shadow-sm active:scale-95 transition-transform">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: bg }}>
-                  <Icon size={20} style={{ color }} strokeWidth={1.8} />
+                className="bg-white rounded-2xl py-3 px-1 flex flex-col items-center gap-1.5 shadow-sm active:scale-95 transition-transform">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: bg }}>
+                  <Icon size={18} style={{ color }} strokeWidth={2} />
                 </div>
-                <span className="text-[10px] font-medium text-gray-600 text-center leading-tight">{label}</span>
+                <span className="text-[9.5px] font-semibold text-gray-500 text-center leading-tight">{label}</span>
               </Link>
             ))}
           </div>
         </div>
+
+        {/* Mata Pelajaran */}
+        {!isOrtu && mapelData && mapelData.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-2 px-1">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Mata Pelajaran</p>
+            <Link href="/materi" className="text-xs font-semibold text-[#F97316]">Lihat semua →</Link>
+          </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 scrollbar-hide">
+              {mapelData.map((m: any) => {
+                const style = MAPEL_COLORS[m.kode] || MAPEL_COLORS.DEFAULT;
+                return (
+                  <Link key={m.id} href={`/materi?mapel=${m.id}`}
+                    className="flex-shrink-0 bg-white rounded-2xl p-3 w-28 shadow-sm text-left active:scale-95 transition-transform">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-2" style={{ background: style.bg }}>
+                      <BookOpen size={16} style={{ color: style.color }} strokeWidth={2} />
+                    </div>
+                    <p className="text-[10px] font-bold text-gray-700 leading-tight">{m.nama}</p>
+                    <p className="text-[9px] text-gray-400 mt-0.5">KKM {m.kkm || 75}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Upcoming task — "5 days until trip" style */}
         {!isOrtu && tugasDeadline && (
@@ -206,6 +257,7 @@ export default function BerandaPage() {
         )}
 
       </div>
+
     </div>
   );
 }

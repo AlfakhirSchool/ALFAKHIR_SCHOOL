@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,87 +28,121 @@ export default function LoginPage() {
         return;
       }
       login(user, accessToken, refreshToken);
-      router.push('/');
+      setSuccess(true);
+      setTimeout(() => router.push('/'), 700);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Email/password salah');
+      setError(err?.response?.data?.message || 'Username atau password salah');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F97316] to-[#0f4a2a] flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        {/* Logo & Judul */}
-        <div className="text-center mb-8">
-          <img src="/logo-sd.png" alt="Logo SD" className="w-20 h-20 object-contain mx-auto mb-4 drop-shadow-lg" />
-          <h1 className="text-2xl font-bold text-white">Portal SD Al-Fakhir</h1>
-          <p className="text-orange-200 text-sm mt-1">SD Islam Modern Al-Fakhir</p>
+    <div
+      className="min-h-screen flex flex-col transition-all duration-700"
+      style={{
+        background: 'linear-gradient(160deg, #F97316 0%, #c45c0a 45%, #7c3a00 100%)',
+        opacity: success ? 0 : 1,
+        transform: success ? 'scale(1.04)' : 'scale(1)',
+      }}
+    >
+
+      {/* Top area — branding */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-4">
+        <div className="w-20 h-20 rounded-2xl bg-black/20 flex items-center justify-center mb-5">
+          <img src="/logo-sd.png" alt="Logo" className="w-14 h-14 object-contain brightness-0 invert" />
         </div>
+        <h1 className="text-white text-2xl font-bold tracking-tight">SD Al-Fakhir</h1>
+        <p className="text-orange-200 text-sm mt-1">Sawangan, Depok</p>
 
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-1">Masuk ke Portal</h2>
-          <p className="text-sm text-gray-500 mb-6">Untuk orang tua & siswa</p>
+        {/* Dekoratif dots */}
+        <div className="flex gap-2 mt-8 opacity-25">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="w-1.5 h-1.5 rounded-full bg-white" />
+          ))}
+        </div>
+      </div>
 
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-              {error}
-            </div>
-          )}
+      {/* Bottom sheet */}
+      <div className="bg-white rounded-t-[32px] px-6 pt-8 pb-10 shadow-2xl">
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Username</label>
+        {/* Handle bar */}
+        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
+
+        <h2 className="text-xl font-bold text-gray-900 mb-1">Masuk ke Portal</h2>
+        <p className="text-sm text-gray-400 mb-7">Untuk siswa & orang tua Al-Fakhir</p>
+
+        {error && (
+          <div className="mb-5 px-4 py-3 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-600 flex items-start gap-2">
+            <span className="mt-0.5 text-red-400 flex-shrink-0">⚠</span>
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-2 tracking-wide uppercase">
+              Username / Email
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              placeholder="Masukkan username atau email"
+              required
+              autoComplete="username"
+              className="w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#F97316] focus:ring-2 focus:ring-orange-100 transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-2 tracking-wide uppercase">
+              Password
+            </label>
+            <div className="relative">
               <input
-                type="text"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                placeholder="Username atau email"
+                type={showPw ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Masukkan password"
                 required
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                autoComplete="current-password"
+                className="w-full px-4 py-3.5 pr-12 bg-gray-50 border border-gray-100 rounded-2xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#F97316] focus:ring-2 focus:ring-orange-100 transition-all"
               />
+              <button
+                type="button"
+                onClick={() => setShowPw(v => !v)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Password</label>
-              <div className="relative">
-                <input
-                  type={showPw ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPw(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                >
-                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 bg-[#F97316] text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2 hover:bg-[#ea6b10] disabled:opacity-60 transition-colors"
-            >
-              {loading ? (
-                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              ) : (
-                <><LogIn size={16} /> Masuk</>
-              )}
-            </button>
-          </form>
+          </div>
 
-          <p className="text-xs text-center text-gray-400 mt-5">
-            Lupa password? Hubungi admin sekolah.
-          </p>
-        </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2 active:scale-95"
+            style={{ background: (loading || success) ? '#f9a05e' : 'linear-gradient(135deg, #F97316 0%, #e8620d 100%)', boxShadow: '0 8px 24px rgba(249,115,22,0.35)' }}
+          >
+            {loading ? (
+              <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            ) : (
+              <>Masuk <ArrowRight size={16} /></>
+            )}
+          </button>
+        </form>
 
-        <p className="text-center text-orange-300 text-xs mt-6">
-          © 2025 Al-Fakhir School · Sawangan, Depok
+        <p className="text-xs text-center text-gray-400 mt-6">
+          Lupa password?{' '}
+          <span className="text-[#F97316] font-medium">Hubungi admin sekolah</span>
+        </p>
+
+        <p className="text-[10px] text-center text-gray-300 mt-4">
+          © 2026 Al-Fakhir School · Sawangan, Depok
+        </p>
+        <p className="text-[10px] text-center text-gray-300 mt-1">
+          Developed by <span className="text-[#F97316] font-medium">Feri</span>
         </p>
       </div>
     </div>
