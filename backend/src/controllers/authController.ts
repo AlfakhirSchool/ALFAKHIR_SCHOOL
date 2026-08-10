@@ -46,10 +46,11 @@ const generateTokens = (user: { id: string; email: string; nama: string; role: s
 };
 
 export const login = async (req: Request, res: Response): Promise<void> => {
-  const { email, nis, password, role: loginRole, device_id } = req.body;
+  const { email, username: usernameInput, nis, password, role: loginRole, device_id } = req.body;
+  const loginIdentifier = usernameInput || email; // support both field names from clients
 
-  if (!password || (!email && !nis)) {
-    res.status(400).json({ success: false, message: 'NIS/email dan password wajib diisi' });
+  if (!password || (!loginIdentifier && !nis)) {
+    res.status(400).json({ success: false, message: 'Username/NIS dan password wajib diisi' });
     return;
   }
 
@@ -77,15 +78,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       user = (siswa as any).user ?? null;
     }
   } else {
-    user = await User.findOne({ where: { email, is_active: true } });
-    if (!user) {
-      // ponytail: login by nama untuk guru/staf yang belum punya email di sistem
-      user = await User.findOne({ where: { nama: { [Op.iLike]: email }, is_active: true } });
-    }
+    // cari by username dulu, fallback ke email lama (migrasi bertahap)
+    user = await User.findOne({ where: { username: loginIdentifier, is_active: true } });
+    if (!user) user = await User.findOne({ where: { email: loginIdentifier, is_active: true } });
   }
 
   if (!user || !(user as any).is_active) {
-    res.status(401).json({ success: false, message: 'NIS/email atau password salah' });
+    res.status(401).json({ success: false, message: 'Username/NIS atau password salah' });
     return;
   }
 

@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
-const DOMAIN = '';
 
 type JenjangInfo = { logo: string; name: string; sub: string; accent: string; panelBg: string };
 
@@ -32,9 +31,8 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const email = username.includes('@') ? username : `${username}${DOMAIN}`;
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { username, password });
       const { user, accessToken, refreshToken } = res.data.data;
       // web-admin-sd: hanya admin SD atau admin master
       const isAdminSD = user.role === 'admin' && (user.school_level === 'SD' || !user.school_level);
@@ -183,7 +181,7 @@ export default function LoginPage() {
                   onFocus={() => setFocused('user')}
                   onBlur={() => setFocused(null)}
                   className="w-full px-4 py-3.5 bg-transparent rounded-xl focus:outline-none text-[#1A2332]"
-                  placeholder="Username atau email"
+                  placeholder="Masukkan username"
                   autoComplete="username"
                 />
               </div>

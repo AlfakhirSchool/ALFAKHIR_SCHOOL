@@ -21,7 +21,7 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await api.post('/auth/login', { email: username, password });
+      const res = await api.post('/auth/login', { username, password });
       const { user, accessToken, refreshToken } = res.data.data;
       if (!['siswa', 'ortu'].includes(user.role)) {
         setError('Akun ini tidak memiliki akses ke portal siswa/orang tua.');
@@ -88,7 +88,7 @@ export default function LoginPage() {
               type="text"
               value={username}
               onChange={e => setUsername(e.target.value)}
-              placeholder="Masukkan username atau email"
+              placeholder="Masukkan username"
               required
               autoComplete="username"
               className="w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#F97316] focus:ring-2 focus:ring-orange-100 transition-all"
