@@ -3,14 +3,14 @@ import path from 'path';
 import fs from 'fs';
 import Materi from '../models/Materi';
 import Guru from '../models/Guru';
-import MataKelas from '../models/MataKelas';
 import { AuthRequest } from '../middleware/auth';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'materi');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 export const getMateri = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { mata_pelajaran_id, kelas_id } = req.query;
+  const mata_pelajaran_id = req.query.mata_pelajaran_id as string | undefined;
+  const kelas_id = req.query.kelas_id as string | undefined;
   const where: any = { is_active: true };
   if (mata_pelajaran_id) where.mata_pelajaran_id = mata_pelajaran_id;
   if (kelas_id) where.kelas_id = kelas_id;
