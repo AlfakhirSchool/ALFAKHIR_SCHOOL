@@ -57,7 +57,7 @@ export const uploadMateri = async (req: AuthRequest, res: Response): Promise<voi
 };
 
 export const deleteMateri = async (req: AuthRequest, res: Response): Promise<void> => {
-  const materi = await Materi.findByPk(req.params.id);
+  const materi = await Materi.findByPk(req.params.id as string);
   if (!materi) { res.status(404).json({ success: false, message: 'Materi tidak ditemukan' }); return; }
 
   if (materi.file_url) {
