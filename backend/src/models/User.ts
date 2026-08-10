@@ -7,6 +7,7 @@ export type SchoolLevel = 'SD' | 'SMP' | 'SMA' | null;
 interface UserAttributes {
   id: string;
   email: string;
+  username: string | null;
   password_hash: string;
   nama: string;
   role: UserRole;
@@ -18,11 +19,12 @@ interface UserAttributes {
   updated_at?: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'is_active' | 'profile_pic' | 'school_level' | 'device_id'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'is_active' | 'profile_pic' | 'school_level' | 'device_id' | 'username'> {}
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   declare id: string;
   declare email: string;
+  declare username: string | null;
   declare password_hash: string;
   declare nama: string;
   declare role: UserRole;
@@ -38,6 +40,7 @@ User.init(
   {
     id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
     email: { type: DataTypes.STRING(255), allowNull: false, unique: true },
+    username: { type: DataTypes.STRING(255), allowNull: true, unique: true },
     password_hash: { type: DataTypes.STRING(255), allowNull: false },
     nama: { type: DataTypes.STRING(255), allowNull: false },
     role: { type: DataTypes.ENUM('admin', 'guru', 'pewawancara', 'keuangan', 'siswa', 'ortu'), allowNull: false },
