@@ -1,10 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Upload, CheckCircle, Clock, FileText, X } from 'lucide-react';
+import { ClipboardList, Upload, CheckCircle, Clock, FileText, X, AlertCircle, ChevronRight } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
+
+function fmtDeadline(d: string) {
+  return new Date(d).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+
+function sisaHari(d: string) {
+  const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000);
+  if (diff < 0) return null;
+  if (diff === 0) return 'Hari ini';
+  if (diff === 1) return 'Besok';
+  return `${diff} hari lagi`;
+}
 
 export default function TugasPage() {
   const { user } = useAuthStore();
@@ -13,6 +25,7 @@ export default function TugasPage() {
   const [selectedTugas, setSelectedTugas] = useState<any>(null);
   const [file, setFile] = useState<File | null>(null);
   const [catatan, setCatatan] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: siswaData } = useQuery({
     queryKey: ['portal-siswa-me'],
@@ -27,8 +40,6 @@ export default function TugasPage() {
     queryFn: () => api.get('/tugas', { params: { kelas_id: kelasId } }).then(r => r.data),
     enabled: isSiswa && !!kelasId,
   });
-
-  const tugasList: any[] = data?.data || [];
 
   const submitMut = useMutation({
     mutationFn: async () => {
@@ -47,126 +58,197 @@ export default function TugasPage() {
     },
   });
 
+  const tugasList: any[] = data?.data || [];
   const now = new Date();
 
-  if (!isSiswa) {
+  const belumSelesai = tugasList.filter(t => !t.submission_saya?.status && t.deadline && new Date(t.deadline) > now);
+  const sudahSelesai = tugasList.filter(t => t.submission_saya?.status);
+  const terlambat = tugasList.filter(t => !t.submission_saya?.status && t.deadline && new Date(t.deadline) <= now);
+
+  const TugasCard = ({ t }: { t: any }) => {
+    const deadline = t.deadline ? new Date(t.deadline) : null;
+    const overdue = deadline && deadline < now;
+    const sudahKumpul = t.submission_saya?.status;
+    const sisa = deadline && !overdue ? sisaHari(t.deadline) : null;
+    const urgent = sisa === 'Hari ini' || sisa === 'Besok';
+
     return (
-      <div className="space-y-4">
-        <h1 className="text-lg font-bold text-gray-800">Tugas & Materi</h1>
-        <div className="text-center py-16 text-gray-400">
-          <BookOpen size={48} className="mx-auto mb-3 opacity-30" />
-          <p className="text-sm font-medium">Fitur tugas siswa</p>
-          <p className="text-xs mt-1">Tersedia untuk akun siswa</p>
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        {/* Top accent bar */}
+        <div className="h-1 w-full" style={{
+          background: sudahKumpul ? '#10B981' : overdue ? '#EF4444' : urgent ? '#F97316' : '#3B7FD1'
+        }} />
+
+        <div className="p-4">
+          <div className="flex items-start gap-3">
+            {/* Icon */}
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: sudahKumpul ? '#ECFDF5' : overdue ? '#FEF2F2' : urgent ? '#FFF7ED' : '#EBF2FF' }}>
+              {sudahKumpul
+                ? <CheckCircle size={18} className="text-emerald-500" />
+                : overdue
+                ? <AlertCircle size={18} className="text-red-500" />
+                : <ClipboardList size={18} style={{ color: urgent ? '#F97316' : '#3B7FD1' }} />}
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-bold text-sm text-gray-800 leading-snug">{t.judul}</p>
+                <span className={`flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                  sudahKumpul ? 'bg-emerald-50 text-emerald-600' :
+                  overdue ? 'bg-red-50 text-red-500' :
+                  urgent ? 'bg-orange-50 text-[#F97316]' :
+                  'bg-blue-50 text-blue-600'
+                }`}>
+                  {sudahKumpul ? '✓ Dikumpulkan' : overdue ? 'Terlambat' : sisa || 'Aktif'}
+                </span>
+              </div>
+
+              <p className="text-[10px] text-gray-400 mt-0.5">
+                {t.mata_pelajaran?.nama || 'Umum'} · {t.kelas?.nama}
+              </p>
+
+              {t.deskripsi && (
+                <p className="text-xs text-gray-500 mt-2 line-clamp-2">{t.deskripsi}</p>
+              )}
+
+              {deadline && (
+                <div className="flex items-center gap-1.5 mt-2">
+                  <Clock size={10} className={overdue ? 'text-red-400' : 'text-gray-400'} />
+                  <p className={`text-[10px] ${overdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                    {fmtDeadline(t.deadline)}
+                  </p>
+                </div>
+              )}
+
+              {sudahKumpul && t.submission_saya?.nilai != null && (
+                <div className="mt-2.5 flex items-center gap-2 bg-emerald-50 rounded-xl px-3 py-2">
+                  <span className="text-xs text-emerald-700 font-semibold">Nilai: {t.submission_saya.nilai}</span>
+                  {t.submission_saya.catatan_guru && (
+                    <span className="text-[10px] text-emerald-600">· {t.submission_saya.catatan_guru}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-3 flex gap-2">
+            {t.file_url && (
+              <a href={t.file_url} target="_blank" rel="noopener"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-xl text-xs font-semibold text-gray-600">
+                <FileText size={12} /> Unduh Soal
+              </a>
+            )}
+            {isSiswa && !sudahKumpul && !overdue && (
+              <button onClick={() => setSelectedTugas(t)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F97316] text-white rounded-xl text-xs font-semibold ml-auto">
+                <Upload size={12} /> Kumpulkan
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
-  }
+  };
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-bold text-gray-800">Tugas & Materi</h1>
+    <div className="min-h-screen bg-[#F0F2F5]">
 
-      {isLoading || (isSiswa && !kelasId) ? (
-        <div className="text-center py-10 text-gray-400 text-sm">Memuat...</div>
-      ) : tugasList.length === 0 ? (
-        <div className="text-center py-10 text-gray-400">
-          <BookOpen size={40} className="mx-auto mb-2 opacity-30" />
-          <p className="text-sm">Belum ada tugas</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {tugasList.map((t: any) => {
-            const deadline = t.deadline ? new Date(t.deadline) : null;
-            const overdue = deadline && deadline < now;
-            const sudahKumpul = t.submission_saya?.status;
-
-            return (
-              <div key={t.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-800 text-sm">{t.judul}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{t.kelas?.nama} · {t.mata_pelajaran?.nama || 'Umum'}</p>
-                      {t.deskripsi && <p className="text-xs text-gray-600 mt-2 line-clamp-2">{t.deskripsi}</p>}
-                    </div>
-                    {sudahKumpul ? (
-                      <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-green-50 text-green-600 font-medium whitespace-nowrap">
-                        <CheckCircle size={10} /> Dikumpulkan
-                      </span>
-                    ) : overdue ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-50 text-red-500 font-medium whitespace-nowrap">
-                        Terlambat
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-600 font-medium whitespace-nowrap">
-                        <Clock size={10} /> Belum
-                      </span>
-                    )}
-                  </div>
-
-                  {deadline && (
-                    <p className={`text-[10px] mt-2 ${overdue ? 'text-red-500' : 'text-gray-400'}`}>
-                      Deadline: {deadline.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  )}
-
-                  {t.file_url && (
-                    <a href={t.file_url} target="_blank" rel="noopener"
-                      className="mt-3 flex items-center gap-2 text-xs text-[#F97316] font-medium">
-                      <FileText size={14} /> Unduh Materi/Soal
-                    </a>
-                  )}
-
-                  {sudahKumpul && t.submission_saya?.nilai !== null && (
-                    <div className="mt-3 p-2 bg-green-50 rounded-lg">
-                      <p className="text-xs text-green-700">
-                        Nilai: <strong>{t.submission_saya.nilai}</strong>
-                        {t.submission_saya.catatan_guru && ` · ${t.submission_saya.catatan_guru}`}
-                      </p>
-                    </div>
-                  )}
-
-                  {isSiswa && !sudahKumpul && !overdue && (
-                    <button
-                      onClick={() => setSelectedTugas(t)}
-                      className="mt-3 w-full py-2 bg-[#F97316] text-white rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-[#ea6b10] transition-colors"
-                    >
-                      <Upload size={13} /> Kumpulkan Tugas
-                    </button>
-                  )}
-                </div>
+      {/* Hero banner */}
+      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(145deg, #FF8C38 0%, #E8620D 100%)' }}>
+        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/8" />
+        <div className="absolute top-4 right-0 w-14 h-14 rounded-full bg-white/8" />
+        <div className="px-4 pt-12 pb-6 relative">
+          <div className="flex items-center gap-2 mb-3">
+            <ClipboardList size={16} className="text-white/60" />
+            <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Daftar Tugas</p>
+          </div>
+          <h1 className="text-white font-black text-4xl leading-none mb-5">Tugas</h1>
+          <div className="flex gap-2">
+            {[
+              { label: belumSelesai.length, title: 'Aktif',     numColor: '#fff' },
+              { label: sudahSelesai.length, title: 'Selesai',   numColor: '#BBF7D0' },
+              { label: terlambat.length,    title: 'Terlambat', numColor: '#FECACA' },
+            ].map(s => (
+              <div key={s.title} className="flex-1 flex flex-col items-center bg-black/15 rounded-2xl px-3 py-2.5">
+                <span className="font-black text-2xl leading-none" style={{ color: s.numColor }}>{s.label}</span>
+                <span className="text-white/60 text-[9px] font-semibold mt-1 uppercase tracking-wide">{s.title}</span>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
-      )}
+        <div className="h-6 bg-[#F0F2F5] rounded-t-[28px]" />
+      </div>
 
+      <div className="px-4 py-4 pb-28 space-y-4">
+        {isLoading || (isSiswa && !kelasId) ? (
+          <div className="text-center py-16 text-gray-400 text-sm">Memuat tugas...</div>
+        ) : tugasList.length === 0 ? (
+          <div className="bg-white rounded-2xl p-10 text-center shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
+              <ClipboardList size={28} className="text-blue-300" />
+            </div>
+            <p className="font-semibold text-gray-600 text-sm">Belum ada tugas</p>
+            <p className="text-xs text-gray-400 mt-1">Tugas dari guru akan muncul di sini</p>
+          </div>
+        ) : (
+          <>
+            {belumSelesai.length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">Perlu Dikumpulkan</p>
+                <div className="space-y-3">{belumSelesai.map(t => <TugasCard key={t.id} t={t} />)}</div>
+              </div>
+            )}
+            {terlambat.length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">Terlambat</p>
+                <div className="space-y-3">{terlambat.map(t => <TugasCard key={t.id} t={t} />)}</div>
+              </div>
+            )}
+            {sudahSelesai.length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">Sudah Dikumpulkan</p>
+                <div className="space-y-3">{sudahSelesai.map(t => <TugasCard key={t.id} t={t} />)}</div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Submit sheet */}
       {selectedTugas && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="bg-white rounded-t-2xl w-full p-5 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedTugas(null)} />
+          <div className="relative bg-white rounded-t-3xl w-full p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-2" />
             <div className="flex items-center justify-between">
-              <p className="font-semibold text-gray-800">{selectedTugas.judul}</p>
-              <button onClick={() => setSelectedTugas(null)}><X size={18} className="text-gray-400" /></button>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Upload File Jawaban</label>
-              <input type="file" onChange={e => setFile(e.target.files?.[0] || null)}
-                className="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[#F97316] file:text-white file:text-xs" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Catatan (opsional)</label>
-              <textarea value={catatan} onChange={e => setCatatan(e.target.value)} rows={3}
-                placeholder="Tulis catatan untuk guru..."
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316] resize-none" />
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => submitMut.mutate()} disabled={submitMut.isPending || (!file && !catatan)}
-                className="flex-1 py-2.5 bg-[#F97316] text-white rounded-lg text-sm font-medium disabled:opacity-50">
-                {submitMut.isPending ? 'Mengumpulkan...' : 'Kumpulkan'}
+              <div>
+                <p className="font-bold text-gray-800 text-base">Kumpulkan Tugas</p>
+                <p className="text-xs text-gray-400">{selectedTugas.judul}</p>
+              </div>
+              <button onClick={() => setSelectedTugas(null)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                <X size={16} className="text-gray-500" />
               </button>
-              <button onClick={() => setSelectedTugas(null)}
-                className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm">Batal</button>
             </div>
+
+            <input ref={fileRef} type="file" onChange={e => setFile(e.target.files?.[0] || null)} className="hidden" />
+            <button onClick={() => fileRef.current?.click()}
+              className="w-full py-3.5 border-2 border-dashed border-gray-200 rounded-2xl text-sm text-gray-500 flex items-center justify-center gap-2 hover:border-[#F97316] hover:text-[#F97316] transition-colors">
+              <Upload size={16} />
+              {file ? file.name : 'Pilih file jawaban...'}
+            </button>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Catatan untuk guru (opsional)</label>
+              <textarea value={catatan} onChange={e => setCatatan(e.target.value)} rows={3}
+                placeholder="Tulis catatan..."
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316] resize-none" />
+            </div>
+
+            <button onClick={() => submitMut.mutate()} disabled={submitMut.isPending || (!file && !catatan)}
+              className="w-full py-3.5 bg-[#F97316] text-white rounded-2xl font-bold text-sm disabled:opacity-50">
+              {submitMut.isPending ? 'Mengumpulkan...' : 'Kumpulkan Tugas'}
+            </button>
           </div>
         </div>
       )}

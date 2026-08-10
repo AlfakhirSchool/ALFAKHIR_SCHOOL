@@ -26,14 +26,12 @@ const MAPEL_COLORS: Record<string, { bg: string; color: string; icon: string }> 
 };
 
 const MENU = [
-  { href: '/tagihan',   icon: CreditCard,    label: 'Tagihan',       color: '#F97316', bg: '#FFF7ED' },
-  { href: '/kehadiran', icon: CalendarCheck, label: 'Kehadiran',     color: '#10B981', bg: '#ECFDF5' },
-  { href: '/tugas',     icon: FileText,      label: 'Tugas',         color: '#3B7FD1', bg: '#EBF2FF' },
-  { href: '/materi',    icon: BookOpen,      label: 'Mata Pelajaran',color: '#F59E0B', bg: '#FFFBEB' },
-  { href: '/tagihan',   icon: Award,         label: 'Kuitansi',      color: '#EF4444', bg: '#FEF2F2' },
-  { href: '/kehadiran', icon: Clock,         label: 'Jadwal',        color: '#06B6D4', bg: '#ECFEFF' },
-  { href: '/profil',    icon: Bell,          label: 'Pengumuman',    color: '#64748B', bg: '#F8FAFC' },
-  { href: '/profil',    icon: User,          label: 'Profil',        color: '#8B5CF6', bg: '#F5F3FF' },
+  { href: '/tagihan',    icon: CreditCard,    label: 'Tagihan',       color: '#F97316', bg: '#FFF7ED' },
+  { href: '/kehadiran',  icon: CalendarCheck, label: 'Kehadiran',     color: '#10B981', bg: '#ECFDF5' },
+  { href: '/tugas',      icon: FileText,      label: 'Tugas',         color: '#3B7FD1', bg: '#EBF2FF' },
+  { href: '/materi',     icon: BookOpen,      label: 'Mata Pelajaran',color: '#F59E0B', bg: '#FFFBEB' },
+  { href: '/jadwal',     icon: Clock,         label: 'Jadwal',        color: '#06B6D4', bg: '#ECFEFF' },
+  { href: '/pengumuman', icon: Bell,          label: 'Pengumuman',    color: '#64748B', bg: '#F8FAFC' },
 ];
 
 export default function BerandaPage() {
@@ -93,7 +91,7 @@ export default function BerandaPage() {
         <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/8" />
         <div className="absolute top-6 right-2 w-16 h-16 rounded-full bg-white/8" />
 
-        <div className="px-4 pt-10 pb-6">
+        <div className="px-4 pt-10 pb-8">
           {/* Top row */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -101,8 +99,8 @@ export default function BerandaPage() {
               <p className="text-white/80 text-xs font-semibold tracking-wide">SD AL-FAKHIR</p>
             </div>
             <Link href="/profil">
-              <div className="w-8 h-8 rounded-full border-2 border-white/40 bg-white/20 flex items-center justify-center">
-                <span className="text-white font-black text-xs">{(user?.nama || 'P')[0].toUpperCase()}</span>
+              <div className="w-9 h-9 rounded-full border-2 border-white/40 bg-white/20 flex items-center justify-center">
+                <span className="text-white font-black text-sm">{(user?.nama || 'P')[0].toUpperCase()}</span>
               </div>
             </Link>
           </div>
@@ -110,24 +108,20 @@ export default function BerandaPage() {
           {/* Greeting */}
           <div className="mb-5">
             <p className="text-white/60 text-xs mb-1">Selamat datang</p>
-            <h1 className="text-white font-black text-[26px] leading-none tracking-tight">{user?.nama || 'Pengguna'}</h1>
+            <h1 className="text-white font-black text-3xl leading-none tracking-tight">{user?.nama || 'Pengguna'}</h1>
           </div>
 
-          {/* Stats pills */}
-          <div className="flex gap-2">
-            <div className="flex-1 bg-black/15 rounded-2xl px-3 py-2.5">
-              <p className="text-white/50 text-[9px] font-semibold uppercase tracking-widest mb-1">Kelas</p>
-              <div className="flex items-center gap-1.5">
-                <BookOpen size={12} className="text-white/70" />
-                <p className="text-white font-bold text-sm">{siswaData?.kelas?.nama || '—'}</p>
-              </div>
+          {/* Quick info row */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-white/15 rounded-full px-3 py-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="text-white/80 text-[10px] font-semibold">Aktif</span>
             </div>
-            <div className="flex-1 bg-black/15 rounded-2xl px-3 py-2.5">
-              <p className="text-white/50 text-[9px] font-semibold uppercase tracking-widest mb-1">Kehadiran</p>
-              <div className="flex items-center gap-1.5">
-                <CalendarCheck size={12} className="text-white/70" />
-                <p className="text-white font-bold text-sm">—</p>
-              </div>
+            <div className="flex items-center gap-1.5 bg-white/15 rounded-full px-3 py-1.5">
+              <CalendarCheck size={10} className="text-white/70" />
+              <span className="text-white/80 text-[10px] font-semibold">
+                {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </span>
             </div>
           </div>
         </div>
@@ -138,46 +132,127 @@ export default function BerandaPage() {
 
       <div className="px-3 pb-28 space-y-4 mt-4">
 
+        {/* Stats pills */}
+        {!isOrtu && (
+          <div className="flex gap-2">
+            <div className="flex-1 bg-white rounded-2xl px-3 py-2.5 shadow-sm" style={{ border: '1px solid rgba(0,0,0,0.08)' }}>
+              <p className="text-gray-400 text-[9px] font-semibold uppercase tracking-widest mb-1">Kelas</p>
+              <div className="flex items-center gap-1.5">
+                <BookOpen size={12} className="text-[#F97316]" />
+                <p className="text-gray-800 font-bold text-sm">{siswaData?.kelas?.nama || '—'}</p>
+              </div>
+            </div>
+            <div className="flex-1 bg-white rounded-2xl px-3 py-2.5 shadow-sm" style={{ border: '1px solid rgba(0,0,0,0.08)' }}>
+              <p className="text-gray-400 text-[9px] font-semibold uppercase tracking-widest mb-1">Kehadiran</p>
+              <div className="flex items-center gap-1.5">
+                <CalendarCheck size={12} className="text-[#10B981]" />
+                <p className="text-gray-800 font-bold text-sm">—</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Menu grid */}
         <div>
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">Menu Layanan</p>
           <div className="grid grid-cols-4 gap-2">
             {MENU.map(({ href, icon: Icon, label, color, bg }) => (
               <Link key={label} href={href}
-                className="bg-white rounded-2xl py-3 px-1 flex flex-col items-center gap-1.5 shadow-sm active:scale-95 transition-transform">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: bg }}>
-                  <Icon size={18} style={{ color }} strokeWidth={2} />
+                className="bg-white rounded-2xl py-2.5 px-1 flex flex-col items-center gap-1 shadow-md active:scale-95 transition-transform"
+                style={{ border: '1px solid rgba(0,0,0,0.10)' }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: bg }}>
+                  <Icon size={16} style={{ color }} strokeWidth={2} />
                 </div>
-                <span className="text-[9.5px] font-semibold text-gray-500 text-center leading-tight">{label}</span>
+                <span className="text-[9px] font-semibold text-gray-500 text-center leading-tight">{label}</span>
               </Link>
             ))}
           </div>
         </div>
 
-        {/* Mata Pelajaran */}
+        {/* Mata Pelajaran — banner style */}
         {!isOrtu && mapelData && mapelData.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-2 px-1">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Mata Pelajaran</p>
-            <Link href="/materi" className="text-xs font-semibold text-[#F97316]">Lihat semua →</Link>
-          </div>
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 scrollbar-hide">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Mata Pelajaran</p>
+              <Link href="/materi" className="text-xs font-semibold text-[#F97316]">Lihat semua →</Link>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-1 -mx-3 px-3 scrollbar-hide">
               {mapelData.map((m: any) => {
                 const style = MAPEL_COLORS[m.kode] || MAPEL_COLORS.DEFAULT;
                 return (
                   <Link key={m.id} href={`/materi?mapel=${m.id}`}
-                    className="flex-shrink-0 bg-white rounded-2xl p-3 w-28 shadow-sm text-left active:scale-95 transition-transform">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-2" style={{ background: style.bg }}>
-                      <BookOpen size={16} style={{ color: style.color }} strokeWidth={2} />
+                    className="flex-shrink-0 w-44 rounded-2xl overflow-hidden shadow-sm active:scale-95 transition-transform"
+                    style={{ background: style.bg }}>
+                    <div className="p-4">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                        style={{ background: style.color + '20' }}>
+                        <BookOpen size={18} style={{ color: style.color }} strokeWidth={2} />
+                      </div>
+                      <p className="font-black text-sm leading-snug" style={{ color: style.color }}>{m.nama}</p>
+                      <p className="text-[10px] mt-1 font-medium" style={{ color: style.color + 'aa' }}>KKM {m.kkm || 75}</p>
                     </div>
-                    <p className="text-[10px] font-bold text-gray-700 leading-tight">{m.nama}</p>
-                    <p className="text-[9px] text-gray-400 mt-0.5">KKM {m.kkm || 75}</p>
                   </Link>
                 );
               })}
             </div>
           </div>
         )}
+
+        {/* Banner Berita & Informasi */}
+        <div>
+          <div className="flex items-center justify-between mb-2 px-1">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Berita & Informasi</p>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-1 -mx-3 px-3 scrollbar-hide">
+            {[
+              {
+                tag: 'Pengumuman',
+                tagColor: '#F97316',
+                tagBg: '#FFF7ED',
+                title: 'Libur Maulid Nabi 1446 H',
+                desc: 'Sekolah libur 5 September 2025. Masuk kembali 8 September.',
+                bg: 'linear-gradient(135deg, #FF8C38 0%, #E8620D 100%)',
+                dark: true,
+              },
+              {
+                tag: 'Kegiatan',
+                tagColor: '#3B82F6',
+                tagBg: '#EFF6FF',
+                title: 'Penerimaan Rapor Semester 1',
+                desc: 'Pengambilan rapor oleh wali murid 20 Desember 2025.',
+                bg: '#EFF6FF',
+                dark: false,
+              },
+              {
+                tag: 'Info Sekolah',
+                tagColor: '#10B981',
+                tagBg: '#ECFDF5',
+                title: 'Program Tahfidz Gelombang 2',
+                desc: 'Pendaftaran dibuka mulai 1 Oktober 2025.',
+                bg: '#ECFDF5',
+                dark: false,
+              },
+            ].map((item, i) => (
+              <div key={i} className="flex-shrink-0 w-52 rounded-2xl overflow-hidden shadow-sm"
+                style={{ background: item.bg }}>
+                <div className="p-4">
+                  <span className="inline-block text-[10px] font-bold px-2.5 py-1 rounded-full mb-3"
+                    style={item.dark
+                      ? { background: 'rgba(255,255,255,0.25)', color: '#fff' }
+                      : { background: item.tagBg, color: item.tagColor }}>
+                    {item.tag}
+                  </span>
+                  <p className={`font-black text-sm leading-snug mb-1.5 ${item.dark ? 'text-white' : 'text-gray-800'}`}>
+                    {item.title}
+                  </p>
+                  <p className={`text-[11px] leading-relaxed line-clamp-3 ${item.dark ? 'text-white/75' : 'text-gray-500'}`}>
+                    {item.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Upcoming task — "5 days until trip" style */}
         {!isOrtu && tugasDeadline && (
