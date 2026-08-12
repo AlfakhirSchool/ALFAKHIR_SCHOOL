@@ -8,7 +8,7 @@ import { useAuthStore, SchoolLevel } from '@/store/authStore';
 import {
   LayoutDashboard, Users, GraduationCap, School, BookOpen, Calendar,
   DoorOpen, CreditCard, ClipboardCheck, FileText, Wallet, BookMarked,
-  BarChart3, UserCog, Search, Settings, Bell, MessageSquare, QrCode, Printer,
+  BarChart3, UserCog, Search, Settings, Bell, MessageSquare, QrCode, Printer, Megaphone,
   PanelLeftClose, PanelLeftOpen, ClipboardList, ChevronRight, NotebookPen,
 } from 'lucide-react';
 
@@ -48,6 +48,7 @@ const masterMenu: SidebarEntry[] = [
       { href: '/kelas',          icon: <School size={15} />,        label: 'Kelas' },
       { href: '/mata-pelajaran', icon: <BookOpen size={15} />,      label: 'Mata Pelajaran' },
       { href: '/jadwal',         icon: <Calendar size={15} />,      label: 'Jadwal' },
+      { href: '/pengumuman',     icon: <Megaphone size={15} />,     label: 'Pengumuman' },
     ],
   },
   {
@@ -102,6 +103,7 @@ const levelMenu = (level: string): SidebarEntry[] => [
       { href: '/kelas',          icon: <School size={15} />,        label: 'Kelas' },
       { href: '/mata-pelajaran', icon: <BookOpen size={15} />,      label: 'Mata Pelajaran' },
       { href: '/jadwal',         icon: <Calendar size={15} />,      label: 'Jadwal' },
+      { href: '/pengumuman',     icon: <Megaphone size={15} />,     label: 'Pengumuman' },
     ],
   },
   {

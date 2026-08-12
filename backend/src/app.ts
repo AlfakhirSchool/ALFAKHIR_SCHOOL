@@ -39,6 +39,7 @@ import { errorHandler, notFound } from './middleware/errorHandler';
 import { globalAuditLogger } from './middleware/auditLog';
 import logger from './config/logger';
 import { testEmailConnection } from './utils/emailService';
+import pengumumanRoutes from './routes/pengumuman';
 
 dotenv.config();
 
@@ -124,6 +125,7 @@ app.use(`${PREFIX}/pertanyaan-form`, pertanyaanFormRoutes);
 app.use(`${PREFIX}/ai/chat`, aiChatRoutes);
 app.use(`${PREFIX}/tugas`, tugasRoutes);
 app.use(`${PREFIX}/materi`, materiRoutes);
+app.use(`${PREFIX}/pengumuman`, pengumumanRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

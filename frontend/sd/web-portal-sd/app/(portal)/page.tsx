@@ -62,6 +62,11 @@ export default function BerandaPage() {
     enabled: !isOrtu,
   });
 
+  const { data: pengumumanData } = useQuery({
+    queryKey: ['portal-pengumuman'],
+    queryFn: () => api.get('/pengumuman', { params: { school_level: 'SD', limit: 5 } }).then(r => r.data.data as any[]),
+  });
+
 
   const tagihan = tagihanData?.data || [];
   const belumBayar = tagihan.filter((t: any) => t.status !== 'lunas');
@@ -204,53 +209,28 @@ export default function BerandaPage() {
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Berita & Informasi</p>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-1 -mx-3 px-3 scrollbar-hide">
-            {[
-              {
-                tag: 'Pengumuman',
-                tagColor: '#F97316',
-                tagBg: '#FFF7ED',
-                title: 'Libur Maulid Nabi 1446 H',
-                desc: 'Sekolah libur 5 September 2025. Masuk kembali 8 September.',
-                bg: 'linear-gradient(135deg, #FF8C38 0%, #E8620D 100%)',
-                dark: true,
-              },
-              {
-                tag: 'Kegiatan',
-                tagColor: '#3B82F6',
-                tagBg: '#EFF6FF',
-                title: 'Penerimaan Rapor Semester 1',
-                desc: 'Pengambilan rapor oleh wali murid 20 Desember 2025.',
-                bg: '#EFF6FF',
-                dark: false,
-              },
-              {
-                tag: 'Info Sekolah',
-                tagColor: '#10B981',
-                tagBg: '#ECFDF5',
-                title: 'Program Tahfidz Gelombang 2',
-                desc: 'Pendaftaran dibuka mulai 1 Oktober 2025.',
-                bg: '#ECFDF5',
-                dark: false,
-              },
-            ].map((item, i) => (
-              <div key={i} className="flex-shrink-0 w-52 rounded-2xl overflow-hidden shadow-sm"
-                style={{ background: item.bg }}>
+            {(pengumumanData && pengumumanData.length > 0 ? pengumumanData : []).map((item: any, i: number) => {
+              const dark = i === 0;
+              return (
+              <div key={item.id} className="flex-shrink-0 w-52 rounded-2xl overflow-hidden shadow-sm"
+                style={{ background: dark ? 'linear-gradient(135deg, #FF8C38 0%, #E8620D 100%)' : '#F1F5F9' }}>
                 <div className="p-4">
                   <span className="inline-block text-[10px] font-bold px-2.5 py-1 rounded-full mb-3"
-                    style={item.dark
+                    style={dark
                       ? { background: 'rgba(255,255,255,0.25)', color: '#fff' }
-                      : { background: item.tagBg, color: item.tagColor }}>
-                    {item.tag}
+                      : { background: '#FFF7ED', color: '#F97316' }}>
+                    {item.kategori}
                   </span>
-                  <p className={`font-black text-sm leading-snug mb-1.5 ${item.dark ? 'text-white' : 'text-gray-800'}`}>
-                    {item.title}
+                  <p className={`font-black text-sm leading-snug mb-1.5 ${dark ? 'text-white' : 'text-gray-800'}`}>
+                    {item.judul}
                   </p>
-                  <p className={`text-[11px] leading-relaxed line-clamp-3 ${item.dark ? 'text-white/75' : 'text-gray-500'}`}>
-                    {item.desc}
+                  <p className={`text-[11px] leading-relaxed line-clamp-3 ${dark ? 'text-white/75' : 'text-gray-500'}`}>
+                    {item.isi}
                   </p>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
 
