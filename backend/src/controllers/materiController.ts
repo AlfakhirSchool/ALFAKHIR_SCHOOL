@@ -9,20 +9,25 @@ const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'materi');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 export const getMateri = async (req: AuthRequest, res: Response): Promise<void> => {
-  const mata_pelajaran_id = req.query.mata_pelajaran_id as string | undefined;
-  const kelas_id = req.query.kelas_id as string | undefined;
-  const where: any = { is_active: true };
-  if (mata_pelajaran_id) where.mata_pelajaran_id = mata_pelajaran_id;
-  if (kelas_id) where.kelas_id = kelas_id;
+  try {
+    const mata_pelajaran_id = req.query.mata_pelajaran_id as string | undefined;
+    const kelas_id = req.query.kelas_id as string | undefined;
+    const where: any = { is_active: true };
+    if (mata_pelajaran_id) where.mata_pelajaran_id = mata_pelajaran_id;
+    if (kelas_id) where.kelas_id = kelas_id;
 
-  const data = await Materi.findAll({
-    where,
-    include: [
-      { model: Guru, as: 'guru', attributes: ['id', 'nama'] },
-    ],
-    order: [['created_at', 'DESC']],
-  });
-  res.json({ success: true, data });
+    const data = await Materi.findAll({
+      where,
+      include: [
+        { model: Guru, as: 'guru', attributes: ['id', 'nama'] },
+      ],
+      order: [['created_at', 'DESC']],
+    });
+    res.json({ success: true, data });
+  } catch (e: any) {
+    console.error('GET /materi error:', e.message);
+    res.status(500).json({ success: false, message: 'Gagal memuat materi' });
+  }
 };
 
 export const uploadMateri = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -57,14 +62,19 @@ export const uploadMateri = async (req: AuthRequest, res: Response): Promise<voi
 };
 
 export const deleteMateri = async (req: AuthRequest, res: Response): Promise<void> => {
-  const materi = await Materi.findByPk(req.params.id as string);
-  if (!materi) { res.status(404).json({ success: false, message: 'Materi tidak ditemukan' }); return; }
+  try {
+    const materi = await Materi.findByPk(req.params.id as string);
+    if (!materi) { res.status(404).json({ success: false, message: 'Materi tidak ditemukan' }); return; }
 
-  if (materi.file_url) {
-    const filePath = path.join(process.cwd(), materi.file_url);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    if (materi.file_url) {
+      const filePath = path.join(process.cwd(), materi.file_url);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    }
+
+    await materi.update({ is_active: false });
+    res.json({ success: true, message: 'Materi dihapus' });
+  } catch (e: any) {
+    console.error('DELETE /materi error:', e.message);
+    res.status(500).json({ success: false, message: 'Gagal menghapus materi' });
   }
-
-  await materi.update({ is_active: false });
-  res.json({ success: true, message: 'Materi dihapus' });
 };
