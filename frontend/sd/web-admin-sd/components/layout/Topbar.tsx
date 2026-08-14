@@ -68,7 +68,7 @@ export default function Topbar() {
 
   const unread = notifs.filter(n => !n.read).length;
   const accentColor = ROLE_COLOR[user?.role ?? 'admin'] ?? '#60A5FA';
-  const initial = (user?.nama || user?.email || 'U')[0].toUpperCase();
+  const initial = (user?.nama || user?.username || 'U')[0].toUpperCase();
 
   // close on outside click
   useEffect(() => {
@@ -226,7 +226,7 @@ export default function Topbar() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-gray-900 truncate">{user?.nama}</p>
-                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.username}</p>
                     <span
                       className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
                       style={{ backgroundColor: accentColor }}

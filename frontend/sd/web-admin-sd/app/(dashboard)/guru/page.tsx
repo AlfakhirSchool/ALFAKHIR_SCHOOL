@@ -204,7 +204,7 @@ export default function GuruPage() {
           <table className="min-w-[600px] w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Nama / Email</th>
+                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Nama / Username</th>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Jenjang</th>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Spesialisasi</th>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Status</th>
@@ -228,7 +228,7 @@ export default function GuruPage() {
                       </div>
                       <div>
                         <p className="font-semibold text-[#1A2332] text-sm">{g.user?.nama}</p>
-                        <p className="text-xs text-gray-400">{g.user?.email || ''}</p>
+                        <p className="text-xs text-gray-400">{g.user?.username || ''}</p>
                       </div>
                     </div>
                   </td>

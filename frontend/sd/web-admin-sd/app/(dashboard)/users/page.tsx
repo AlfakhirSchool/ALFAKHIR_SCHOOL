@@ -258,7 +258,7 @@ export default function UsersPage() {
 
         {/* Filter + Tambah */}
         <div className="flex flex-wrap gap-3 items-center">
-          <input placeholder="🔍 Cari nama atau email..." value={search}
+          <input placeholder="🔍 Cari nama atau username..." value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             className="flex-1 min-w-56 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
           />
@@ -284,7 +284,7 @@ export default function UsersPage() {
           <table className="min-w-[600px] w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Nama / Email</th>
+                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Nama / Username</th>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Role</th>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Jenjang</th>
                 <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase">Status</th>
@@ -307,7 +307,7 @@ export default function UsersPage() {
                 <tr key={u.id} className="hover:bg-gray-50/60 transition-colors">
                   <td className="px-5 py-3.5">
                     <p className="font-semibold text-[#1A2332] text-sm">{u.nama}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{u.email}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{u.username}</p>
                   </td>
                   <td className="px-5 py-3.5">
                     <Badge text={ROLE_LABEL[u.role] || u.role} color={ROLE_COLOR[u.role] || '#888'} />

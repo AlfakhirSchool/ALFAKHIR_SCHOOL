@@ -28,7 +28,7 @@ function AccountRow({ u, onReset }: { u: any; onReset: (id: string, nama: string
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-800">{u.nama}</p>
-            <p className="text-xs text-gray-400">{u.email}</p>
+            <p className="text-xs text-gray-400">{u.username}</p>
           </div>
         </div>
       </td>
@@ -197,14 +197,14 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <p className="text-xl font-bold text-gray-800">{user?.nama}</p>
-                    <p className="text-gray-400 text-sm">{user?.email}</p>
+                    <p className="text-gray-400 text-sm">{user?.username}</p>
                     <div className="flex items-center gap-1.5 mt-1.5">
                       <Shield size={12} className="text-blue-600" />
                       <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-semibold">Master Administrator</span>
                     </div>
                   </div>
                 </div>
-                <p className="text-sm text-gray-400">Untuk mengubah nama atau email, hubungi developer sistem.</p>
+                <p className="text-sm text-gray-400">Untuk mengubah nama atau username, hubungi developer sistem.</p>
               </div>
             )}
 
