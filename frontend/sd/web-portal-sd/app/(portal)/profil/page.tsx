@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { Mail, LogOut, GraduationCap, ChevronRight, Settings, HelpCircle, Bell, Camera } from 'lucide-react';
+import { Mail, LogOut, ChevronRight, Settings, HelpCircle, Bell, Camera } from 'lucide-react';
 import api from '@/lib/api';
 
 export default function ProfilPage() {
@@ -87,7 +87,6 @@ export default function ProfilPage() {
           </div>
           {[
             { icon: Mail, label: 'Email / Username', value: user?.email || '-' },
-            { icon: GraduationCap, label: 'Peran', value: roleLabel },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="px-4 py-3.5 flex items-center gap-3 border-t border-gray-50">
               <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">

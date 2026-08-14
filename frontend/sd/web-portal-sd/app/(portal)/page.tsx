@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
-  CreditCard, CalendarCheck, BookOpen, Bell, User,
+  CreditCard, CalendarCheck, BookOpen, Bell,
   ChevronRight, AlertCircle, FileText, Award, Clock
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
@@ -300,16 +300,6 @@ export default function BerandaPage() {
           </div>
         )}
 
-        {/* Ortu placeholder */}
-        {isOrtu && (
-          <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
-            <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center mx-auto mb-3">
-              <User size={24} className="text-[#F97316]" />
-            </div>
-            <p className="font-semibold text-gray-800 text-sm">Portal Orang Tua</p>
-            <p className="text-xs text-gray-400 mt-1">Fitur lengkap akan segera tersedia</p>
-          </div>
-        )}
 
       </div>
 
