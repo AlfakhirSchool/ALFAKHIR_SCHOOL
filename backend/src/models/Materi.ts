@@ -11,12 +11,13 @@ interface MateriAttributes {
   file_url: string | null;
   file_name: string | null;
   file_size: number | null;
+  link_video: string | null;
   is_active: boolean;
   created_at?: Date;
   updated_at?: Date;
 }
 
-interface MateriCreationAttributes extends Optional<MateriAttributes, 'id' | 'kelas_id' | 'guru_id' | 'deskripsi' | 'file_url' | 'file_name' | 'file_size' | 'is_active'> {}
+interface MateriCreationAttributes extends Optional<MateriAttributes, 'id' | 'kelas_id' | 'guru_id' | 'deskripsi' | 'file_url' | 'file_name' | 'file_size' | 'link_video' | 'is_active'> {}
 
 class Materi extends Model<MateriAttributes, MateriCreationAttributes> implements MateriAttributes {
   declare id: string;
@@ -28,6 +29,7 @@ class Materi extends Model<MateriAttributes, MateriCreationAttributes> implement
   declare file_url: string | null;
   declare file_name: string | null;
   declare file_size: number | null;
+  declare link_video: string | null;
   declare is_active: boolean;
   declare created_at: Date;
   declare updated_at: Date;
@@ -43,6 +45,7 @@ Materi.init({
   file_url:           { type: DataTypes.STRING(500), allowNull: true },
   file_name:          { type: DataTypes.STRING(255), allowNull: true },
   file_size:          { type: DataTypes.INTEGER, allowNull: true },
+  link_video:         { type: DataTypes.STRING(500), allowNull: true },
   is_active:          { type: DataTypes.BOOLEAN, defaultValue: true },
 }, {
   sequelize,

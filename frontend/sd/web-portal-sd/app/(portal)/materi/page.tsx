@@ -207,20 +207,28 @@ export default function MateriSiswaPage() {
 
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center gap-2 text-[10px] text-gray-400">
-                        {m.guru && <span>oleh {m.guru.nama}</span>}
+                        {m.guru && <span>oleh {m.guru.user?.nama || '-'}</span>}
                         {m.file_size && <span>· {fmtSize(m.file_size)}</span>}
                         <span>· {fmtDate(m.created_at)}</span>
                       </div>
 
-                      {m.file_url ? (
-                        <a href={`${API_BASE}${m.file_url}`} target="_blank" rel="noopener"
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
-                          style={{ background: fc.color }}>
-                          <Download size={12} /> Unduh
-                        </a>
-                      ) : (
-                        <span className="text-[10px] text-gray-300 italic">Tanpa file</span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {m.link_video && (
+                          <a href={m.link_video} target="_blank" rel="noopener"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-red-500">
+                            ▶ Tonton
+                          </a>
+                        )}
+                        {m.file_url ? (
+                          <a href={`${API_BASE}${m.file_url}`} target="_blank" rel="noopener"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
+                            style={{ background: fc.color }}>
+                            <Download size={12} /> Unduh
+                          </a>
+                        ) : !m.link_video ? (
+                          <span className="text-[10px] text-gray-300 italic">Tanpa file</span>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 </div>

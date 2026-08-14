@@ -11,7 +11,7 @@ export default function MateriGuruPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedMapel, setSelectedMapel] = useState('');
-  const [form, setForm] = useState({ judul: '', deskripsi: '', mata_pelajaran_id: '', kelas_id: '' });
+  const [form, setForm] = useState({ judul: '', deskripsi: '', mata_pelajaran_id: '', kelas_id: '', link_video: '' });
   const [file, setFile] = useState<File | null>(null);
 
   const { data: mapelList = [] } = useQuery({
@@ -41,13 +41,14 @@ export default function MateriGuruPage() {
       if (form.deskripsi) fd.append('deskripsi', form.deskripsi);
       fd.append('mata_pelajaran_id', form.mata_pelajaran_id);
       if (form.kelas_id) fd.append('kelas_id', form.kelas_id);
+      if (form.link_video) fd.append('link_video', form.link_video);
       if (file) fd.append('file', file);
       return api.post('/materi', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['materi-guru'] });
       setShowForm(false);
-      setForm({ judul: '', deskripsi: '', mata_pelajaran_id: '', kelas_id: '' });
+      setForm({ judul: '', deskripsi: '', mata_pelajaran_id: '', kelas_id: '', link_video: '' });
       setFile(null);
     },
   });
@@ -170,6 +171,14 @@ export default function MateriGuruPage() {
               <textarea value={form.deskripsi} onChange={e => setForm(f => ({ ...f, deskripsi: e.target.value }))}
                 rows={2} placeholder="Keterangan singkat materi ini..."
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#10B981] resize-none" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Link Video (YouTube/Google Drive, opsional)</label>
+              <input type="url" value={form.link_video}
+                onChange={e => setForm(f => ({ ...f, link_video: e.target.value }))}
+                placeholder="https://youtube.com/watch?v=..."
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#10B981]" />
             </div>
 
             <div>

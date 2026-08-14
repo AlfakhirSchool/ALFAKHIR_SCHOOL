@@ -32,7 +32,7 @@ export const getMateri = async (req: AuthRequest, res: Response): Promise<void> 
 };
 
 export const uploadMateri = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { judul, deskripsi, mata_pelajaran_id, kelas_id } = req.body;
+  const { judul, deskripsi, mata_pelajaran_id, kelas_id, link_video } = req.body;
   if (!judul || !mata_pelajaran_id) {
     res.status(400).json({ success: false, message: 'Judul dan mata pelajaran wajib diisi' });
     return;
@@ -57,6 +57,7 @@ export const uploadMateri = async (req: AuthRequest, res: Response): Promise<voi
     file_url,
     file_name,
     file_size,
+    link_video: link_video || null,
   });
 
   res.status(201).json({ success: true, data: materi });
