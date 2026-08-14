@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import Materi from '../models/Materi';
 import Guru from '../models/Guru';
+import { User } from '../models';
 import { AuthRequest } from '../middleware/auth';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'materi');
@@ -19,7 +20,7 @@ export const getMateri = async (req: AuthRequest, res: Response): Promise<void> 
     const data = await Materi.findAll({
       where,
       include: [
-        { model: Guru, as: 'guru', attributes: ['id', 'nama'] },
+        { model: Guru, as: 'guru', attributes: ['id'], include: [{ model: User, as: 'user', attributes: ['nama'] }] },
       ],
       order: [['created_at', 'DESC']],
     });
