@@ -9,6 +9,18 @@ import api from '@/lib/api';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'http://localhost:3001';
 
+// Cycling color palettes for mapel cards (matches design: tertiary-fixed, secondary-fixed, primary-fixed, error-container, surface-container-highest)
+const CARD_PALETTES = [
+  { bg: '#c4e7ff', color: '#001e2c' },
+  { bg: '#dae2fd', color: '#131b2e' },
+  { bg: '#ffdbc8', color: '#321200' },
+  { bg: '#ffdad6', color: '#93000a' },
+  { bg: '#e0e3e5', color: '#191c1e' },
+  { bg: '#ecfdf5', color: '#065f46' },
+  { bg: '#f5f3ff', color: '#4c1d95' },
+  { bg: '#fef9c3', color: '#713f12' },
+];
+
 const MAPEL_COLORS: Record<string, { bg: string; color: string }> = {
   MTK:  { bg: '#EFF6FF', color: '#3B82F6' },
   BIN:  { bg: '#FEF9C3', color: '#CA8A04' },
@@ -80,168 +92,138 @@ export default function MateriSiswaPage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5]">
+    <div className="min-h-screen bg-[#f7f9fb]">
 
-      {/* Header */}
-      <div className="bg-white sticky top-0 z-30 shadow-sm">
-        <div className="flex items-center gap-3 px-4 pt-10 pb-4">
-          {selectedMapel ? (
-            <button onClick={() => { setSelectedMapel(''); setSearch(''); }}
-              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-              <ChevronLeft size={18} className="text-gray-600" />
-            </button>
-          ) : (
-            <Link href="/" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-              <ChevronLeft size={18} className="text-gray-600" />
-            </Link>
-          )}
-          <div className="flex-1">
-            <h1 className="font-black text-gray-900 text-lg leading-none">
-              {selectedMapelObj ? selectedMapelObj.nama : 'Materi Pelajaran'}
-            </h1>
-            {selectedMapelObj && (
-              <p className="text-xs text-gray-400 mt-0.5">Pilih materi untuk dipelajari</p>
-            )}
-          </div>
-          {selectedMapel && (
-            <div className="flex flex-col items-center bg-orange-50 rounded-xl px-2.5 py-1.5">
-              <span className="font-black text-base leading-none text-[#F97316]">{filtered.length}</span>
-              <span className="text-[9px] text-orange-400 font-medium">Materi</span>
-            </div>
-          )}
-        </div>
-
+      {/* Fixed header */}
+      <header className="bg-white fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-4 border-b border-[#e6e8ea]">
+        {selectedMapel ? (
+          <button onClick={() => { setSelectedMapel(''); setSearch(''); }}
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#eceef0] transition-colors mr-2">
+            <ChevronLeft size={22} className="text-[#191c1e]" />
+          </button>
+        ) : (
+          <Link href="/" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#eceef0] transition-colors mr-2">
+            <ChevronLeft size={22} className="text-[#191c1e]" />
+          </Link>
+        )}
+        <h1 className="text-lg font-bold text-[#191c1e] flex-1">
+          {selectedMapelObj ? selectedMapelObj.nama : 'Materi Pelajaran'}
+        </h1>
         {selectedMapel && (
-          <div className="px-4 pb-3">
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ background: mapelStyle?.bg, color: mapelStyle?.color }}>
+            {filtered.length} materi
+          </div>
+        )}
+      </header>
+
+      <main className="pt-20 px-5 pb-28">
+
+        {/* Mapel grid — hanya tampil saat belum pilih */}
+        {!selectedMapel && (
+          <>
+            <p className="text-xs font-bold text-[#574237] uppercase tracking-[0.1em] mb-4">Pilih Mata Pelajaran</p>
+            <div className="grid grid-cols-2 gap-4">
+              {mapelList.map((m: any, idx: number) => {
+                const palette = CARD_PALETTES[idx % CARD_PALETTES.length];
+                return (
+                  <button key={m.id}
+                    onClick={() => setSelectedMapel(m.id)}
+                    className="bg-white rounded-xl p-4 flex flex-col items-center justify-center text-center gap-2 shadow-[0px_8px_16px_rgba(15,23,42,0.04)] hover:shadow-md transition-shadow active:scale-[0.98]">
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-1"
+                      style={{ background: palette.bg, color: palette.color }}>
+                      <BookOpen size={24} strokeWidth={1.8} />
+                    </div>
+                    <span className="text-sm font-semibold text-[#191c1e] leading-snug">{m.nama}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* Search + materi list — tampil saat mapel dipilih */}
+        {selectedMapel && (
+          <>
+            {/* Search */}
+            <div className="relative mb-4">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8b7265]" />
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Cari materi..."
-                className="w-full pl-9 pr-4 py-2.5 bg-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+                className="w-full pl-9 pr-4 py-2.5 bg-white border border-[#e6e8ea] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#f47b20]/30"
               />
             </div>
-          </div>
-        )}
-      </div>
 
-      {/* Grid mapel — hanya tampil saat belum ada yang dipilih */}
-      {!selectedMapel && (
-        <div className="pt-4 pb-4">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-5">Pilih Mata Pelajaran</p>
-          <div className="flex gap-3 px-4 overflow-x-auto scrollbar-hide pb-1">
-            {mapelList.map((m: any) => {
-              const s = MAPEL_COLORS[m.kode] || MAPEL_COLORS.DEFAULT;
-              return (
-                <button key={m.id}
-                  onClick={() => setSelectedMapel(m.id)}
-                  className="flex-shrink-0 flex flex-col items-center gap-2 pt-4 pb-3 px-3 rounded-2xl active:scale-95 transition-transform w-24"
-                  style={{ background: s.bg }}>
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                    style={{ background: s.color + '22' }}>
-                    <BookOpen size={22} style={{ color: s.color }} />
-                  </div>
-                  <span className="font-bold text-[11px] text-center leading-tight w-full" style={{ color: s.color }}>{m.nama}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Content — hanya tampil saat mapel dipilih */}
-      {selectedMapel && (
-      <div className="px-4 py-4 pb-28 space-y-3">
-        {isLoading ? (
-          <div className="flex flex-col gap-3">
-            {[1,2,3].map(i => (
-              <div key={i} className="bg-white rounded-2xl h-24 animate-pulse" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center mb-5 shadow-sm">
-              <BookOpen size={32} className="text-gray-200" />
-            </div>
-            <p className="font-bold text-gray-500 text-base">
-              {search ? 'Tidak ditemukan' : 'Belum ada materi'}
-            </p>
-            <p className="text-xs text-gray-400 mt-1 text-center max-w-[200px]">
-              {search
-                ? `Tidak ada materi untuk "${search}"`
-                : 'Guru belum mengupload materi untuk pelajaran ini'}
-            </p>
-          </div>
-        ) : (
-          filtered.map((m: any) => {
-            const ext = getExt(m.file_name || '');
-            const fc = fileColor(ext);
-            const mapelStyle2 = m.mata_pelajaran
-              ? (MAPEL_COLORS[m.mata_pelajaran.kode] || MAPEL_COLORS.DEFAULT)
-              : MAPEL_COLORS.DEFAULT;
-
-            return (
-              <div key={m.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
-                <div className="p-4 flex items-start gap-3">
-                  {/* File type icon */}
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: fc.bg, color: fc.color }}>
-                    <FileIcon ext={ext} />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm text-gray-800 leading-snug">{m.judul}</p>
-
-                    <div className="flex flex-wrap gap-1.5 mt-1.5">
-                      {m.mata_pelajaran && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                          style={{ background: mapelStyle2.bg, color: mapelStyle2.color }}>
-                          {m.mata_pelajaran.nama}
-                        </span>
-                      )}
-                      {m.kelas && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                          {m.kelas.nama}
-                        </span>
-                      )}
-                    </div>
-
-                    {m.deskripsi && (
-                      <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{m.deskripsi}</p>
-                    )}
-
-                    <div className="mt-2 text-[10px] text-gray-400 flex flex-wrap gap-x-2 gap-y-0.5">
-                      {m.guru && <span>oleh {m.guru.user?.nama || '-'}</span>}
-                      {m.file_size && <span>· {fmtSize(m.file_size)}</span>}
-                      <span>· {fmtDate(m.created_at)}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-3">
-                      {m.link_video && (
-                        <a href={m.link_video} target="_blank" rel="noopener"
-                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-red-500">
-                          ▶ Tonton
-                        </a>
-                      )}
-                      {m.file_url ? (
-                        <a href={`${API_BASE}${m.file_url}`} target="_blank" rel="noopener"
-                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white"
-                          style={{ background: fc.color }}>
-                          <Download size={12} /> Unduh
-                        </a>
-                      ) : !m.link_video ? (
-                        <span className="text-[10px] text-gray-300 italic">Tanpa file</span>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
+            {isLoading ? (
+              <div className="flex flex-col gap-3">
+                {[1,2,3].map(i => <div key={i} className="bg-white rounded-xl h-24 animate-pulse" />)}
               </div>
-            );
-          })
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="w-20 h-20 rounded-2xl bg-white flex items-center justify-center mb-5 shadow-sm">
+                  <BookOpen size={32} className="text-[#dec1b1]" />
+                </div>
+                <p className="font-bold text-[#574237] text-base">
+                  {search ? 'Tidak ditemukan' : 'Belum ada materi'}
+                </p>
+                <p className="text-xs text-[#8b7265] mt-1 text-center max-w-[200px]">
+                  {search ? `Tidak ada materi untuk "${search}"` : 'Guru belum mengupload materi untuk pelajaran ini'}
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {filtered.map((m: any) => {
+                  const ext = getExt(m.file_name || '');
+                  const fc = fileColor(ext);
+                  return (
+                    <div key={m.id} className="bg-white rounded-xl shadow-[0px_8px_16px_rgba(15,23,42,0.04)] overflow-hidden">
+                      <div className="p-4 flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{ background: fc.bg, color: fc.color }}>
+                          <FileIcon ext={ext} />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm text-[#191c1e] leading-snug">{m.judul}</p>
+
+                          {m.deskripsi && (
+                            <p className="text-xs text-[#8b7265] mt-1 line-clamp-2">{m.deskripsi}</p>
+                          )}
+
+                          <div className="mt-1.5 text-[10px] text-[#8b7265] flex flex-wrap gap-x-2">
+                            {m.guru && <span>oleh {m.guru.user?.nama || '-'}</span>}
+                            {m.file_size && <span>· {fmtSize(m.file_size)}</span>}
+                            <span>· {fmtDate(m.created_at)}</span>
+                          </div>
+
+                          <div className="flex items-center gap-2 mt-3">
+                            {m.link_video && (
+                              <a href={m.link_video} target="_blank" rel="noopener"
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-white bg-red-500">
+                                ▶ Tonton
+                              </a>
+                            )}
+                            {m.file_url ? (
+                              <a href={`${API_BASE}${m.file_url}`} target="_blank" rel="noopener"
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-white"
+                                style={{ background: fc.color }}>
+                                <Download size={12} /> Unduh
+                              </a>
+                            ) : !m.link_video ? (
+                              <span className="text-[10px] text-[#8b7265] italic">Tanpa file</span>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
         )}
-      </div>
-      )}
+      </main>
     </div>
   );
 }
