@@ -118,14 +118,18 @@ export default function MateriSiswaPage() {
 
       </div>
 
-      {/* Filter chips — fixed bottom bar */}
-      <div className="fixed bottom-16 left-0 right-0 z-20 bg-white/90 backdrop-blur border-t border-gray-100">
-        <div className="flex gap-2 px-4 py-2.5 overflow-x-auto scrollbar-hide">
+      {/* Filter mapel — grid */}
+      <div className="px-4 pt-2 pb-4">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">Filter Mata Pelajaran</p>
+        <div className="grid grid-cols-4 gap-2">
           <button onClick={() => setSelectedMapel('')}
-            className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-2xl active:scale-95 transition-transform"
+            className="flex flex-col items-center gap-1.5 py-3 rounded-2xl active:scale-95 transition-transform"
             style={{ background: !selectedMapel ? 'linear-gradient(135deg,#FF8C38,#E8620D)' : '#F3F4F6' }}>
-            <BookOpen size={12} style={{ color: !selectedMapel ? '#fff' : '#9CA3AF' }} />
-            <span className="font-bold text-xs" style={{ color: !selectedMapel ? '#fff' : '#6B7280' }}>Semua</span>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: !selectedMapel ? 'rgba(255,255,255,0.25)' : '#E5E7EB' }}>
+              <BookOpen size={18} style={{ color: !selectedMapel ? '#fff' : '#9CA3AF' }} />
+            </div>
+            <span className="font-bold text-[10px] text-center leading-tight px-1" style={{ color: !selectedMapel ? '#fff' : '#6B7280' }}>Semua</span>
           </button>
           {mapelList.map((m: any) => {
             const s = MAPEL_COLORS[m.kode] || MAPEL_COLORS.DEFAULT;
@@ -133,10 +137,13 @@ export default function MateriSiswaPage() {
             return (
               <button key={m.id}
                 onClick={() => setSelectedMapel(m.id === selectedMapel ? '' : m.id)}
-                className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-2xl active:scale-95 transition-transform"
+                className="flex flex-col items-center gap-1.5 py-3 rounded-2xl active:scale-95 transition-transform"
                 style={{ background: active ? s.color : s.bg }}>
-                <BookOpen size={12} style={{ color: active ? '#fff' : s.color }} />
-                <span className="font-bold text-xs" style={{ color: active ? '#fff' : s.color }}>{m.nama}</span>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: active ? 'rgba(255,255,255,0.25)' : s.color + '25' }}>
+                  <BookOpen size={18} style={{ color: active ? '#fff' : s.color }} />
+                </div>
+                <span className="font-bold text-[10px] text-center leading-tight px-1" style={{ color: active ? '#fff' : s.color }}>{m.nama}</span>
               </button>
             );
           })}
@@ -144,7 +151,7 @@ export default function MateriSiswaPage() {
       </div>
 
       {/* Content */}
-      <div className="px-4 py-4 pb-36 space-y-3">
+      <div className="px-4 py-4 pb-28 space-y-3">
         {isLoading ? (
           <div className="flex flex-col gap-3">
             {[1,2,3].map(i => (
