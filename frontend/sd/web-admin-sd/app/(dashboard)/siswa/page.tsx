@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Key, Upload, CheckCircle, XCircle, FileSpreadsheet, RefreshCw } from 'lucide-react';
+import { Key, Upload, Download, CheckCircle, XCircle, FileSpreadsheet, RefreshCw } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
@@ -70,6 +70,28 @@ export default function SiswaPage() {
       setAddForm({ nama: '', nis: '', kelas_id: '', jenjang: '', jenis_kelamin: '' });
     },
   });
+
+  const exportCsv = async () => {
+    const res = await api.get('/siswa', { params: { jenjang: activeJenjang, limit: 9999 } });
+    const list: any[] = res.data.data || [];
+    const rows = [
+      ['Nama', 'Jenis Kelamin', 'Kelas', 'NIS', 'Password Default', 'Status'],
+      ...list.map(s => [
+        s.user?.nama || '',
+        s.jenis_kelamin || '',
+        s.kelas?.nama || '',
+        s.nis || '',
+        s.user?.password_default || '',
+        s.user?.is_active ? 'Aktif' : 'Tidak Aktif',
+      ]),
+    ];
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `siswa-${activeJenjang}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+  };
 
   const toggleAktif = useMutation({
     mutationFn: (s: any) => api.put(`/siswa/${s.id}`, { is_active: !s.user?.is_active }),
@@ -168,6 +190,12 @@ export default function SiswaPage() {
             className="px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
           >
             <Upload size={16} /> Import CSV
+          </button>
+          <button
+            onClick={exportCsv}
+            className="px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+          >
+            <Download size={16} /> Export CSV
           </button>
         </div>
 
