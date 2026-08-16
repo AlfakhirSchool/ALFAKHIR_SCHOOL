@@ -2,12 +2,21 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { Mail, LogOut, ChevronRight, Settings, HelpCircle, Bell, Camera } from 'lucide-react';
 import api from '@/lib/api';
 
 export default function ProfilPage() {
   const { user, logout, login } = useAuthStore();
+
+  const { data: siswaData } = useQuery({
+    queryKey: ['profil-siswa-me'],
+    queryFn: () => api.get('/siswa/me').then(r => r.data.data),
+    enabled: user?.role === 'siswa',
+  });
+
+  const nisDisplay = siswaData?.nis || user?.nis || user?.username || '-';
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -86,7 +95,7 @@ export default function ProfilPage() {
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Informasi Akun</p>
           </div>
           {[
-            { icon: Mail, label: 'NIS / Username', value: user?.nis || user?.username || user?.email || '-' },
+            { icon: Mail, label: 'NIS / Username', value: nisDisplay },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="px-4 py-3.5 flex items-center gap-3 border-t border-gray-50">
               <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
