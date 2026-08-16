@@ -7,7 +7,7 @@ import { BookOpen, Download, Search, ChevronLeft, FileText, Film, Image as Image
 import Link from 'next/link';
 import api from '@/lib/api';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api$/, '') || 'http://localhost:3001';
 
 const MAPEL_COLORS: Record<string, { bg: string; color: string }> = {
   MTK:  { bg: '#EFF6FF', color: '#3B82F6' },
@@ -31,7 +31,9 @@ function fmtSize(bytes: number) {
 }
 
 function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return '-';
+  return dt.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
 }
 
 function FileIcon({ ext }: { ext: string }) {
@@ -205,30 +207,28 @@ export default function MateriSiswaPage() {
                       <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">{m.deskripsi}</p>
                     )}
 
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="flex items-center gap-2 text-[10px] text-gray-400">
-                        {m.guru && <span>oleh {m.guru.user?.nama || '-'}</span>}
-                        {m.file_size && <span>· {fmtSize(m.file_size)}</span>}
-                        <span>· {fmtDate(m.created_at)}</span>
-                      </div>
+                    <div className="mt-2 text-[10px] text-gray-400 flex flex-wrap gap-x-2 gap-y-0.5">
+                      {m.guru && <span>oleh {m.guru.user?.nama || '-'}</span>}
+                      {m.file_size && <span>· {fmtSize(m.file_size)}</span>}
+                      <span>· {fmtDate(m.created_at)}</span>
+                    </div>
 
-                      <div className="flex items-center gap-2">
-                        {m.link_video && (
-                          <a href={m.link_video} target="_blank" rel="noopener"
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-red-500">
-                            ▶ Tonton
-                          </a>
-                        )}
-                        {m.file_url ? (
-                          <a href={`${API_BASE}${m.file_url}`} target="_blank" rel="noopener"
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white"
-                            style={{ background: fc.color }}>
-                            <Download size={12} /> Unduh
-                          </a>
-                        ) : !m.link_video ? (
-                          <span className="text-[10px] text-gray-300 italic">Tanpa file</span>
-                        ) : null}
-                      </div>
+                    <div className="flex items-center gap-2 mt-3">
+                      {m.link_video && (
+                        <a href={m.link_video} target="_blank" rel="noopener"
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-red-500">
+                          ▶ Tonton
+                        </a>
+                      )}
+                      {m.file_url ? (
+                        <a href={`${API_BASE}${m.file_url}`} target="_blank" rel="noopener"
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white"
+                          style={{ background: fc.color }}>
+                          <Download size={12} /> Unduh
+                        </a>
+                      ) : !m.link_video ? (
+                        <span className="text-[10px] text-gray-300 italic">Tanpa file</span>
+                      ) : null}
                     </div>
                   </div>
                 </div>
