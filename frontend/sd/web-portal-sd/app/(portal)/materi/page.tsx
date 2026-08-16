@@ -128,21 +128,21 @@ export default function MateriSiswaPage() {
 
       {/* Grid mapel — hanya tampil saat belum ada yang dipilih */}
       {!selectedMapel && (
-        <div className="px-4 pt-4 pb-4">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">Pilih Mata Pelajaran</p>
-          <div className="grid grid-cols-4 gap-2">
+        <div className="pt-4 pb-4">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-5">Pilih Mata Pelajaran</p>
+          <div className="flex gap-3 px-4 overflow-x-auto scrollbar-hide pb-1">
             {mapelList.map((m: any) => {
               const s = MAPEL_COLORS[m.kode] || MAPEL_COLORS.DEFAULT;
               return (
                 <button key={m.id}
                   onClick={() => setSelectedMapel(m.id)}
-                  className="flex flex-col items-center gap-1.5 py-3 rounded-2xl active:scale-95 transition-transform"
+                  className="flex-shrink-0 flex flex-col items-center gap-2 pt-4 pb-3 px-3 rounded-2xl active:scale-95 transition-transform w-24"
                   style={{ background: s.bg }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: s.color + '25' }}>
-                    <BookOpen size={18} style={{ color: s.color }} />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
+                    style={{ background: s.color + '22' }}>
+                    <BookOpen size={22} style={{ color: s.color }} />
                   </div>
-                  <span className="font-bold text-[10px] text-center leading-tight px-1" style={{ color: s.color }}>{m.nama}</span>
+                  <span className="font-bold text-[11px] text-center leading-tight w-full" style={{ color: s.color }}>{m.nama}</span>
                 </button>
               );
             })}
