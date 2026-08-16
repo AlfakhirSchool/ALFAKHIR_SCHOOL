@@ -163,11 +163,21 @@ async function doImportRows(rows: { nama: string; kelas_nama: string; nis: strin
       // Kalau Sheets punya NIS dan siswa ini belum punya NIS (atau TMP), update otomatis
       const hasNis = existingByNama.nis && !existingByNama.nis.toString().startsWith('TMP');
       if (nis && !hasNis) {
-        const autoPassword = nis.slice(-4);
-        const password_hash = await bcrypt.hash(autoPassword, 10);
-        await existingByNama.update({ nis, nisn: nis, no_induk: nis });
-        await (existingByNama as any).user.update({ email: `${nis}@siswa.alfakhir.sch.id`, password_hash, password_default: autoPassword });
-        results.push({ nama, nis, status: 'updated', reason: 'NIS diperbarui dari Sheets' });
+        try {
+          const autoPassword = nis.slice(-4);
+          const password_hash = await bcrypt.hash(autoPassword, 10);
+          // Cek email belum dipakai user lain
+          const emailTaken = await User.findOne({ where: { email: `${nis}@siswa.alfakhir.sch.id` } });
+          if (emailTaken && emailTaken.id !== (existingByNama as any).user_id) {
+            results.push({ nama, nis, status: 'skipped', reason: `Email NIS ${nis} sudah dipakai akun lain` });
+            continue;
+          }
+          await existingByNama.update({ nis, nisn: nis, no_induk: nis });
+          await (existingByNama as any).user.update({ email: `${nis}@siswa.alfakhir.sch.id`, password_hash, password_default: autoPassword });
+          results.push({ nama, nis, status: 'updated', reason: 'NIS diperbarui dari Sheets' });
+        } catch (err: any) {
+          results.push({ nama, nis, status: 'skipped', reason: `Gagal update NIS: ${err.message}` });
+        }
       } else {
         results.push({ nama, nis: nis || '', status: 'skipped', reason: `Siswa "${nama}" sudah ada di kelas ${(kelas as any).nama}` });
       }
