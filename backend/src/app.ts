@@ -68,7 +68,7 @@ app.use(cors({
       'https://guru.smpialfakhir.sch.id',
       'https://dashboard.smpialfakhir.sch.id',
     ].filter(Boolean);
-    if (!origin || allowed.includes(origin) || origin?.endsWith('.smpialfakhir.sch.id') || (process.env.CLOUDFLARE_TUNNEL_TOKEN && origin?.endsWith('.trycloudflare.com'))) {
+    if (!origin || allowed.includes(origin) || origin?.endsWith('.smpialfakhir.sch.id') || origin?.endsWith('.alfakhirschool.sch.id') || (process.env.CLOUDFLARE_TUNNEL_TOKEN && origin?.endsWith('.trycloudflare.com'))) {
       callback(null, true);
     } else {
       callback(new Error(`CORS: origin tidak diizinkan: ${origin}`));
