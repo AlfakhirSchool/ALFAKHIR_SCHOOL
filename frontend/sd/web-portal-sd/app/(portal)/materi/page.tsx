@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { BookOpen, Download, Search, ChevronLeft, FileText, Film, Image as ImageIcon } from 'lucide-react';
+import { BookOpen, Download, Search, ChevronLeft, FileText, Film, Image as ImageIcon, User } from 'lucide-react';
 import Link from 'next/link';
 import api from '@/lib/api';
 
@@ -177,44 +177,54 @@ export default function MateriSiswaPage() {
                   const ext = getExt(m.file_name || '');
                   const fc = fileColor(ext);
                   return (
-                    <div key={m.id} className="bg-white rounded-xl shadow-[0px_8px_16px_rgba(15,23,42,0.04)] overflow-hidden">
-                      <div className="p-4 flex items-start gap-3">
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                          style={{ background: fc.bg, color: fc.color }}>
-                          <FileIcon ext={ext} />
+                    <div key={m.id} className="bg-white rounded-2xl shadow-[0px_8px_16px_-4px_rgba(15,23,42,0.04)] border border-white/80 overflow-hidden">
+                      <div className="p-4 flex gap-4">
+                        {/* Thumbnail area */}
+                        <div className="w-20 h-20 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{ background: fc.bg + '55' }}>
+                          <div style={{ color: fc.color }}>
+                            <FileIcon ext={ext} />
+                          </div>
                         </div>
 
-                        <div className="flex-1 min-w-0">
+                        {/* Content */}
+                        <div className="flex-1 min-w-0 flex flex-col">
                           <p className="font-bold text-sm text-[#191c1e] leading-snug">{m.judul}</p>
-
                           {m.deskripsi && (
-                            <p className="text-xs text-[#8b7265] mt-1 line-clamp-2">{m.deskripsi}</p>
+                            <p className="text-xs text-[#574237] mt-1 line-clamp-2">{m.deskripsi}</p>
                           )}
-
-                          <div className="mt-1.5 text-[10px] text-[#8b7265] flex flex-wrap gap-x-2">
-                            {m.guru && <span>oleh {m.guru.user?.nama || '-'}</span>}
-                            {m.file_size && <span>· {fmtSize(m.file_size)}</span>}
-                            <span>· {fmtDate(m.created_at)}</span>
-                          </div>
-
-                          <div className="flex items-center gap-2 mt-3">
-                            {m.link_video && (
-                              <a href={m.link_video} target="_blank" rel="noopener"
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-white bg-red-500">
-                                ▶ Tonton
-                              </a>
-                            )}
-                            {m.file_url ? (
-                              <a href={`${API_BASE}${m.file_url}`} target="_blank" rel="noopener"
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-white"
-                                style={{ background: fc.color }}>
-                                <Download size={12} /> Unduh
-                              </a>
-                            ) : !m.link_video ? (
-                              <span className="text-[10px] text-[#8b7265] italic">Tanpa file</span>
-                            ) : null}
-                          </div>
+                          {m.guru && (
+                            <p className="text-[11px] text-[#565e74] mt-1.5 flex items-center gap-1">
+                              <User size={11} className="flex-shrink-0" />
+                              {m.guru.user?.nama || '-'}
+                            </p>
+                          )}
+                          {m.file_size && (
+                            <p className="text-[11px] text-[#565e74] flex items-center gap-1">
+                              <FileText size={11} className="flex-shrink-0" />
+                              {fmtSize(m.file_size)}
+                            </p>
+                          )}
                         </div>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex gap-3 px-4 pb-4">
+                        {m.link_video && (
+                          <a href={m.link_video} target="_blank" rel="noopener"
+                            className="flex-1 h-10 rounded-lg text-xs font-bold text-white flex items-center justify-center gap-1.5"
+                            style={{ background: '#f47b20' }}>
+                            ▶ Tonton
+                          </a>
+                        )}
+                        {m.file_url ? (
+                          <a href={`${API_BASE}${m.file_url}`} target="_blank" rel="noopener"
+                            className="flex-1 h-10 rounded-lg text-xs font-bold text-[#191c1e] border border-[#dec1b1] flex items-center justify-center gap-1.5 bg-white">
+                            <Download size={13} /> Unduh
+                          </a>
+                        ) : !m.link_video ? (
+                          <span className="text-[10px] text-[#8b7265] italic self-center">Tanpa file</span>
+                        ) : null}
                       </div>
                     </div>
                   );
