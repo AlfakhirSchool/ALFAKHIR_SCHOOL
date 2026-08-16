@@ -125,8 +125,6 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
 const SHEET_ID = '1NaxhH1ORhzYGms_o98miCFxqoZCi8xRrciicPt5XHGw';
 const SHEET_TABS = [
   { nama: 'SD',  gid: '0' },
-  { nama: 'SMP', gid: '2540234' },
-  { nama: 'SMA', gid: process.env.SHEET_SMA_GID || '1861647558' },
 ];
 
 async function fetchSheetCsv(gid: string): Promise<string> {
