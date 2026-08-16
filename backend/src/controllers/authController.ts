@@ -78,9 +78,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       user = (siswa as any).user ?? null;
     }
   } else {
-    // cari by username dulu, fallback ke email lama (migrasi bertahap)
+    // cari by username dulu, fallback ke email, lalu NIS (siswa login dengan NIS saja)
     user = await User.findOne({ where: { username: loginIdentifier, is_active: true } });
     if (!user) user = await User.findOne({ where: { email: loginIdentifier, is_active: true } });
+    if (!user && !loginIdentifier.includes('@'))
+      user = await User.findOne({ where: { email: `${loginIdentifier}@siswa.alfakhir.sch.id`, is_active: true } });
   }
 
   if (!user || !(user as any).is_active) {
