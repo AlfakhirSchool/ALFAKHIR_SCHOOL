@@ -150,18 +150,32 @@ function parseCsvRows(csv: string): { nama: string; kelas_nama: string; nis: str
 }
 
 async function doImportRows(rows: { nama: string; kelas_nama: string; nis: string; status: string; jenis_kelamin?: string | null }[]) {
-  const results: { nama: string; nis: string; status: 'created' | 'skipped'; reason?: string }[] = [];
+  const results: { nama: string; nis: string; status: 'created' | 'updated' | 'skipped'; reason?: string }[] = [];
   for (const [idx, row] of rows.entries()) {
     const { nama, kelas_nama } = row;
     let { nis } = row;
     if (!nama || !kelas_nama) { results.push({ nama: nama || '?', nis: nis || '?', status: 'skipped', reason: 'Data tidak lengkap' }); continue; }
-    // Coba exact match dulu, fallback ke contains search
     let kelas = await Kelas.findOne({ where: { nama: { [Op.iLike]: kelas_nama } } });
     if (!kelas) kelas = await Kelas.findOne({ where: { nama: { [Op.iLike]: `%${kelas_nama}%` } } });
     if (!kelas) { results.push({ nama, nis: nis || '', status: 'skipped', reason: `Kelas "${kelas_nama}" tidak ditemukan` }); continue; }
-    // Cek duplikat nama di kelas yang sama
-    const existingByNama = await Siswa.findOne({ where: { kelas_id: (kelas as any).id }, include: [{ model: User, as: 'user', where: { nama: { [Op.iLike]: nama } } }] });
-    if (existingByNama) { results.push({ nama, nis: nis || '', status: 'skipped', reason: `Siswa "${nama}" sudah ada di kelas ${(kelas as any).nama}` }); continue; }
+
+    // Cek siswa sudah ada berdasarkan nama di kelas yang sama
+    const existingByNama = await Siswa.findOne({ where: { kelas_id: (kelas as any).id }, include: [{ model: User, as: 'user', where: { nama: { [Op.iLike]: nama } } }] }) as any;
+    if (existingByNama) {
+      // Kalau Sheets punya NIS dan siswa ini belum punya NIS (atau TMP), update otomatis
+      const hasNis = existingByNama.nis && !existingByNama.nis.toString().startsWith('TMP');
+      if (nis && !hasNis) {
+        const autoPassword = nis.slice(-4);
+        const password_hash = await bcrypt.hash(autoPassword, 10);
+        await existingByNama.update({ nis, nisn: nis, no_induk: nis });
+        await (existingByNama as any).user.update({ email: `${nis}@siswa.alfakhir.sch.id`, password_hash, password_default: autoPassword, username: nis });
+        results.push({ nama, nis, status: 'updated', reason: 'NIS diperbarui dari Sheets' });
+      } else {
+        results.push({ nama, nis: nis || '', status: 'skipped', reason: `Siswa "${nama}" sudah ada di kelas ${(kelas as any).nama}` });
+      }
+      continue;
+    }
+
     if (nis) {
       if (await User.findOne({ where: { email: `${nis}@siswa.alfakhir.sch.id` } })) { results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' }); continue; }
       if (await Siswa.findOne({ where: { nis } })) { results.push({ nama, nis, status: 'skipped', reason: 'NIS sudah terdaftar' }); continue; }
@@ -196,8 +210,10 @@ export const syncFromSheets = async (_req: AuthRequest, res: Response): Promise<
     }
     const results = await doImportRows(allRows);
     const created = results.filter(r => r.status === 'created').length;
+    const updated = results.filter(r => r.status === 'updated').length;
     const skipped = results.filter(r => r.status === 'skipped').length;
-    res.json({ success: true, message: `${created} siswa ditambahkan, ${skipped} dilewati`, data: results });
+    const parts = [`${created} siswa ditambahkan`, updated > 0 ? `${updated} diperbarui NIS-nya` : null, `${skipped} dilewati`].filter(Boolean);
+    res.json({ success: true, message: parts.join(', '), data: results });
   } catch (e: any) {
     res.status(500).json({ success: false, message: `Gagal sync: ${e?.message || 'Error tidak diketahui'}` });
   }
