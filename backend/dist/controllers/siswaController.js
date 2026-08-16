@@ -3,14 +3,26 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remove = exports.update = exports.importCsv = exports.syncFromSheets = exports.create = exports.getById = exports.getAll = exports.getSekolahList = void 0;
+exports.remove = exports.update = exports.importCsv = exports.syncFromSheets = exports.create = exports.getById = exports.getAll = exports.getSekolahList = exports.getMe = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const sequelize_1 = require("sequelize");
 const models_1 = require("../models");
 const errorHandler_1 = require("../middleware/errorHandler");
 const levelFilter_1 = require("../utils/levelFilter");
+const getMe = async (req, res) => {
+    const siswa = await models_1.Siswa.findOne({
+        where: { user_id: req.user.id },
+        include: [{ model: models_1.Kelas, as: 'kelas', attributes: ['id', 'nama'] }],
+    });
+    if (!siswa) {
+        res.status(404).json({ success: false, message: 'Data siswa tidak ditemukan' });
+        return;
+    }
+    res.json({ success: true, data: siswa });
+};
+exports.getMe = getMe;
 const getSekolahList = async (_req, res) => {
-    const list = await models_1.Sekolah.findAll({ attributes: ['id', 'nama', 'jenjang'], order: [['nama', 'ASC']] });
+    const list = await models_1.Sekolah.findAll({ attributes: ['id', 'nama', 'level'], order: [['nama', 'ASC']] });
     res.json({ success: true, data: list });
 };
 exports.getSekolahList = getSekolahList;
@@ -34,8 +46,8 @@ const getAll = async (req, res) => {
     const { count, rows } = await models_1.Siswa.findAndCountAll({
         where,
         include: [
-            { model: models_1.User, as: 'user', where: userWhere, attributes: { exclude: ['password_hash'] } },
-            { model: models_1.Kelas, as: 'kelas', where: kelasWhere, required: true, include: [{ model: models_1.Sekolah, as: 'sekolah', where: Object.keys(sekolahWhere).length ? sekolahWhere : undefined }] },
+            { model: models_1.User, as: 'user', where: userWhere, attributes: { exclude: ['password_hash', 'password_default'] } },
+            { model: models_1.Kelas, as: 'kelas', where: kelasWhere, required: false, include: [{ model: models_1.Sekolah, as: 'sekolah', where: Object.keys(sekolahWhere).length ? sekolahWhere : undefined }] },
         ],
         limit: parseInt(limit),
         offset,
@@ -49,9 +61,14 @@ const getAll = async (req, res) => {
 };
 exports.getAll = getAll;
 const getById = async (req, res) => {
+    if (req.user.role === 'siswa') {
+        const ownSiswa = await models_1.Siswa.findOne({ where: { user_id: req.user.id } });
+        if (!ownSiswa || ownSiswa.id !== req.params.id)
+            throw (0, errorHandler_1.createError)('Akses ditolak', 403);
+    }
     const siswa = await models_1.Siswa.findByPk(req.params.id, {
         include: [
-            { model: models_1.User, as: 'user', attributes: { exclude: ['password_hash'] } },
+            { model: models_1.User, as: 'user', attributes: { exclude: ['password_hash', 'password_default'] } },
             { model: models_1.Kelas, as: 'kelas', include: [{ model: models_1.Sekolah, as: 'sekolah' }] },
         ],
     });
@@ -70,10 +87,12 @@ const create = async (req, res) => {
         return;
     }
     const finalNisn = nisn || nis;
-    const existingNisn = await models_1.Siswa.findOne({ where: { nisn: finalNisn } });
-    if (existingNisn) {
-        res.status(400).json({ success: false, message: nisn ? 'NISN sudah terdaftar' : 'NIS sudah terdaftar sebagai siswa' });
-        return;
+    if (finalNisn) {
+        const existingNisn = await models_1.Siswa.findOne({ where: { nisn: finalNisn } });
+        if (existingNisn) {
+            res.status(400).json({ success: false, message: nisn ? 'NISN sudah terdaftar' : 'NIS sudah terdaftar sebagai siswa' });
+            return;
+        }
     }
     const password_hash = await bcrypt_1.default.hash(autoPassword, 10);
     const user = await models_1.User.create({ email: autoEmail, password_hash, nama, role: 'siswa', password_default: autoPassword });
@@ -104,8 +123,6 @@ exports.create = create;
 const SHEET_ID = '1NaxhH1ORhzYGms_o98miCFxqoZCi8xRrciicPt5XHGw';
 const SHEET_TABS = [
     { nama: 'SD', gid: '0' },
-    { nama: 'SMP', gid: '2540234' },
-    { nama: 'SMA', gid: process.env.SHEET_SMA_GID || '1861647558' },
 ];
 async function fetchSheetCsv(gid) {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
@@ -136,7 +153,6 @@ async function doImportRows(rows) {
             results.push({ nama: nama || '?', nis: nis || '?', status: 'skipped', reason: 'Data tidak lengkap' });
             continue;
         }
-        // Coba exact match dulu, fallback ke contains search
         let kelas = await models_1.Kelas.findOne({ where: { nama: { [sequelize_1.Op.iLike]: kelas_nama } } });
         if (!kelas)
             kelas = await models_1.Kelas.findOne({ where: { nama: { [sequelize_1.Op.iLike]: `%${kelas_nama}%` } } });
@@ -144,10 +160,32 @@ async function doImportRows(rows) {
             results.push({ nama, nis: nis || '', status: 'skipped', reason: `Kelas "${kelas_nama}" tidak ditemukan` });
             continue;
         }
-        // Cek duplikat nama di kelas yang sama
+        // Cek siswa sudah ada berdasarkan nama di kelas yang sama
         const existingByNama = await models_1.Siswa.findOne({ where: { kelas_id: kelas.id }, include: [{ model: models_1.User, as: 'user', where: { nama: { [sequelize_1.Op.iLike]: nama } } }] });
         if (existingByNama) {
-            results.push({ nama, nis: nis || '', status: 'skipped', reason: `Siswa "${nama}" sudah ada di kelas ${kelas.nama}` });
+            // Kalau Sheets punya NIS dan siswa ini belum punya NIS (atau TMP), update otomatis
+            const hasNis = existingByNama.nis && !existingByNama.nis.toString().startsWith('TMP');
+            if (nis && !hasNis) {
+                try {
+                    const autoPassword = nis.slice(-4);
+                    const password_hash = await bcrypt_1.default.hash(autoPassword, 10);
+                    // Cek email belum dipakai user lain
+                    const emailTaken = await models_1.User.findOne({ where: { email: `${nis}@siswa.alfakhir.sch.id` } });
+                    if (emailTaken && emailTaken.id !== existingByNama.user_id) {
+                        results.push({ nama, nis, status: 'skipped', reason: `Email NIS ${nis} sudah dipakai akun lain` });
+                        continue;
+                    }
+                    await existingByNama.update({ nis, nisn: nis, no_induk: nis });
+                    await existingByNama.user.update({ email: `${nis}@siswa.alfakhir.sch.id`, password_hash, password_default: autoPassword });
+                    results.push({ nama, nis, status: 'updated', reason: 'NIS diperbarui dari Sheets' });
+                }
+                catch (err) {
+                    results.push({ nama, nis, status: 'skipped', reason: `Gagal update NIS: ${err.message}` });
+                }
+            }
+            else {
+                results.push({ nama, nis: nis || '', status: 'skipped', reason: `Siswa "${nama}" sudah ada di kelas ${kelas.nama}` });
+            }
             continue;
         }
         if (nis) {
@@ -166,7 +204,8 @@ async function doImportRows(rows) {
         const is_active = !row.status || row.status.toUpperCase() !== 'TIDAK AKTIF';
         const password_hash = await bcrypt_1.default.hash(autoPassword, 10);
         const user = await models_1.User.create({ email: autoEmail, password_hash, nama, role: 'siswa', password_default: nis ? autoPassword : null, is_active });
-        await models_1.Siswa.create({ user_id: user.id, kelas_id: kelas.id, nisn: nis || null, nis: nis || null, no_induk: nis || null, jenis_kelamin: row.jenis_kelamin || null });
+        const noInduk = nis || `TMP${Date.now()}${idx}`;
+        await models_1.Siswa.create({ user_id: user.id, kelas_id: kelas.id, nisn: nis || null, nis: nis || null, no_induk: noInduk, jenis_kelamin: row.jenis_kelamin || null });
         results.push({ nama, nis, status: 'created' });
     }
     return results;
@@ -189,8 +228,10 @@ const syncFromSheets = async (_req, res) => {
         }
         const results = await doImportRows(allRows);
         const created = results.filter(r => r.status === 'created').length;
+        const updated = results.filter(r => r.status === 'updated').length;
         const skipped = results.filter(r => r.status === 'skipped').length;
-        res.json({ success: true, message: `${created} siswa ditambahkan, ${skipped} dilewati`, data: results });
+        const parts = [`${created} siswa ditambahkan`, updated > 0 ? `${updated} diperbarui NIS-nya` : null, `${skipped} dilewati`].filter(Boolean);
+        res.json({ success: true, message: parts.join(', '), data: results });
     }
     catch (e) {
         res.status(500).json({ success: false, message: `Gagal sync: ${e?.message || 'Error tidak diketahui'}` });

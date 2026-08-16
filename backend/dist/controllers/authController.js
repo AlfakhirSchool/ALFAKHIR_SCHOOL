@@ -9,7 +9,6 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const sequelize_1 = require("sequelize");
 const models_1 = require("../models");
 const errorHandler_1 = require("../middleware/errorHandler");
 const auditLog_1 = require("../middleware/auditLog");
@@ -40,9 +39,10 @@ const generateTokens = (user) => {
     return { accessToken, refreshToken };
 };
 const login = async (req, res) => {
-    const { email, nis, password, role: loginRole, device_id } = req.body;
-    if (!password || (!email && !nis)) {
-        res.status(400).json({ success: false, message: 'NIS/email dan password wajib diisi' });
+    const { email, username: usernameInput, nis, password, role: loginRole, device_id } = req.body;
+    const loginIdentifier = usernameInput || email; // support both field names from clients
+    if (!password || (!loginIdentifier && !nis)) {
+        res.status(400).json({ success: false, message: 'Username/NIS dan password wajib diisi' });
         return;
     }
     let user = null;
@@ -70,14 +70,15 @@ const login = async (req, res) => {
         }
     }
     else {
-        // Lookup by email exact, or by nama (case-insensitive) for username-style login
-        user = await models_1.User.findOne({ where: { email, is_active: true } });
-        if (!user) {
-            user = await models_1.User.findOne({ where: { nama: { [sequelize_1.Op.iLike]: email }, is_active: true } });
-        }
+        // cari by username dulu, fallback ke email, lalu NIS (siswa login dengan NIS saja)
+        user = await models_1.User.findOne({ where: { username: loginIdentifier, is_active: true } });
+        if (!user)
+            user = await models_1.User.findOne({ where: { email: loginIdentifier, is_active: true } });
+        if (!user && !loginIdentifier.includes('@'))
+            user = await models_1.User.findOne({ where: { email: `${loginIdentifier}@siswa.alfakhir.sch.id`, is_active: true } });
     }
     if (!user || !user.is_active) {
-        res.status(401).json({ success: false, message: 'NIS/email atau password salah' });
+        res.status(401).json({ success: false, message: 'Username/NIS atau password salah' });
         return;
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -130,6 +131,7 @@ const login = async (req, res) => {
             user: {
                 id: user.id,
                 email: user.email,
+                username: user.username,
                 nama: user.nama,
                 role: user.role,
                 school_level: user.school_level ?? null,
@@ -269,6 +271,11 @@ const switchAccount = async (req, res) => {
     }
     const { accessToken } = generateTokens({
         id: target.id, email: target.email, nama: target.nama, role: target.role, school_level: targetLevel,
+    });
+    (0, auditLog_1.logAction)({
+        user_id: current.id, nama: current.nama, role: current.role, school_level: currentLevel,
+        action: 'switch_account', table: 'users', record_id: target.id,
+        new_value: { target_id: target.id, target_nama: target.nama, target_email: target.email },
     });
     res.json({
         success: true,

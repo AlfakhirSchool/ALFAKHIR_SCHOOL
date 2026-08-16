@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import sequelize from '../config/database';
 import { User, Siswa, Guru, Kelas, Sekolah, Absensi, Nilai, Pembayaran, JurnalGuru, JadwalPelajaran } from '../models';
 import { AuthRequest } from '../middleware/auth';
+import redis from '../config/redis';
 
 const getStatsForLevel = async (level: string): Promise<{ sekolahId?: string; namaSekolah?: string; totalSiswa: number; totalKelas: number; absensiHariIni: number }> => {
   const sekolah = await Sekolah.findOne({ where: { level } });
@@ -29,6 +30,10 @@ const getStatsForLevel = async (level: string): Promise<{ sekolahId?: string; na
 
 export const adminDashboard = async (_req: AuthRequest, res: Response): Promise<void> => {
   const today = new Date().toISOString().split('T')[0];
+  const cacheKey = `dashboard:admin:${today}`;
+
+  const cached = await redis.get(cacheKey).catch(() => null);
+  if (cached) { res.json(JSON.parse(cached)); return; }
 
   const [sd, smp, sma, totalGuru, pendingJurnal] = await Promise.all([
     getStatsForLevel('SD'),
@@ -42,13 +47,16 @@ export const adminDashboard = async (_req: AuthRequest, res: Response): Promise<
   const totalKelas = sd.totalKelas + smp.totalKelas + sma.totalKelas;
   const absensiHariIni = sd.absensiHariIni + smp.absensiHariIni + sma.absensiHariIni;
 
-  res.json({
+  const result = {
     success: true,
     data: {
       kpi: { totalSiswa, totalGuru, totalKelas, absensiHariIni, pendingJurnal },
       sekolah: { sd, smp, sma },
     },
-  });
+  };
+  // cache 60 detik — data absensi hari ini berubah per menit, tidak perlu real-time
+  redis.setex(cacheKey, 60, JSON.stringify(result)).catch(() => {});
+  res.json(result);
 };
 
 export const guruDashboard = async (req: AuthRequest, res: Response): Promise<void> => {

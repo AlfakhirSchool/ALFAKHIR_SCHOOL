@@ -47,6 +47,11 @@ const create = async (req, res) => {
 };
 exports.create = create;
 const getSiswa = async (req, res) => {
+    if (req.user.role === 'siswa') {
+        const siswa = await models_1.Siswa.findOne({ where: { user_id: req.user.id } });
+        if (!siswa || siswa.id !== req.params.siswa_id)
+            throw (0, errorHandler_1.createError)('Akses ditolak', 403);
+    }
     const { semester, tahun_ajaran } = req.query;
     const where = { siswa_id: req.params.siswa_id };
     if (semester)
@@ -54,7 +59,7 @@ const getSiswa = async (req, res) => {
     if (tahun_ajaran)
         where.tahun_ajaran = tahun_ajaran;
     const nilaiList = await models_1.Nilai.findAll({
-        where: { ...where, siswa_id: req.params.siswa_id },
+        where,
         include: [
             { model: models_1.MataPelajaran, as: 'mata_pelajaran' },
             { model: models_1.Guru, as: 'guru', include: [{ model: models_1.User, as: 'user', attributes: ['nama'] }] },
@@ -69,6 +74,13 @@ const update = async (req, res) => {
     const nilai = await models_1.Nilai.findByPk(req.params.id);
     if (!nilai)
         throw (0, errorHandler_1.createError)('Nilai tidak ditemukan', 404);
+    // Guru hanya bisa edit nilai yang dia input sendiri
+    if (req.user.role === 'guru') {
+        const guru = await models_1.Guru.findOne({ where: { user_id: req.user.id } });
+        if (!guru || nilai.guru_id !== guru.id) {
+            throw (0, errorHandler_1.createError)('Tidak berhak mengubah nilai guru lain', 403);
+        }
+    }
     const { kuis, tugas, uts, uas, catatan } = req.body;
     let nilaiAkhir = nilai.nilai_akhir;
     let gradeInfo = nilai.grade ? { grade: nilai.grade, predikat: nilai.predikat || '' } : null;

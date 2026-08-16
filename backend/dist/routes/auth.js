@@ -36,11 +36,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const authController = __importStar(require("../controllers/authController"));
 const auth_1 = require("../middleware/auth");
+const rateLimiter_1 = require("../middleware/rateLimiter");
 const router = (0, express_1.Router)();
-router.post('/login', authController.login);
+// Max 20 percobaan login per 15 menit per IP
+router.post('/login', (0, rateLimiter_1.rateLimiter)(20, 15 * 60 * 1000), authController.login);
 router.post('/logout', auth_1.authenticate, authController.logout);
 router.post('/refresh', authController.refreshToken);
 router.get('/profile', auth_1.authenticate, authController.getProfile);
+router.get('/me', auth_1.authenticate, authController.getProfile);
 router.post('/change-password', auth_1.authenticate, authController.changePassword);
 router.post('/upload-photo', auth_1.authenticate, authController.upload.single('photo'), authController.uploadProfilePhoto);
 router.post('/reset-device/:userId', auth_1.authenticate, (0, auth_1.authorize)('admin'), authController.resetDevice);

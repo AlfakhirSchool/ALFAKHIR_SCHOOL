@@ -1,18 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
+const sequelize_1 = require("sequelize");
 const models_1 = require("../models");
 const auth_1 = require("../middleware/auth");
 const errorHandler_1 = require("../middleware/errorHandler");
 const router = (0, express_1.Router)();
 router.use(auth_1.authenticate);
 router.get('/', async (req, res) => {
-    const { jenjang } = req.query;
-    const where = {};
-    if (jenjang && jenjang !== 'all')
-        where.jenjang = jenjang;
-    const list = await models_1.MataPelajaran.findAll({ where, order: [['nama', 'ASC']] });
-    res.json({ success: true, data: list });
+    try {
+        const { jenjang } = req.query;
+        const where = {};
+        if (jenjang && jenjang !== 'all') {
+            where[sequelize_1.Op.or] = [{ jenjang: jenjang }, { jenjang: null }];
+        }
+        const list = await models_1.MataPelajaran.findAll({ where, order: [['nama', 'ASC']] });
+        res.json({ success: true, data: list });
+    }
+    catch (e) {
+        res.status(500).json({ success: false, message: e.message || 'Gagal memuat mata pelajaran' });
+    }
 });
 router.post('/', (0, auth_1.authorize)('admin'), async (req, res) => {
     try {

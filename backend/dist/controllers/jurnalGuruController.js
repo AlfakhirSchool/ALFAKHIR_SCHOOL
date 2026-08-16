@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.downloadExcel = exports.exportPdf = exports.getLaporanKelas = exports.review = exports.submit = exports.remove = exports.getAll = exports.getById = exports.update = exports.create = void 0;
+exports.saveSiswaDetail = exports.getSiswaDetail = exports.getRiwayatSiswa = exports.downloadExcel = exports.exportPdf = exports.getLaporanKelas = exports.review = exports.submit = exports.remove = exports.getAll = exports.getById = exports.update = exports.create = void 0;
 const sequelize_1 = require("sequelize");
 const XLSX = __importStar(require("xlsx"));
 const models_1 = require("../models");
@@ -88,6 +88,11 @@ const getById = async (req, res) => {
     });
     if (!jurnal)
         throw (0, errorHandler_1.createError)('Jurnal tidak ditemukan', 404);
+    if (req.user.role === 'guru') {
+        const guru = await models_1.Guru.findOne({ where: { user_id: req.user.id } });
+        if (!guru || jurnal.guru_id !== guru.id)
+            throw (0, errorHandler_1.createError)('Akses ditolak', 403);
+    }
     res.json({ success: true, data: jurnal });
 };
 exports.getById = getById;
@@ -111,20 +116,27 @@ const getAll = async (req, res) => {
     else if (guru_id) {
         where.guru_id = guru_id;
     }
-    const { count, rows } = await models_1.JurnalGuru.findAndCountAll({
-        where,
-        include: [
-            { model: models_1.Guru, as: 'guru', include: [{ model: models_1.User, as: 'user', attributes: ['nama'] }] },
-            { model: models_1.Kelas, as: 'kelas' },
-            { model: models_1.MataPelajaran, as: 'mata_pelajaran' },
-        ],
-        limit: parseInt(limit),
-        offset,
-        order: [['tanggal', 'DESC']],
-    });
+    const [{ count, rows }, statsRows] = await Promise.all([
+        models_1.JurnalGuru.findAndCountAll({
+            where,
+            include: [
+                { model: models_1.Guru, as: 'guru', include: [{ model: models_1.User, as: 'user', attributes: ['nama'] }] },
+                { model: models_1.Kelas, as: 'kelas' },
+                { model: models_1.MataPelajaran, as: 'mata_pelajaran' },
+            ],
+            limit: parseInt(limit),
+            offset,
+            order: [['tanggal', 'DESC']],
+        }),
+        models_1.JurnalGuru.findAll({ where, attributes: ['status'], raw: true }),
+    ]);
+    const summary = { draft: 0, submitted: 0, reviewed: 0, approved: 0 };
+    statsRows.forEach((r) => { if (r.status in summary)
+        summary[r.status]++; });
     res.json({
         success: true,
         data: rows,
+        summary,
         pagination: { total: count, page: parseInt(page), limit: parseInt(limit), totalPages: Math.ceil(count / parseInt(limit)) },
     });
 };
@@ -133,6 +145,11 @@ const remove = async (req, res) => {
     const jurnal = await models_1.JurnalGuru.findByPk(req.params.id);
     if (!jurnal)
         throw (0, errorHandler_1.createError)('Jurnal tidak ditemukan', 404);
+    if (req.user.role === 'guru') {
+        const guru = await models_1.Guru.findOne({ where: { user_id: req.user.id } });
+        if (!guru || jurnal.guru_id !== guru.id)
+            throw (0, errorHandler_1.createError)('Tidak berhak menghapus jurnal ini', 403);
+    }
     await jurnal.destroy();
     res.json({ success: true, message: 'Jurnal berhasil dihapus' });
 };
@@ -244,3 +261,71 @@ const downloadExcel = async (req, res) => {
     res.send(buf);
 };
 exports.downloadExcel = downloadExcel;
+const getRiwayatSiswa = async (req, res) => {
+    const { siswa_id } = req.params;
+    const { kelas_id } = req.query;
+    const where = { siswa_id };
+    const jurnalWhere = {};
+    if (kelas_id)
+        jurnalWhere.kelas_id = kelas_id;
+    // Guru hanya bisa lihat riwayat dari jurnal miliknya sendiri
+    if (req.user?.role === 'guru') {
+        const guru = await models_1.Guru.findOne({ where: { user_id: req.user.id } });
+        if (guru)
+            jurnalWhere.guru_id = guru.id;
+    }
+    const detail = await models_1.JurnalSiswa.findAll({
+        where,
+        include: [{
+                model: models_1.JurnalGuru, as: 'jurnal',
+                where: Object.keys(jurnalWhere).length ? jurnalWhere : undefined,
+                include: [
+                    { model: models_1.Kelas, as: 'kelas' },
+                    { model: models_1.MataPelajaran, as: 'mata_pelajaran' },
+                    { model: models_1.Guru, as: 'guru', include: [{ model: models_1.User, as: 'user', attributes: ['nama'] }] },
+                ],
+            }],
+        order: [[{ model: models_1.JurnalGuru, as: 'jurnal' }, 'tanggal', 'DESC']],
+    });
+    const total = detail.length;
+    const stats = { hadir: 0, sakit: 0, izin: 0, alfa: 0 };
+    detail.forEach(d => { if (stats[d.kehadiran] !== undefined)
+        stats[d.kehadiran]++; });
+    res.json({ success: true, data: detail, stats, total });
+};
+exports.getRiwayatSiswa = getRiwayatSiswa;
+const getSiswaDetail = async (req, res) => {
+    const jurnal = await models_1.JurnalGuru.findByPk(req.params.id);
+    if (!jurnal)
+        throw (0, errorHandler_1.createError)('Jurnal tidak ditemukan', 404);
+    const detail = await models_1.JurnalSiswa.findAll({
+        where: { jurnal_id: jurnal.id },
+        include: [{ model: models_1.Siswa, as: 'siswa', include: [{ model: models_1.User, as: 'user', attributes: ['nama'] }] }],
+    });
+    res.json({ success: true, data: detail });
+};
+exports.getSiswaDetail = getSiswaDetail;
+const saveSiswaDetail = async (req, res) => {
+    const jurnal = await models_1.JurnalGuru.findByPk(req.params.id);
+    if (!jurnal)
+        throw (0, errorHandler_1.createError)('Jurnal tidak ditemukan', 404);
+    const items = req.body.items || [];
+    // Upsert per siswa
+    for (const item of items) {
+        await models_1.JurnalSiswa.upsert({
+            jurnal_id: jurnal.id,
+            siswa_id: item.siswa_id,
+            kehadiran: item.kehadiran || 'hadir',
+            catatan: item.catatan || null,
+            ...(item.foto_url !== undefined ? { foto_url: item.foto_url } : {}),
+        });
+    }
+    // Update aggregate counts di jurnal
+    const hadir = items.filter(i => i.kehadiran === 'hadir').length;
+    const sakit = items.filter(i => i.kehadiran === 'sakit').length;
+    const izin = items.filter(i => i.kehadiran === 'izin').length;
+    const alfa = items.filter(i => i.kehadiran === 'alfa').length;
+    await jurnal.update({ jumlah_siswa_hadir: hadir, jumlah_siswa_sakit: sakit, jumlah_siswa_izin: izin, jumlah_siswa_alfa: alfa });
+    res.json({ success: true, message: 'Detail siswa berhasil disimpan' });
+};
+exports.saveSiswaDetail = saveSiswaDetail;

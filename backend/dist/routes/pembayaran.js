@@ -37,14 +37,23 @@ const express_1 = require("express");
 const pembayaranController = __importStar(require("../controllers/pembayaranController"));
 const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
-// Webhook tidak perlu auth (dipanggil oleh BCA/Mandiri)
-router.post('/webhook/bca', pembayaranController.webhookBca);
-router.post('/webhook/mandiri', pembayaranController.webhookMandiri);
+// Webhook: validasi token dari BCA/Mandiri via header X-Callback-Token
+function webhookAuth(req, res, next) {
+    const token = req.headers['x-callback-token'];
+    const expected = process.env.WEBHOOK_CALLBACK_TOKEN;
+    if (!expected || token !== expected) {
+        res.status(401).json({ status: 'unauthorized' });
+        return;
+    }
+    next();
+}
+router.post('/webhook/bca', webhookAuth, pembayaranController.webhookBca);
+router.post('/webhook/mandiri', webhookAuth, pembayaranController.webhookMandiri);
 router.use(auth_1.authenticate);
-router.get('/', (0, auth_1.authorize)('admin', 'ortu', 'siswa'), pembayaranController.getAll);
-router.post('/', (0, auth_1.authorize)('admin'), pembayaranController.create);
-router.get('/laporan', (0, auth_1.authorize)('admin'), pembayaranController.getLaporan);
+router.get('/', (0, auth_1.authorize)('admin', 'keuangan', 'ortu', 'siswa'), pembayaranController.getAll);
+router.post('/', (0, auth_1.authorize)('admin', 'keuangan'), pembayaranController.create);
+router.get('/laporan', (0, auth_1.authorize)('admin', 'keuangan'), pembayaranController.getLaporan);
 router.put('/:id', (0, auth_1.authorize)('admin'), pembayaranController.update);
 router.delete('/:id', (0, auth_1.authorize)('admin'), pembayaranController.remove);
-router.post('/:id/bayar', (0, auth_1.authorize)('admin'), pembayaranController.bayar);
+router.post('/:id/bayar', (0, auth_1.authorize)('admin', 'keuangan'), pembayaranController.bayar);
 exports.default = router;

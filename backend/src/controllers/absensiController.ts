@@ -8,6 +8,7 @@ import { Absensi, QrCodeSession, JadwalPelajaran, Siswa, Kelas, MataPelajaran, G
 import sequelize from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import redis from '../config/redis';
 import { kelasIdFilter } from '../utils/levelFilter';
 import { sendWAMessage, buildMasukMessage, buildPulangMessage } from '../utils/waNotification';
 import { propagateKelasToGerbang, setIzin } from '../utils/absensiSync';
@@ -150,6 +151,7 @@ export const scanQr = async (req: AuthRequest, res: Response): Promise<void> => 
     created_by: req.user!.id,
   });
 
+  redis.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
   res.status(201).json({ success: true, message: 'Absensi berhasil dicatat', data: absensi });
 };
 
@@ -184,6 +186,7 @@ export const inputCode = async (req: AuthRequest, res: Response): Promise<void> 
     created_by: req.user!.id,
   });
 
+  redis.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
   res.status(201).json({ success: true, message: 'Absensi berhasil dicatat', data: absensi });
 };
 
@@ -196,6 +199,7 @@ export const manualInput = async (req: AuthRequest, res: Response): Promise<void
   const existing = await Absensi.findOne({ where: { siswa_id, jadwal_pelajaran_id, tanggal } });
   if (existing) {
     await existing.update({ status, catatan, created_by: req.user!.id });
+    redis.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
     res.json({ success: true, message: 'Absensi berhasil diperbarui', data: existing });
     return;
   }
@@ -209,6 +213,7 @@ export const manualInput = async (req: AuthRequest, res: Response): Promise<void
     created_by: req.user!.id,
   });
 
+  redis.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
   res.status(201).json({ success: true, message: 'Absensi berhasil dicatat', data: absensi });
 };
 
@@ -217,6 +222,7 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
   if (!absensi) throw createError('Absensi tidak ditemukan', 404);
 
   await absensi.update({ status: req.body.status, catatan: req.body.catatan });
+  redis.keys(`absensi:detail:${(absensi as any).siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
   res.json({ success: true, message: 'Absensi berhasil diperbarui', data: absensi });
 };
 
@@ -564,7 +570,14 @@ export const getSiswaDetail = async (req: AuthRequest, res: Response): Promise<v
   }
 
   const { bulan, tahun } = req.query;
-  const where: Record<string, unknown> = { siswa_id: req.params.siswa_id as string };
+  const siswaId = req.params.siswa_id as string;
+
+  // Cache 2 menit — absensi siswa tidak berubah detik-detik, cukup segar untuk portal
+  const cacheKey = `absensi:detail:${siswaId}:${bulan || 'all'}:${tahun || 'all'}`;
+  const cached = await redis.get(cacheKey).catch(() => null);
+  if (cached) { res.json(JSON.parse(cached)); return; }
+
+  const where: Record<string, unknown> = { siswa_id: siswaId };
 
   if (bulan && tahun) {
     const startDate = new Date(parseInt(tahun as string), parseInt(bulan as string) - 1, 1);
@@ -578,7 +591,9 @@ export const getSiswaDetail = async (req: AuthRequest, res: Response): Promise<v
     order: [['tanggal', 'DESC']],
   });
 
-  res.json({ success: true, data: absensiList });
+  const result = { success: true, data: absensiList };
+  redis.setex(cacheKey, 120, JSON.stringify(result)).catch(() => {});
+  res.json(result);
 };
 
 // JSON data untuk preview rekap absensi per mata pelajaran

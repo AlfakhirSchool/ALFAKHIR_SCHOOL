@@ -19,6 +19,7 @@ const absensi_1 = __importDefault(require("./routes/absensi"));
 const nilai_1 = __importDefault(require("./routes/nilai"));
 const pembayaran_1 = __importDefault(require("./routes/pembayaran"));
 const jurnalGuru_1 = __importDefault(require("./routes/jurnalGuru"));
+const catatanSiswa_1 = __importDefault(require("./routes/catatanSiswa"));
 const dashboard_1 = __importDefault(require("./routes/dashboard"));
 const auditLog_1 = __importDefault(require("./routes/auditLog"));
 const users_1 = __importDefault(require("./routes/users"));
@@ -35,10 +36,14 @@ const catatanPewawancara_1 = __importDefault(require("./routes/catatanPewawancar
 const soalAkademik_1 = __importDefault(require("./routes/soalAkademik"));
 const jawabanForm_1 = __importDefault(require("./routes/jawabanForm"));
 const pertanyaanForm_1 = __importDefault(require("./routes/pertanyaanForm"));
+const aiChat_1 = __importDefault(require("./routes/aiChat"));
+const tugas_1 = __importDefault(require("./routes/tugas"));
+const materi_1 = __importDefault(require("./routes/materi"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const auditLog_2 = require("./middleware/auditLog");
 const logger_1 = __importDefault(require("./config/logger"));
 const emailService_1 = require("./utils/emailService");
+const pengumuman_1 = __importDefault(require("./routes/pengumuman"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 app.use((0, helmet_1.default)({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
@@ -49,14 +54,26 @@ app.use((0, cors_1.default)({
             process.env.FRONTEND_GURU_URL,
             'http://localhost:3000',
             'http://localhost:3002',
+            'http://localhost:3004',
+            'http://localhost:3010',
+            'http://localhost:3011',
+            'http://localhost:3012',
+            'http://localhost:3020',
+            'http://localhost:3021',
+            'http://localhost:3022',
             'http://10.10.9.73:3000',
             'http://10.10.9.73:3002',
+            // Production Cloudflare domains
+            'https://keuangan.smpialfakhir.sch.id',
+            'https://pewawancara.smpialfakhir.sch.id',
+            'https://guru.smpialfakhir.sch.id',
+            'https://dashboard.smpialfakhir.sch.id',
         ].filter(Boolean);
-        if (!origin || allowed.includes(origin) || (process.env.CLOUDFLARE_TUNNEL_TOKEN && origin?.endsWith('.trycloudflare.com'))) {
+        if (!origin || allowed.includes(origin) || origin?.endsWith('.smpialfakhir.sch.id') || origin?.endsWith('.alfakhirschool.sch.id') || (process.env.CLOUDFLARE_TUNNEL_TOKEN && origin?.endsWith('.trycloudflare.com'))) {
             callback(null, true);
         }
         else {
-            callback(null, true);
+            callback(new Error(`CORS: origin tidak diizinkan: ${origin}`));
         }
     },
     credentials: true,
@@ -74,7 +91,7 @@ app.get(`${PREFIX}/health`, (_req, res) => {
 });
 app.get(`${PREFIX}/health/email`, async (_req, res) => {
     const ok = await (0, emailService_1.testEmailConnection)();
-    res.json({ smtp: ok ? 'connected' : 'not configured', user: process.env.SMTP_USER || null });
+    res.json({ smtp: ok ? 'connected' : 'not configured' });
 });
 app.use(`${PREFIX}/auth`, auth_1.default);
 app.use(`${PREFIX}/siswa`, siswa_1.default);
@@ -86,6 +103,7 @@ app.use(`${PREFIX}/absensi`, absensi_1.default);
 app.use(`${PREFIX}/nilai`, nilai_1.default);
 app.use(`${PREFIX}/pembayaran`, pembayaran_1.default);
 app.use(`${PREFIX}/jurnal-guru`, jurnalGuru_1.default);
+app.use(`${PREFIX}/catatan-siswa`, catatanSiswa_1.default);
 app.use(`${PREFIX}/dashboard`, dashboard_1.default);
 app.use(`${PREFIX}/audit-log`, auditLog_1.default);
 app.use(`${PREFIX}/users`, users_1.default);
@@ -102,6 +120,10 @@ app.use(`${PREFIX}/catatan-pewawancara`, catatanPewawancara_1.default);
 app.use(`${PREFIX}/soal-akademik`, soalAkademik_1.default);
 app.use(`${PREFIX}/jawaban-form`, jawabanForm_1.default);
 app.use(`${PREFIX}/pertanyaan-form`, pertanyaanForm_1.default);
+app.use(`${PREFIX}/ai/chat`, aiChat_1.default);
+app.use(`${PREFIX}/tugas`, tugas_1.default);
+app.use(`${PREFIX}/materi`, materi_1.default);
+app.use(`${PREFIX}/pengumuman`, pengumuman_1.default);
 app.use(errorHandler_1.notFound);
 app.use(errorHandler_1.errorHandler);
 exports.default = app;

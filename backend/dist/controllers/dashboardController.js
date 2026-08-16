@@ -7,6 +7,7 @@ exports.studentDashboard = exports.parentDashboard = exports.guruDashboard = exp
 const sequelize_1 = require("sequelize");
 const database_1 = __importDefault(require("../config/database"));
 const models_1 = require("../models");
+const redis_1 = __importDefault(require("../config/redis"));
 const getStatsForLevel = async (level) => {
     const sekolah = await models_1.Sekolah.findOne({ where: { level } });
     if (!sekolah)
@@ -29,6 +30,12 @@ const getStatsForLevel = async (level) => {
 };
 const adminDashboard = async (_req, res) => {
     const today = new Date().toISOString().split('T')[0];
+    const cacheKey = `dashboard:admin:${today}`;
+    const cached = await redis_1.default.get(cacheKey).catch(() => null);
+    if (cached) {
+        res.json(JSON.parse(cached));
+        return;
+    }
     const [sd, smp, sma, totalGuru, pendingJurnal] = await Promise.all([
         getStatsForLevel('SD'),
         getStatsForLevel('SMP'),
@@ -39,13 +46,16 @@ const adminDashboard = async (_req, res) => {
     const totalSiswa = sd.totalSiswa + smp.totalSiswa + sma.totalSiswa;
     const totalKelas = sd.totalKelas + smp.totalKelas + sma.totalKelas;
     const absensiHariIni = sd.absensiHariIni + smp.absensiHariIni + sma.absensiHariIni;
-    res.json({
+    const result = {
         success: true,
         data: {
             kpi: { totalSiswa, totalGuru, totalKelas, absensiHariIni, pendingJurnal },
             sekolah: { sd, smp, sma },
         },
-    });
+    };
+    // cache 60 detik — data absensi hari ini berubah per menit, tidak perlu real-time
+    redis_1.default.setex(cacheKey, 60, JSON.stringify(result)).catch(() => { });
+    res.json(result);
 };
 exports.adminDashboard = adminDashboard;
 const guruDashboard = async (req, res) => {
@@ -54,21 +64,24 @@ const guruDashboard = async (req, res) => {
         res.json({ success: true, data: {} });
         return;
     }
-    const [jurnalBulanIni, jurnalPending] = await Promise.all([
+    const hariMap = { 0: 'Minggu', 1: 'Senin', 2: 'Selasa', 3: 'Rabu', 4: 'Kamis', 5: 'Jumat', 6: 'Sabtu' };
+    const hariIni = hariMap[new Date().getDay()];
+    const [jurnalBulanIni, jurnalPending, jadwalGuru] = await Promise.all([
         models_1.JurnalGuru.count({
             where: {
                 guru_id: guru.id,
-                tanggal: {
-                    [sequelize_1.Op.gte]: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-                },
+                tanggal: { [sequelize_1.Op.gte]: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
             },
         }),
         models_1.JurnalGuru.count({ where: { guru_id: guru.id, status: 'submitted' } }),
+        models_1.JadwalPelajaran.findAll({ where: { guru_id: guru.id }, attributes: ['kelas_id', 'hari'] }),
     ]);
+    const totalKelas = new Set(jadwalGuru.map((j) => j.kelas_id)).size;
+    const jadwalHariIni = jadwalGuru.filter((j) => j.hari === hariIni).length;
     res.json({
         success: true,
         data: {
-            kpi: { jurnalBulanIni, jurnalPending },
+            kpi: { jurnalBulanIni, jurnalPending, totalKelas, jadwalHariIni },
             school_levels: guru.school_levels || [],
         },
     });

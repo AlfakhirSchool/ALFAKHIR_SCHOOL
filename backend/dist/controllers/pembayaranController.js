@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.webhookMandiri = exports.webhookBca = exports.remove = exports.update = exports.getLaporan = exports.bayar = exports.create = exports.getAll = void 0;
 const sequelize_1 = require("sequelize");
+const database_1 = __importDefault(require("../config/database"));
 const models_1 = require("../models");
 const errorHandler_1 = require("../middleware/errorHandler");
 const logger_1 = __importDefault(require("../config/logger"));
@@ -19,6 +20,28 @@ const getAll = async (req, res) => {
         where.status = status;
     if (tahun_ajaran)
         where.tahun_ajaran = tahun_ajaran;
+    // IDOR guard: ortu/siswa hanya bisa akses data milik sendiri
+    if (req.user.role === 'ortu') {
+        // Ortu wajib kirim siswa_id; relasi ortu-siswa belum ada, blok akses tanpa siswa_id
+        if (!siswa_id) {
+            res.status(403).json({ success: false, message: 'Akses ditolak: siswa_id wajib untuk role ortu' });
+            return;
+        }
+        // Blok akses: ortu tidak bisa lihat pembayaran semua siswa
+        res.status(403).json({ success: false, message: 'Akses pembayaran via portal wali murid belum tersedia' });
+        return;
+    }
+    if (req.user.role === 'siswa') {
+        if (!siswa_id) {
+            res.status(403).json({ success: false, message: 'Akses ditolak: siswa_id wajib' });
+            return;
+        }
+        const siswa = await models_1.Siswa.findByPk(siswa_id);
+        if (!siswa || siswa.user_id !== req.user.id) {
+            res.status(403).json({ success: false, message: 'Akses ditolak' });
+            return;
+        }
+    }
     // Filter by school level — cari siswa_ids yang termasuk level ini
     if (req.user?.school_level && !siswa_id) {
         const levelWhere = await (0, levelFilter_1.kelasIdFilter)(req.user.school_level);
@@ -74,30 +97,45 @@ const create = async (req, res) => {
 exports.create = create;
 const bayar = async (req, res) => {
     const { nominal_bayar, bank, reference_number } = req.body;
-    const pembayaran = await models_1.Pembayaran.findByPk(req.params.id, { include: [{ model: models_1.PembayaranDetail, as: 'detail_list' }] });
-    if (!pembayaran)
-        throw (0, errorHandler_1.createError)('Tagihan tidak ditemukan', 404);
-    const totalTerbayar = (pembayaran.nominal_terbayar || 0) + nominal_bayar;
-    let newStatus = 'sebagian';
-    if (totalTerbayar >= pembayaran.nominal_biaya)
-        newStatus = 'lunas';
-    if (totalTerbayar === 0)
-        newStatus = 'belum_bayar';
-    await models_1.PembayaranDetail.create({
-        pembayaran_id: pembayaran.id,
-        nominal_bayar,
-        tanggal_bayar: new Date(),
-        bank,
-        reference_number,
-    });
-    await pembayaran.update({
-        nominal_terbayar: totalTerbayar,
-        status: newStatus,
-        tanggal_bayar: newStatus === 'lunas' ? new Date() : pembayaran.tanggal_bayar,
-        metode_bayar: bank,
+    // Idempotency: tolak reference_number duplikat
+    if (reference_number) {
+        const existing = await models_1.PembayaranDetail.findOne({ where: { reference_number } });
+        if (existing) {
+            res.status(409).json({ success: false, message: 'Reference number sudah diproses' });
+            return;
+        }
+    }
+    const { totalTerbayar, newStatus, pembayaranId, jenisBiaya, tahunAjaran } = await database_1.default.transaction(async (t) => {
+        const pembayaran = await models_1.Pembayaran.findByPk(req.params.id, {
+            include: [{ model: models_1.PembayaranDetail, as: 'detail_list' }],
+            lock: t.LOCK.UPDATE,
+            transaction: t,
+        });
+        if (!pembayaran)
+            throw (0, errorHandler_1.createError)('Tagihan tidak ditemukan', 404);
+        const totalTerbayar = Number(pembayaran.nominal_terbayar || 0) + Number(nominal_bayar);
+        let newStatus = 'sebagian';
+        if (totalTerbayar >= Number(pembayaran.nominal_biaya))
+            newStatus = 'lunas';
+        if (totalTerbayar === 0)
+            newStatus = 'belum_bayar';
+        await models_1.PembayaranDetail.create({
+            pembayaran_id: pembayaran.id,
+            nominal_bayar,
+            tanggal_bayar: new Date(),
+            bank,
+            reference_number,
+        }, { transaction: t });
+        await pembayaran.update({
+            nominal_terbayar: totalTerbayar,
+            status: newStatus,
+            tanggal_bayar: newStatus === 'lunas' ? new Date() : pembayaran.tanggal_bayar,
+            metode_bayar: bank,
+        }, { transaction: t });
+        return { totalTerbayar, newStatus, pembayaranId: pembayaran.id, jenisBiaya: pembayaran.jenis_biaya, tahunAjaran: pembayaran.tahun_ajaran };
     });
     if (newStatus === 'lunas' && process.env.N8N_WEBHOOK_URL) {
-        const siswaData = await models_1.Pembayaran.findByPk(pembayaran.id, {
+        const siswaData = await models_1.Pembayaran.findByPk(pembayaranId, {
             include: [{ model: models_1.Siswa, as: 'siswa', include: [{ model: models_1.User, as: 'user', attributes: ['nama', 'email'] }] }],
         });
         const email = siswaData?.siswa?.user?.email;
@@ -109,9 +147,9 @@ const bayar = async (req, res) => {
                 body: JSON.stringify({
                     email,
                     nama_siswa,
-                    jenis_pembayaran: pembayaran.jenis_biaya,
+                    jenis_pembayaran: jenisBiaya,
                     nominal: totalTerbayar,
-                    tahun_ajaran: pembayaran.tahun_ajaran,
+                    tahun_ajaran: tahunAjaran,
                 }),
             }).catch((err) => logger_1.default.error({ event: 'n8n_webhook_error', error: err.message }));
         }

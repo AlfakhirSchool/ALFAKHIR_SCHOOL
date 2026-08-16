@@ -5,6 +5,7 @@ import { rateLimiter } from '../middleware/rateLimiter';
 import { User, Siswa, Guru, Kelas, JurnalGuru, Sekolah } from '../models';
 import { QueryTypes } from 'sequelize';
 import sequelize from '../config/database';
+import redis from '../config/redis';
 
 const router = Router();
 router.use(authenticate);
@@ -12,6 +13,11 @@ router.use(authenticate);
 async function getSchoolContext(): Promise<string> {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
+
+  const cacheKey = `ai:school-context:${todayStr}`;
+  const cached = await redis.get(cacheKey).catch(() => null);
+  if (cached) return cached;
+
   const lines: string[] = [];
 
   lines.push(`TANGGAL: ${today.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`);
@@ -110,7 +116,10 @@ async function getSchoolContext(): Promise<string> {
     lines.push(`STATUS PEMBAYARAN: Lunas ${p.lunas || 0}, Sebagian ${p.sebagian || 0}, Belum bayar ${p.belum_bayar || 0}`);
   }
 
-  return lines.join('\n');
+  const context = lines.join('\n');
+  // cache 5 menit — cukup segar untuk AI, hemat 8 query per chat message
+  redis.setex(cacheKey, 300, context).catch(() => {});
+  return context;
 }
 
 router.post('/', rateLimiter(20, 60 * 1000), async (req: AuthRequest, res: Response): Promise<void> => {

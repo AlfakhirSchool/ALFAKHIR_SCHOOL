@@ -1,9 +1,10 @@
 import { Model, Optional } from 'sequelize';
-export type UserRole = 'admin' | 'guru' | 'pewawancara' | 'siswa' | 'ortu';
+export type UserRole = 'admin' | 'guru' | 'pewawancara' | 'keuangan' | 'siswa' | 'ortu';
 export type SchoolLevel = 'SD' | 'SMP' | 'SMA' | null;
 interface UserAttributes {
     id: string;
     email: string;
+    username: string | null;
     password_hash: string;
     nama: string;
     role: UserRole;
@@ -14,11 +15,12 @@ interface UserAttributes {
     created_at?: Date;
     updated_at?: Date;
 }
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'is_active' | 'profile_pic' | 'school_level' | 'device_id'> {
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'is_active' | 'profile_pic' | 'school_level' | 'device_id' | 'username'> {
 }
 declare class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
     id: string;
     email: string;
+    username: string | null;
     password_hash: string;
     nama: string;
     role: UserRole;

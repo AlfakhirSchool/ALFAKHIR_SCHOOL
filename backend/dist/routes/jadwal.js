@@ -7,19 +7,29 @@ const errorHandler_1 = require("../middleware/errorHandler");
 const levelFilter_1 = require("../utils/levelFilter");
 const router = (0, express_1.Router)();
 router.use(auth_1.authenticate);
-router.get('/', async (req, res) => {
-    const { guru_id, kelas_id } = req.query;
+router.get('/', (0, auth_1.authorize)('admin', 'guru', 'siswa', 'ortu'), async (req, res) => {
+    let { guru_id, kelas_id, jenjang } = req.query;
     const levelWhere = await (0, levelFilter_1.kelasIdFilter)(req.user?.school_level);
     const where = { ...levelWhere };
+    // Guru hanya bisa lihat jadwal miliknya sendiri
+    if (req.user.role === 'guru') {
+        const guru = await models_1.Guru.findOne({ where: { user_id: req.user.id } });
+        if (guru)
+            guru_id = guru.id;
+    }
     if (guru_id)
         where.guru_id = guru_id;
     if (kelas_id)
         where.kelas_id = kelas_id;
+    // Filter jenjang via sekolah.level pada kelas
+    const sekolahWhere = {};
+    if (jenjang)
+        sekolahWhere.level = jenjang;
     const jadwalList = await models_1.JadwalPelajaran.findAll({
         where,
         include: [
             { model: models_1.Guru, as: 'guru', include: [{ model: models_1.User, as: 'user', attributes: ['nama'] }] },
-            { model: models_1.Kelas, as: 'kelas' },
+            { model: models_1.Kelas, as: 'kelas', required: !!jenjang, include: [{ model: models_1.Sekolah, as: 'sekolah', attributes: ['level'], where: Object.keys(sekolahWhere).length ? sekolahWhere : undefined }] },
             { model: models_1.MataPelajaran, as: 'mata_pelajaran' },
         ],
         order: [['hari', 'ASC'], ['jam_mulai', 'ASC']],

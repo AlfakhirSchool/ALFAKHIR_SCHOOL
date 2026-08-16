@@ -45,6 +45,7 @@ const sequelize_1 = require("sequelize");
 const models_1 = require("../models");
 const database_1 = __importDefault(require("../config/database"));
 const errorHandler_1 = require("../middleware/errorHandler");
+const redis_1 = __importDefault(require("../config/redis"));
 const levelFilter_1 = require("../utils/levelFilter");
 const waNotification_1 = require("../utils/waNotification");
 const absensiSync_1 = require("../utils/absensiSync");
@@ -182,6 +183,8 @@ const scanQr = async (req, res) => {
         longitude: longitude ?? null,
         created_by: req.user.id,
     });
+    redis_1.default.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length)
+        redis_1.default.del(...keys); }).catch(() => { });
     res.status(201).json({ success: true, message: 'Absensi berhasil dicatat', data: absensi });
 };
 exports.scanQr = scanQr;
@@ -211,6 +214,8 @@ const inputCode = async (req, res) => {
         longitude: longitude ?? null,
         created_by: req.user.id,
     });
+    redis_1.default.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length)
+        redis_1.default.del(...keys); }).catch(() => { });
     res.status(201).json({ success: true, message: 'Absensi berhasil dicatat', data: absensi });
 };
 exports.inputCode = inputCode;
@@ -219,6 +224,8 @@ const manualInput = async (req, res) => {
     const existing = await models_1.Absensi.findOne({ where: { siswa_id, jadwal_pelajaran_id, tanggal } });
     if (existing) {
         await existing.update({ status, catatan, created_by: req.user.id });
+        redis_1.default.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length)
+            redis_1.default.del(...keys); }).catch(() => { });
         res.json({ success: true, message: 'Absensi berhasil diperbarui', data: existing });
         return;
     }
@@ -230,6 +237,8 @@ const manualInput = async (req, res) => {
         catatan,
         created_by: req.user.id,
     });
+    redis_1.default.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length)
+        redis_1.default.del(...keys); }).catch(() => { });
     res.status(201).json({ success: true, message: 'Absensi berhasil dicatat', data: absensi });
 };
 exports.manualInput = manualInput;
@@ -238,6 +247,8 @@ const update = async (req, res) => {
     if (!absensi)
         throw (0, errorHandler_1.createError)('Absensi tidak ditemukan', 404);
     await absensi.update({ status: req.body.status, catatan: req.body.catatan });
+    redis_1.default.keys(`absensi:detail:${absensi.siswa_id}:*`).then(keys => { if (keys.length)
+        redis_1.default.del(...keys); }).catch(() => { });
     res.json({ success: true, message: 'Absensi berhasil diperbarui', data: absensi });
 };
 exports.update = update;
@@ -337,7 +348,9 @@ const bulkGuru = async (req, res) => {
     try {
         await database_1.default.query(`INSERT INTO activity_log (user_id, action, table_name, new_value) VALUES (:uid, 'bulk_absensi_guru', 'absensi', :val::jsonb)`, { replacements: { uid: req.user.id, val: JSON.stringify({ jadwal_pelajaran_id, tanggal, jumlah: listAbsensi.length }) }, type: sequelize_1.QueryTypes.INSERT });
     }
-    catch (_) { }
+    catch (err) {
+        logger_1.default.error({ event: 'activity_log_error', error: err });
+    }
     res.json({ success: true, message: `${listAbsensi.length} absensi berhasil disimpan` });
 };
 exports.bulkGuru = bulkGuru;
@@ -537,8 +550,21 @@ const downloadRekap = async (req, res) => {
 };
 exports.downloadRekap = downloadRekap;
 const getSiswaDetail = async (req, res) => {
+    if (req.user.role === 'siswa') {
+        const siswa = await models_1.Siswa.findOne({ where: { user_id: req.user.id } });
+        if (!siswa || siswa.id !== req.params.siswa_id)
+            throw (0, errorHandler_1.createError)('Akses ditolak', 403);
+    }
     const { bulan, tahun } = req.query;
-    const where = { siswa_id: req.params.siswa_id };
+    const siswaId = req.params.siswa_id;
+    // Cache 2 menit — absensi siswa tidak berubah detik-detik, cukup segar untuk portal
+    const cacheKey = `absensi:detail:${siswaId}:${bulan || 'all'}:${tahun || 'all'}`;
+    const cached = await redis_1.default.get(cacheKey).catch(() => null);
+    if (cached) {
+        res.json(JSON.parse(cached));
+        return;
+    }
+    const where = { siswa_id: siswaId };
     if (bulan && tahun) {
         const startDate = new Date(parseInt(tahun), parseInt(bulan) - 1, 1);
         const endDate = new Date(parseInt(tahun), parseInt(bulan), 0);
@@ -549,7 +575,9 @@ const getSiswaDetail = async (req, res) => {
         include: [{ model: models_1.JadwalPelajaran, as: 'jadwal', include: [{ model: models_1.MataPelajaran, as: 'mata_pelajaran' }] }],
         order: [['tanggal', 'DESC']],
     });
-    res.json({ success: true, data: absensiList });
+    const result = { success: true, data: absensiList };
+    redis_1.default.setex(cacheKey, 120, JSON.stringify(result)).catch(() => { });
+    res.json(result);
 };
 exports.getSiswaDetail = getSiswaDetail;
 // JSON data untuk preview rekap absensi per mata pelajaran

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PertanyaanForm = exports.JawabanForm = exports.RingkasanAI = exports.JawabanAkademik = exports.HasilTesAkademik = exports.SoalAkademik = exports.CatatanPewawancara = exports.Kandidat = exports.Feedback = exports.PendingChange = exports.ActivityLog = exports.JurnalGuru = exports.Rapor = exports.PembayaranDetail = exports.Pembayaran = exports.Nilai = exports.QrCodeSession = exports.Absensi = exports.JadwalPelajaran = exports.OrangTua = exports.Guru = exports.Siswa = exports.MataPelajaran = exports.Kelas = exports.Sekolah = exports.User = void 0;
+exports.Materi = exports.PengumpulanTugas = exports.Tugas = exports.CatatanSiswaGuru = exports.PertanyaanForm = exports.JawabanForm = exports.RingkasanAI = exports.JawabanAkademik = exports.HasilTesAkademik = exports.SoalAkademik = exports.CatatanPewawancara = exports.Kandidat = exports.Feedback = exports.PendingChange = exports.ActivityLog = exports.JurnalSiswa = exports.JurnalGuru = exports.Rapor = exports.PembayaranDetail = exports.Pembayaran = exports.Nilai = exports.QrCodeSession = exports.Absensi = exports.JadwalPelajaran = exports.OrangTua = exports.Guru = exports.Siswa = exports.MataPelajaran = exports.Kelas = exports.Sekolah = exports.User = void 0;
 const User_1 = __importDefault(require("./User"));
 exports.User = User_1.default;
 const Sekolah_1 = __importDefault(require("./Sekolah"));
@@ -34,6 +34,8 @@ const Rapor_1 = __importDefault(require("./Rapor"));
 exports.Rapor = Rapor_1.default;
 const JurnalGuru_1 = __importDefault(require("./JurnalGuru"));
 exports.JurnalGuru = JurnalGuru_1.default;
+const JurnalSiswa_1 = __importDefault(require("./JurnalSiswa"));
+exports.JurnalSiswa = JurnalSiswa_1.default;
 const ActivityLog_1 = __importDefault(require("./ActivityLog"));
 exports.ActivityLog = ActivityLog_1.default;
 const PendingChange_1 = __importDefault(require("./PendingChange"));
@@ -56,6 +58,14 @@ const JawabanForm_1 = __importDefault(require("./JawabanForm"));
 exports.JawabanForm = JawabanForm_1.default;
 const PertanyaanForm_1 = __importDefault(require("./PertanyaanForm"));
 exports.PertanyaanForm = PertanyaanForm_1.default;
+const CatatanSiswaGuru_1 = __importDefault(require("./CatatanSiswaGuru"));
+exports.CatatanSiswaGuru = CatatanSiswaGuru_1.default;
+const Tugas_1 = __importDefault(require("./Tugas"));
+exports.Tugas = Tugas_1.default;
+const PengumpulanTugas_1 = __importDefault(require("./PengumpulanTugas"));
+exports.PengumpulanTugas = PengumpulanTugas_1.default;
+const Materi_1 = __importDefault(require("./Materi"));
+exports.Materi = Materi_1.default;
 // User <-> Guru / Siswa / OrangTua
 User_1.default.hasOne(Guru_1.default, { foreignKey: 'user_id', as: 'guru_detail' });
 Guru_1.default.belongsTo(User_1.default, { foreignKey: 'user_id', as: 'user' });
@@ -112,6 +122,10 @@ Kelas_1.default.hasMany(JurnalGuru_1.default, { foreignKey: 'kelas_id', as: 'jur
 JurnalGuru_1.default.belongsTo(Kelas_1.default, { foreignKey: 'kelas_id', as: 'kelas' });
 MataPelajaran_1.default.hasMany(JurnalGuru_1.default, { foreignKey: 'mata_pelajaran_id', as: 'jurnal_list' });
 JurnalGuru_1.default.belongsTo(MataPelajaran_1.default, { foreignKey: 'mata_pelajaran_id', as: 'mata_pelajaran' });
+JurnalGuru_1.default.hasMany(JurnalSiswa_1.default, { foreignKey: 'jurnal_id', as: 'detail_siswa' });
+JurnalSiswa_1.default.belongsTo(JurnalGuru_1.default, { foreignKey: 'jurnal_id', as: 'jurnal' });
+Siswa_1.default.hasMany(JurnalSiswa_1.default, { foreignKey: 'siswa_id', as: 'jurnal_detail' });
+JurnalSiswa_1.default.belongsTo(Siswa_1.default, { foreignKey: 'siswa_id', as: 'siswa' });
 // Activity Log
 ActivityLog_1.default.belongsTo(User_1.default, { foreignKey: 'user_id', as: 'user' });
 User_1.default.hasMany(ActivityLog_1.default, { foreignKey: 'user_id', as: 'activity_logs' });
@@ -137,3 +151,23 @@ Kandidat_1.default.hasOne(RingkasanAI_1.default, { foreignKey: 'kandidat_id', as
 RingkasanAI_1.default.belongsTo(Kandidat_1.default, { foreignKey: 'kandidat_id', as: 'kandidat' });
 Kandidat_1.default.hasMany(JawabanForm_1.default, { foreignKey: 'kandidat_id', as: 'jawaban_form_list' });
 JawabanForm_1.default.belongsTo(Kandidat_1.default, { foreignKey: 'kandidat_id', as: 'kandidat' });
+Siswa_1.default.hasMany(CatatanSiswaGuru_1.default, { foreignKey: 'siswa_id', as: 'catatan_guru_list' });
+CatatanSiswaGuru_1.default.belongsTo(Siswa_1.default, { foreignKey: 'siswa_id', as: 'siswa' });
+Guru_1.default.hasMany(CatatanSiswaGuru_1.default, { foreignKey: 'guru_id', as: 'catatan_siswa_list' });
+CatatanSiswaGuru_1.default.belongsTo(Guru_1.default, { foreignKey: 'guru_id', as: 'guru' });
+// Tugas & Pengumpulan
+Guru_1.default.hasMany(Tugas_1.default, { foreignKey: 'guru_id', as: 'tugas_list' });
+Tugas_1.default.belongsTo(Guru_1.default, { foreignKey: 'guru_id', as: 'guru' });
+Kelas_1.default.hasMany(Tugas_1.default, { foreignKey: 'kelas_id', as: 'tugas_kelas' });
+Tugas_1.default.belongsTo(Kelas_1.default, { foreignKey: 'kelas_id', as: 'kelas' });
+Tugas_1.default.hasMany(PengumpulanTugas_1.default, { foreignKey: 'tugas_id', as: 'pengumpulan_list' });
+PengumpulanTugas_1.default.belongsTo(Tugas_1.default, { foreignKey: 'tugas_id', as: 'tugas' });
+Siswa_1.default.hasMany(PengumpulanTugas_1.default, { foreignKey: 'siswa_id', as: 'pengumpulan_tugas' });
+PengumpulanTugas_1.default.belongsTo(Siswa_1.default, { foreignKey: 'siswa_id', as: 'siswa' });
+// Materi associations
+Guru_1.default.hasMany(Materi_1.default, { foreignKey: 'guru_id', as: 'materi_list' });
+Materi_1.default.belongsTo(Guru_1.default, { foreignKey: 'guru_id', as: 'guru' });
+Kelas_1.default.hasMany(Materi_1.default, { foreignKey: 'kelas_id', as: 'materi_kelas' });
+Materi_1.default.belongsTo(Kelas_1.default, { foreignKey: 'kelas_id', as: 'kelas' });
+MataPelajaran_1.default.hasMany(Materi_1.default, { foreignKey: 'mata_pelajaran_id', as: 'materi_list' });
+Materi_1.default.belongsTo(MataPelajaran_1.default, { foreignKey: 'mata_pelajaran_id', as: 'mata_pelajaran' });
