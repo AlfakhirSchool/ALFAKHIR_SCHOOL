@@ -22,12 +22,13 @@ export default function LoginPage() {
     setError('');
     try {
       const res = await api.post('/auth/login', { username, password });
-      const { user, accessToken, refreshToken } = res.data.data;
+      const { user, accessToken, refreshToken, profile_detail } = res.data.data;
       if (!['siswa', 'ortu'].includes(user.role)) {
         setError('Akun ini tidak memiliki akses ke portal siswa/orang tua.');
         return;
       }
-      login(user, accessToken, refreshToken);
+      const enrichedUser = { ...user, nis: profile_detail?.nis || user.username || user.email };
+      login(enrichedUser, accessToken, refreshToken);
       setSuccess(true);
       setTimeout(() => router.push('/'), 700);
     } catch (err: any) {

@@ -86,7 +86,7 @@ export default function ProfilPage() {
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Informasi Akun</p>
           </div>
           {[
-            { icon: Mail, label: 'Username', value: user?.username || user?.email || '-' },
+            { icon: Mail, label: 'NIS / Username', value: user?.nis || user?.username || user?.email || '-' },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="px-4 py-3.5 flex items-center gap-3 border-t border-gray-50">
               <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">

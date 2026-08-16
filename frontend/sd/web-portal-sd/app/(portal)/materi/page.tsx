@@ -116,30 +116,26 @@ export default function MateriSiswaPage() {
           </div>
         </div>
 
-        {/* Filter banner cards — landscape compact */}
-        <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-hide">
+      </div>
+
+      {/* Filter chips — fixed bottom bar */}
+      <div className="fixed bottom-16 left-0 right-0 z-20 bg-white/90 backdrop-blur border-t border-gray-100">
+        <div className="flex gap-2 px-4 py-2.5 overflow-x-auto scrollbar-hide">
           <button onClick={() => setSelectedMapel('')}
-            className="flex-shrink-0 flex items-center gap-2.5 px-4 py-2.5 rounded-2xl active:scale-95 transition-transform"
+            className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-2xl active:scale-95 transition-transform"
             style={{ background: !selectedMapel ? 'linear-gradient(135deg,#FF8C38,#E8620D)' : '#F3F4F6' }}>
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ background: !selectedMapel ? 'rgba(255,255,255,0.25)' : '#E5E7EB' }}>
-              <BookOpen size={13} style={{ color: !selectedMapel ? '#fff' : '#9CA3AF' }} />
-            </div>
+            <BookOpen size={12} style={{ color: !selectedMapel ? '#fff' : '#9CA3AF' }} />
             <span className="font-bold text-xs" style={{ color: !selectedMapel ? '#fff' : '#6B7280' }}>Semua</span>
           </button>
-
           {mapelList.map((m: any) => {
             const s = MAPEL_COLORS[m.kode] || MAPEL_COLORS.DEFAULT;
             const active = selectedMapel === m.id;
             return (
               <button key={m.id}
                 onClick={() => setSelectedMapel(m.id === selectedMapel ? '' : m.id)}
-                className="flex-shrink-0 flex items-center gap-2.5 px-4 py-2.5 rounded-2xl active:scale-95 transition-transform"
+                className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-2xl active:scale-95 transition-transform"
                 style={{ background: active ? s.color : s.bg }}>
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                  style={{ background: active ? 'rgba(255,255,255,0.25)' : s.color + '25' }}>
-                  <BookOpen size={13} style={{ color: active ? '#fff' : s.color }} />
-                </div>
+                <BookOpen size={12} style={{ color: active ? '#fff' : s.color }} />
                 <span className="font-bold text-xs" style={{ color: active ? '#fff' : s.color }}>{m.nama}</span>
               </button>
             );
@@ -148,7 +144,7 @@ export default function MateriSiswaPage() {
       </div>
 
       {/* Content */}
-      <div className="px-4 py-4 pb-28 space-y-3">
+      <div className="px-4 py-4 pb-36 space-y-3">
         {isLoading ? (
           <div className="flex flex-col gap-3">
             {[1,2,3].map(i => (

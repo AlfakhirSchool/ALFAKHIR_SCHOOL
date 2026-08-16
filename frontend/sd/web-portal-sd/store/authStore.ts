@@ -7,6 +7,7 @@ interface User {
   username?: string;
   nama: string;
   role: string;
+  nis?: string;
   profile_pic?: string;
   school_levels?: string[];
   spesialisasi?: string;
