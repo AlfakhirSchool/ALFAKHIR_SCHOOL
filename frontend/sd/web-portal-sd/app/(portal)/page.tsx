@@ -67,6 +67,16 @@ export default function BerandaPage() {
     queryFn: () => api.get('/pengumuman', { params: { limit: 5 } }).then(r => r.data.data as any[]),
   });
 
+  const now = new Date();
+  const { data: absensiData } = useQuery({
+    queryKey: ['portal-absensi-summary', siswaData?.id],
+    queryFn: () => api.get(`/absensi/${siswaData?.id}/detail`, {
+      params: { bulan: now.getMonth() + 1, tahun: now.getFullYear() },
+    }).then(r => r.data.data as any[]),
+    enabled: !isOrtu && !!siswaData?.id,
+  });
+  const hadirCount = absensiData ? absensiData.filter((a: any) => a.status === 'hadir').length : null;
+
 
   const tagihan = tagihanData?.data || [];
   const belumBayar = tagihan.filter((t: any) => t.status !== 'lunas');
@@ -151,7 +161,7 @@ export default function BerandaPage() {
               <p className="text-gray-400 text-[9px] font-semibold uppercase tracking-widest mb-1">Kehadiran</p>
               <div className="flex items-center gap-1.5">
                 <CalendarCheck size={12} className="text-[#10B981]" />
-                <p className="text-gray-800 font-bold text-sm">—</p>
+                <p className="text-gray-800 font-bold text-sm">{hadirCount !== null ? `${hadirCount}x` : '—'}</p>
               </div>
             </div>
           </div>
@@ -194,7 +204,6 @@ export default function BerandaPage() {
                         <BookOpen size={18} style={{ color: style.color }} strokeWidth={2} />
                       </div>
                       <p className="font-black text-sm leading-snug" style={{ color: style.color }}>{m.nama}</p>
-                      <p className="text-[10px] mt-1 font-medium" style={{ color: style.color + 'aa' }}>KKM {m.kkm || 75}</p>
                     </div>
                   </Link>
                 );

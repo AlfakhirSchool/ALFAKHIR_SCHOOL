@@ -94,7 +94,7 @@ export default function JadwalPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-sm text-gray-800">{j.mata_pelajaran?.nama || 'Pelajaran'}</p>
-                      <p className="text-[10px] text-gray-400">{j.guru?.nama || ''}</p>
+                      <p className="text-[10px] text-gray-400">{j.guru?.user?.nama || ''}</p>
                     </div>
                     {j.jam_mulai && (
                       <div className="text-right flex-shrink-0">
