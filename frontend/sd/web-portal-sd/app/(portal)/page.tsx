@@ -67,11 +67,11 @@ export default function BerandaPage() {
     queryFn: () => api.get('/pengumuman', { params: { limit: 5 } }).then(r => r.data.data as any[]),
   });
 
-  const now = new Date();
+  const nowDate = new Date();
   const { data: absensiData } = useQuery({
     queryKey: ['portal-absensi-summary', siswaData?.id],
     queryFn: () => api.get(`/absensi/${siswaData?.id}/detail`, {
-      params: { bulan: now.getMonth() + 1, tahun: now.getFullYear() },
+      params: { bulan: nowDate.getMonth() + 1, tahun: nowDate.getFullYear() },
     }).then(r => r.data.data as any[]),
     enabled: !isOrtu && !!siswaData?.id,
   });
