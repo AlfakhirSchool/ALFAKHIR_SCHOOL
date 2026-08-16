@@ -64,7 +64,7 @@ export default function BerandaPage() {
 
   const { data: pengumumanData } = useQuery({
     queryKey: ['portal-pengumuman'],
-    queryFn: () => api.get('/pengumuman', { params: { school_level: 'SD', limit: 5 } }).then(r => r.data.data as any[]),
+    queryFn: () => api.get('/pengumuman', { params: { limit: 5 } }).then(r => r.data.data as any[]),
   });
 
 
