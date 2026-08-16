@@ -2,7 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ClipboardList, Upload, CheckCircle, Clock, FileText, X, AlertCircle, Bell, GraduationCap } from 'lucide-react';
+import { ClipboardList, Upload, CheckCircle, Clock, FileText, X, AlertCircle, Bell } from 'lucide-react';
+import Image from 'next/image';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
@@ -151,12 +152,10 @@ export default function TugasPage() {
       {/* Fixed header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-[#e9e0d8] h-[60px] flex items-center justify-between px-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#ffdbc8] flex items-center justify-center">
-            <GraduationCap size={16} className="text-[#994700]" />
+          <div className="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center">
+            <Image src="/logo-sd.png" alt="SD Al-Fakhir" width={32} height={32} className="object-contain" />
           </div>
-          <div>
-            <h1 className="font-black text-[#191c1e] text-base leading-none">Tugas</h1>
-          </div>
+          <h1 className="font-black text-[#191c1e] text-base leading-none">Tugas</h1>
         </div>
         <button className="w-9 h-9 rounded-full bg-[#ffdbc8]/50 flex items-center justify-center">
           <Bell size={18} className="text-[#994700]" />

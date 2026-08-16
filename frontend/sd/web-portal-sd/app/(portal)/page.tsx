@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   CreditCard, CalendarCheck, BookOpen, Bell,
   ChevronRight, AlertCircle, FileText, Clock,
-  GraduationCap, Inbox,
+  Inbox,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
@@ -112,7 +112,7 @@ export default function BerandaPage() {
           {/* Top app bar */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <GraduationCap size={28} className="text-white" strokeWidth={1.8} />
+              <img src="/logo-sd.png" alt="SD Al-Fakhir" className="w-8 h-8 object-contain drop-shadow" />
               <span className="text-white font-bold text-base tracking-tight">SD AL-FAKHIR</span>
             </div>
             <Link href="/profil"

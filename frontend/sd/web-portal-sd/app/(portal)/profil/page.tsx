@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { Bell, Camera, ChevronRight, LogOut, Shield, HelpCircle, BookOpen, Phone, GraduationCap } from 'lucide-react';
+import Image from 'next/image';
 import api from '@/lib/api';
 
 export default function ProfilPage() {
@@ -51,8 +52,8 @@ export default function ProfilPage() {
       {/* Fixed header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-[#e9e0d8] h-[60px] flex items-center justify-between px-4">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#ffdbc8] flex items-center justify-center">
-            <GraduationCap size={16} className="text-[#994700]" />
+          <div className="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center">
+            <Image src="/logo-sd.png" alt="SD Al-Fakhir" width={32} height={32} className="object-contain" />
           </div>
           <span className="font-black text-[#191c1e] text-sm tracking-wide">SD AL-FAKHIR</span>
         </div>
@@ -152,6 +153,9 @@ export default function ProfilPage() {
 
           <p className="text-center text-[10px] text-[#8b7265] pb-2">
             Portal Al-Fakhir School v1.0 · Sawangan, Depok
+          </p>
+          <p className="text-center text-[10px] text-[#bbb] pb-2">
+            Developer by Feri
           </p>
         </div>
       </div>
