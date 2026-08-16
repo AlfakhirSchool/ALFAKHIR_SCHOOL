@@ -65,8 +65,9 @@ export default function MateriSiswaPage() {
   const { data: materiList = [], isLoading } = useQuery({
     queryKey: ['portal-materi-all', selectedMapel],
     queryFn: () => api.get('/materi', {
-      params: selectedMapel ? { mata_pelajaran_id: selectedMapel } : {},
+      params: { mata_pelajaran_id: selectedMapel },
     }).then(r => r.data.data ?? []),
+    enabled: !!selectedMapel,
   });
 
   const filtered = materiList.filter((m: any) =>
@@ -83,74 +84,74 @@ export default function MateriSiswaPage() {
 
       {/* Header */}
       <div className="bg-white sticky top-0 z-30 shadow-sm">
-        {/* Top bar */}
-        <div className="flex items-center gap-3 px-4 pt-10 pb-3">
-          <Link href="/"
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-            <ChevronLeft size={18} className="text-gray-600" />
-          </Link>
+        <div className="flex items-center gap-3 px-4 pt-10 pb-4">
+          {selectedMapel ? (
+            <button onClick={() => { setSelectedMapel(''); setSearch(''); }}
+              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+              <ChevronLeft size={18} className="text-gray-600" />
+            </button>
+          ) : (
+            <Link href="/" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+              <ChevronLeft size={18} className="text-gray-600" />
+            </Link>
+          )}
           <div className="flex-1">
-            <h1 className="font-black text-gray-900 text-lg leading-none">Materi Pelajaran</h1>
+            <h1 className="font-black text-gray-900 text-lg leading-none">
+              {selectedMapelObj ? selectedMapelObj.nama : 'Materi Pelajaran'}
+            </h1>
             {selectedMapelObj && (
-              <p className="text-xs font-semibold mt-0.5" style={{ color: mapelStyle?.color }}>
-                {selectedMapelObj.nama}
-              </p>
+              <p className="text-xs text-gray-400 mt-0.5">Pilih materi untuk dipelajari</p>
             )}
           </div>
-          <div className="flex flex-col items-center bg-orange-50 rounded-xl px-2.5 py-1.5">
-            <span className="font-black text-base leading-none text-[#F97316]">{filtered.length}</span>
-            <span className="text-[9px] text-orange-400 font-medium">Materi</span>
-          </div>
-        </div>
-
-        {/* Search */}
-        <div className="px-4 pb-3">
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Cari materi..."
-              className="w-full pl-9 pr-4 py-2.5 bg-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
-            />
-          </div>
-        </div>
-
-      </div>
-
-      {/* Filter mapel — grid */}
-      <div className="px-4 pt-2 pb-4">
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">Filter Mata Pelajaran</p>
-        <div className="grid grid-cols-4 gap-2">
-          <button onClick={() => setSelectedMapel('')}
-            className="flex flex-col items-center gap-1.5 py-3 rounded-2xl active:scale-95 transition-transform"
-            style={{ background: !selectedMapel ? 'linear-gradient(135deg,#FF8C38,#E8620D)' : '#F3F4F6' }}>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: !selectedMapel ? 'rgba(255,255,255,0.25)' : '#E5E7EB' }}>
-              <BookOpen size={18} style={{ color: !selectedMapel ? '#fff' : '#9CA3AF' }} />
+          {selectedMapel && (
+            <div className="flex flex-col items-center bg-orange-50 rounded-xl px-2.5 py-1.5">
+              <span className="font-black text-base leading-none text-[#F97316]">{filtered.length}</span>
+              <span className="text-[9px] text-orange-400 font-medium">Materi</span>
             </div>
-            <span className="font-bold text-[10px] text-center leading-tight px-1" style={{ color: !selectedMapel ? '#fff' : '#6B7280' }}>Semua</span>
-          </button>
-          {mapelList.map((m: any) => {
-            const s = MAPEL_COLORS[m.kode] || MAPEL_COLORS.DEFAULT;
-            const active = selectedMapel === m.id;
-            return (
-              <button key={m.id}
-                onClick={() => setSelectedMapel(m.id === selectedMapel ? '' : m.id)}
-                className="flex flex-col items-center gap-1.5 py-3 rounded-2xl active:scale-95 transition-transform"
-                style={{ background: active ? s.color : s.bg }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: active ? 'rgba(255,255,255,0.25)' : s.color + '25' }}>
-                  <BookOpen size={18} style={{ color: active ? '#fff' : s.color }} />
-                </div>
-                <span className="font-bold text-[10px] text-center leading-tight px-1" style={{ color: active ? '#fff' : s.color }}>{m.nama}</span>
-              </button>
-            );
-          })}
+          )}
         </div>
+
+        {selectedMapel && (
+          <div className="px-4 pb-3">
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Cari materi..."
+                className="w-full pl-9 pr-4 py-2.5 bg-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Content */}
+      {/* Grid mapel — hanya tampil saat belum ada yang dipilih */}
+      {!selectedMapel && (
+        <div className="px-4 pt-4 pb-4">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">Pilih Mata Pelajaran</p>
+          <div className="grid grid-cols-4 gap-2">
+            {mapelList.map((m: any) => {
+              const s = MAPEL_COLORS[m.kode] || MAPEL_COLORS.DEFAULT;
+              return (
+                <button key={m.id}
+                  onClick={() => setSelectedMapel(m.id)}
+                  className="flex flex-col items-center gap-1.5 py-3 rounded-2xl active:scale-95 transition-transform"
+                  style={{ background: s.bg }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ background: s.color + '25' }}>
+                    <BookOpen size={18} style={{ color: s.color }} />
+                  </div>
+                  <span className="font-bold text-[10px] text-center leading-tight px-1" style={{ color: s.color }}>{m.nama}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Content — hanya tampil saat mapel dipilih */}
+      {selectedMapel && (
       <div className="px-4 py-4 pb-28 space-y-3">
         {isLoading ? (
           <div className="flex flex-col gap-3">
@@ -240,6 +241,7 @@ export default function MateriSiswaPage() {
           })
         )}
       </div>
+      )}
     </div>
   );
 }
