@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ClipboardList, Upload, CheckCircle, Clock, FileText, X, AlertCircle, ChevronRight } from 'lucide-react';
+import { ClipboardList, Upload, CheckCircle, Clock, FileText, X, AlertCircle, Bell, GraduationCap } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
@@ -72,57 +72,51 @@ export default function TugasPage() {
     const sisa = deadline && !overdue ? sisaHari(t.deadline) : null;
     const urgent = sisa === 'Hari ini' || sisa === 'Besok';
 
-    return (
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        {/* Top accent bar */}
-        <div className="h-1 w-full" style={{
-          background: sudahKumpul ? '#10B981' : overdue ? '#EF4444' : urgent ? '#F97316' : '#3B7FD1'
-        }} />
+    const accentColor = sudahKumpul ? '#059669' : overdue ? '#ef4444' : urgent ? '#f47b20' : '#3b5bdb';
+    const accentBg = sudahKumpul ? '#ecfdf5' : overdue ? '#fef2f2' : urgent ? '#ffdbc8' : '#dae2fd';
 
+    return (
+      <div className="bg-white rounded-2xl shadow-[0px_8px_16px_-4px_rgba(15,23,42,0.04)] overflow-hidden">
+        <div className="h-1 w-full" style={{ background: accentColor }} />
         <div className="p-4">
           <div className="flex items-start gap-3">
-            {/* Icon */}
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: sudahKumpul ? '#ECFDF5' : overdue ? '#FEF2F2' : urgent ? '#FFF7ED' : '#EBF2FF' }}>
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background: accentBg }}>
               {sudahKumpul
-                ? <CheckCircle size={18} className="text-emerald-500" />
+                ? <CheckCircle size={18} style={{ color: accentColor }} />
                 : overdue
-                ? <AlertCircle size={18} className="text-red-500" />
-                : <ClipboardList size={18} style={{ color: urgent ? '#F97316' : '#3B7FD1' }} />}
+                ? <AlertCircle size={18} style={{ color: accentColor }} />
+                : <ClipboardList size={18} style={{ color: accentColor }} />}
             </div>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
-                <p className="font-bold text-sm text-gray-800 leading-snug">{t.judul}</p>
-                <span className={`flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                  sudahKumpul ? 'bg-emerald-50 text-emerald-600' :
-                  overdue ? 'bg-red-50 text-red-500' :
-                  urgent ? 'bg-orange-50 text-[#F97316]' :
-                  'bg-blue-50 text-blue-600'
-                }`}>
+                <p className="font-bold text-sm text-[#191c1e] leading-snug">{t.judul}</p>
+                <span className="flex-shrink-0 text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                  style={{ background: accentBg, color: accentColor }}>
                   {sudahKumpul ? '✓ Dikumpulkan' : overdue ? 'Terlambat' : sisa || 'Aktif'}
                 </span>
               </div>
 
-              <p className="text-[10px] text-gray-400 mt-0.5">
+              <p className="text-[10px] text-[#8b7265] mt-0.5">
                 {t.mata_pelajaran?.nama || 'Umum'} · {t.kelas?.nama}
               </p>
 
               {t.deskripsi && (
-                <p className="text-xs text-gray-500 mt-2 line-clamp-2">{t.deskripsi}</p>
+                <p className="text-xs text-[#565e74] mt-2 line-clamp-2">{t.deskripsi}</p>
               )}
 
               {deadline && (
                 <div className="flex items-center gap-1.5 mt-2">
-                  <Clock size={10} className={overdue ? 'text-red-400' : 'text-gray-400'} />
-                  <p className={`text-[10px] ${overdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                  <Clock size={10} style={{ color: overdue ? '#ef4444' : '#8b7265' }} />
+                  <p className="text-[10px]" style={{ color: overdue ? '#ef4444' : '#8b7265' }}>
                     {fmtDeadline(t.deadline)}
                   </p>
                 </div>
               )}
 
               {sudahKumpul && t.submission_saya?.nilai != null && (
-                <div className="mt-2.5 flex items-center gap-2 bg-emerald-50 rounded-xl px-3 py-2">
+                <div className="mt-2.5 flex items-center gap-2 bg-[#ecfdf5] rounded-xl px-3 py-2">
                   <span className="text-xs text-emerald-700 font-semibold">Nilai: {t.submission_saya.nilai}</span>
                   {t.submission_saya.catatan_guru && (
                     <span className="text-[10px] text-emerald-600">· {t.submission_saya.catatan_guru}</span>
@@ -135,13 +129,13 @@ export default function TugasPage() {
           <div className="mt-3 flex gap-2">
             {t.file_url && (
               <a href={t.file_url} target="_blank" rel="noopener"
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-xl text-xs font-semibold text-gray-600">
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f5f5] rounded-xl text-xs font-semibold text-[#565e74]">
                 <FileText size={12} /> Unduh Soal
               </a>
             )}
             {isSiswa && !sudahKumpul && !overdue && (
               <button onClick={() => setSelectedTugas(t)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F97316] text-white rounded-xl text-xs font-semibold ml-auto">
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f47b20] text-white rounded-xl text-xs font-semibold ml-auto">
                 <Upload size={12} /> Kumpulkan
               </button>
             )}
@@ -152,67 +146,75 @@ export default function TugasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F0F2F5]">
+    <div className="min-h-screen bg-[#f5f5f5]">
 
-      {/* Hero banner */}
-      <div className="relative overflow-hidden" style={{ background: 'linear-gradient(145deg, #FF8C38 0%, #E8620D 100%)' }}>
-        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/8" />
-        <div className="absolute top-4 right-0 w-14 h-14 rounded-full bg-white/8" />
-        <div className="px-4 pt-12 pb-6 relative">
-          <div className="flex items-center gap-2 mb-3">
-            <ClipboardList size={16} className="text-white/60" />
-            <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Daftar Tugas</p>
+      {/* Fixed header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-[#e9e0d8] h-[60px] flex items-center justify-between px-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-[#ffdbc8] flex items-center justify-center">
+            <GraduationCap size={16} className="text-[#994700]" />
           </div>
-          <h1 className="text-white font-black text-4xl leading-none mb-5">Tugas</h1>
-          <div className="flex gap-2">
+          <div>
+            <h1 className="font-black text-[#191c1e] text-base leading-none">Tugas</h1>
+          </div>
+        </div>
+        <button className="w-9 h-9 rounded-full bg-[#ffdbc8]/50 flex items-center justify-center">
+          <Bell size={18} className="text-[#994700]" />
+        </button>
+      </header>
+
+      <div className="pt-[60px] pb-28">
+
+        {/* Stats */}
+        <div className="bg-white border-b border-[#e9e0d8] px-4 py-4">
+          <div className="grid grid-cols-3 gap-3">
             {[
-              { label: belumSelesai.length, title: 'Aktif',     numColor: '#fff' },
-              { label: sudahSelesai.length, title: 'Selesai',   numColor: '#BBF7D0' },
-              { label: terlambat.length,    title: 'Terlambat', numColor: '#FECACA' },
+              { label: 'Aktif', count: belumSelesai.length, bg: '#ffdbc8', color: '#994700' },
+              { label: 'Selesai', count: sudahSelesai.length, bg: '#ecfdf5', color: '#059669' },
+              { label: 'Terlambat', count: terlambat.length, bg: '#fef2f2', color: '#ef4444' },
             ].map(s => (
-              <div key={s.title} className="flex-1 flex flex-col items-center bg-black/15 rounded-2xl px-3 py-2.5">
-                <span className="font-black text-2xl leading-none" style={{ color: s.numColor }}>{s.label}</span>
-                <span className="text-white/60 text-[9px] font-semibold mt-1 uppercase tracking-wide">{s.title}</span>
+              <div key={s.label} className="rounded-2xl p-3 flex flex-col items-center" style={{ background: s.bg }}>
+                <span className="font-black text-2xl leading-none" style={{ color: s.color }}>{s.count}</span>
+                <span className="text-[10px] font-semibold mt-1" style={{ color: s.color }}>{s.label}</span>
               </div>
             ))}
           </div>
         </div>
-        <div className="h-6 bg-[#F0F2F5] rounded-t-[28px]" />
-      </div>
 
-      <div className="px-4 py-4 pb-28 space-y-4">
-        {isLoading || (isSiswa && !kelasId) ? (
-          <div className="text-center py-16 text-gray-400 text-sm">Memuat tugas...</div>
-        ) : tugasList.length === 0 ? (
-          <div className="bg-white rounded-2xl p-10 text-center shadow-sm">
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
-              <ClipboardList size={28} className="text-blue-300" />
+        <div className="px-4 py-4 space-y-4">
+          {isLoading || (isSiswa && !kelasId) ? (
+            <div className="text-center py-16 text-[#8b7265] text-sm">Memuat tugas...</div>
+          ) : tugasList.length === 0 ? (
+            <div className="bg-white rounded-2xl p-10 text-center shadow-[0px_8px_16px_-4px_rgba(15,23,42,0.04)]">
+              <div className="w-16 h-16 rounded-2xl bg-[#dae2fd] flex items-center justify-center mx-auto mb-4">
+                <ClipboardList size={28} className="text-[#3b5bdb]" />
+              </div>
+              <p className="font-bold text-[#191c1e] text-sm">Belum ada tugas</p>
+              <p className="text-xs text-[#8b7265] mt-1">Tugas dari guru akan muncul di sini</p>
             </div>
-            <p className="font-semibold text-gray-600 text-sm">Belum ada tugas</p>
-            <p className="text-xs text-gray-400 mt-1">Tugas dari guru akan muncul di sini</p>
-          </div>
-        ) : (
-          <>
-            {belumSelesai.length > 0 && (
-              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">Perlu Dikumpulkan</p>
-                <div className="space-y-3">{belumSelesai.map(t => <TugasCard key={t.id} t={t} />)}</div>
-              </div>
-            )}
-            {terlambat.length > 0 && (
-              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">Terlambat</p>
-                <div className="space-y-3">{terlambat.map(t => <TugasCard key={t.id} t={t} />)}</div>
-              </div>
-            )}
-            {sudahSelesai.length > 0 && (
-              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">Sudah Dikumpulkan</p>
-                <div className="space-y-3">{sudahSelesai.map(t => <TugasCard key={t.id} t={t} />)}</div>
-              </div>
-            )}
-          </>
-        )}
+          ) : (
+            <>
+              {belumSelesai.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-bold text-[#565e74] uppercase tracking-widest mb-2 px-1">Perlu Dikumpulkan</p>
+                  <div className="space-y-3">{belumSelesai.map(t => <TugasCard key={t.id} t={t} />)}</div>
+                </div>
+              )}
+              {terlambat.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-bold text-[#565e74] uppercase tracking-widest mb-2 px-1">Terlambat</p>
+                  <div className="space-y-3">{terlambat.map(t => <TugasCard key={t.id} t={t} />)}</div>
+                </div>
+              )}
+              {sudahSelesai.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-bold text-[#565e74] uppercase tracking-widest mb-2 px-1">Sudah Dikumpulkan</p>
+                  <div className="space-y-3">{sudahSelesai.map(t => <TugasCard key={t.id} t={t} />)}</div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Submit sheet */}
@@ -220,33 +222,33 @@ export default function TugasPage() {
         <div className="fixed inset-0 z-50 flex items-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedTugas(null)} />
           <div className="relative bg-white rounded-t-3xl w-full p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-2" />
+            <div className="w-10 h-1 rounded-full bg-[#e9e0d8] mx-auto mb-2" />
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-bold text-gray-800 text-base">Kumpulkan Tugas</p>
-                <p className="text-xs text-gray-400">{selectedTugas.judul}</p>
+                <p className="font-bold text-[#191c1e] text-base">Kumpulkan Tugas</p>
+                <p className="text-xs text-[#8b7265]">{selectedTugas.judul}</p>
               </div>
-              <button onClick={() => setSelectedTugas(null)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                <X size={16} className="text-gray-500" />
+              <button onClick={() => setSelectedTugas(null)} className="w-8 h-8 rounded-full bg-[#f5f5f5] flex items-center justify-center">
+                <X size={16} className="text-[#565e74]" />
               </button>
             </div>
 
             <input ref={fileRef} type="file" onChange={e => setFile(e.target.files?.[0] || null)} className="hidden" />
             <button onClick={() => fileRef.current?.click()}
-              className="w-full py-3.5 border-2 border-dashed border-gray-200 rounded-2xl text-sm text-gray-500 flex items-center justify-center gap-2 hover:border-[#F97316] hover:text-[#F97316] transition-colors">
+              className="w-full py-3.5 border-2 border-dashed border-[#e9e0d8] rounded-2xl text-sm text-[#565e74] flex items-center justify-center gap-2 hover:border-[#f47b20] hover:text-[#f47b20] transition-colors">
               <Upload size={16} />
               {file ? file.name : 'Pilih file jawaban...'}
             </button>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">Catatan untuk guru (opsional)</label>
+              <label className="block text-xs font-semibold text-[#565e74] mb-1.5">Catatan untuk guru (opsional)</label>
               <textarea value={catatan} onChange={e => setCatatan(e.target.value)} rows={3}
                 placeholder="Tulis catatan..."
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316] resize-none" />
+                className="w-full px-3 py-2.5 border border-[#e9e0d8] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#f47b20] resize-none" />
             </div>
 
             <button onClick={() => submitMut.mutate()} disabled={submitMut.isPending || (!file && !catatan)}
-              className="w-full py-3.5 bg-[#F97316] text-white rounded-2xl font-bold text-sm disabled:opacity-50">
+              className="w-full py-3.5 bg-[#f47b20] text-white rounded-2xl font-bold text-sm disabled:opacity-50">
               {submitMut.isPending ? 'Mengumpulkan...' : 'Kumpulkan Tugas'}
             </button>
           </div>
