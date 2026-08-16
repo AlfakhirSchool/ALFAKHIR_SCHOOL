@@ -166,7 +166,7 @@ async function doImportRows(rows: { nama: string; kelas_nama: string; nis: strin
         const autoPassword = nis.slice(-4);
         const password_hash = await bcrypt.hash(autoPassword, 10);
         await existingByNama.update({ nis, nisn: nis, no_induk: nis });
-        await (existingByNama as any).user.update({ email: `${nis}@siswa.alfakhir.sch.id`, password_hash, password_default: autoPassword, username: nis });
+        await (existingByNama as any).user.update({ email: `${nis}@siswa.alfakhir.sch.id`, password_hash, password_default: autoPassword });
         results.push({ nama, nis, status: 'updated', reason: 'NIS diperbarui dari Sheets' });
       } else {
         results.push({ nama, nis: nis || '', status: 'skipped', reason: `Siswa "${nama}" sudah ada di kelas ${(kelas as any).nama}` });
