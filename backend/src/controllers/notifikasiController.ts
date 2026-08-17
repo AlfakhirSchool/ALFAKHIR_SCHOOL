@@ -91,9 +91,6 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
       // Absensi gerbang hari ini
       const todayStr = new Date().toISOString().split('T')[0];
       try {
-        const gerbangFilter = schoolLevel
-          ? `AND sch.level = '${schoolLevel}'`
-          : '';
         const [gerbangRow] = await sequelize.query<any>(
           `SELECT
              COUNT(*) FILTER (WHERE ag.waktu_masuk IS NOT NULL) AS hadir,
@@ -103,8 +100,8 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
            JOIN sekolah sch ON k.sekolah_id = sch.id
            LEFT JOIN absensi_gerbang ag ON ag.siswa_id = s.id AND ag.tanggal = :tgl
            JOIN users u ON s.user_id = u.id AND u.is_active = true
-           WHERE 1=1 ${gerbangFilter}`,
-          { replacements: { tgl: todayStr }, type: QueryTypes.SELECT },
+           WHERE (:level IS NULL OR sch.level = :level)`,
+          { replacements: { tgl: todayStr, level: schoolLevel || null }, type: QueryTypes.SELECT },
         );
         if (gerbangRow && parseInt(gerbangRow.total) > 0) {
           const hadir = parseInt(gerbangRow.hadir);
