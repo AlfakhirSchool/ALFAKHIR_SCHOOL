@@ -35,23 +35,22 @@ export const adminDashboard = async (_req: AuthRequest, res: Response): Promise<
   const cached = await redis.get(cacheKey).catch(() => null);
   if (cached) { res.json(JSON.parse(cached)); return; }
 
-  const [sd, smp, sma, totalGuru, pendingJurnal] = await Promise.all([
+  const [sd, smp, totalGuru, pendingJurnal] = await Promise.all([
     getStatsForLevel('SD'),
     getStatsForLevel('SMP'),
-    getStatsForLevel('SMA'),
     Guru.count(),
     JurnalGuru.count({ where: { status: 'submitted' } }),
   ]);
 
-  const totalSiswa = sd.totalSiswa + smp.totalSiswa + sma.totalSiswa;
-  const totalKelas = sd.totalKelas + smp.totalKelas + sma.totalKelas;
-  const absensiHariIni = sd.absensiHariIni + smp.absensiHariIni + sma.absensiHariIni;
+  const totalSiswa = sd.totalSiswa + smp.totalSiswa;
+  const totalKelas = sd.totalKelas + smp.totalKelas;
+  const absensiHariIni = sd.absensiHariIni + smp.absensiHariIni;
 
   const result = {
     success: true,
     data: {
       kpi: { totalSiswa, totalGuru, totalKelas, absensiHariIni, pendingJurnal },
-      sekolah: { sd, smp, sma },
+      sekolah: { sd, smp },
     },
   };
   // cache 60 detik — data absensi hari ini berubah per menit, tidak perlu real-time
