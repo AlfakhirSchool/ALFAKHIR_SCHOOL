@@ -5,7 +5,7 @@ import { TransaksiKeuangan } from '../models';
 import { AuthRequest } from '../middleware/auth';
 
 export const KATEGORI_PEMASUKAN = ['SPP', 'Ekskul', 'UKT', 'Uang Masuk', 'Formulir Pendaftaran', 'Lainnya'];
-export const KATEGORI_PENGELUARAN = ['Pengeluaran Harian', 'Pembayaran Kas', 'Transfer', 'Pengeluaran Operasional', 'Lainnya'];
+export const KATEGORI_PENGELUARAN = ['Pengeluaran Harian', 'Pembayaran Kas & Transfer', 'Pengeluaran SD', 'Pengeluaran SMP', 'Lainnya'];
 export const SUB_KATEGORI_EKSKUL = ['Panahan', 'Robotik', 'Ekskul Kelas 9', 'Lainnya'];
 
 export const getTransaksi = async (req: AuthRequest, res: Response): Promise<void> => {

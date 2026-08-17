@@ -13,7 +13,7 @@ const fmt = (v: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v || 0);
 
 const KATEGORI_PEMASUKAN = ['SPP', 'Ekskul', 'UKT', 'Uang Masuk', 'Formulir Pendaftaran', 'Lainnya'];
-const KATEGORI_PENGELUARAN = ['Pengeluaran Harian', 'Pembayaran Kas', 'Transfer', 'Pengeluaran Operasional', 'Lainnya'];
+const KATEGORI_PENGELUARAN = ['Pengeluaran Harian', 'Pembayaran Kas & Transfer', 'Pengeluaran SD', 'Pengeluaran SMP', 'Lainnya'];
 const SUB_EKSKUL = ['Panahan', 'Robotik', 'Ekskul Kelas 9', 'Lainnya'];
 const UNIT_LIST = ['SD', 'SMP', 'Umum'];
 const METODE_LIST = ['tunai', 'transfer', 'qris'];
