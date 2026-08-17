@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
@@ -11,6 +11,13 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Portal Al-Fakhir School",
   description: "Portal Orang Tua & Siswa SD/SMP Islam Modern Al Fakhir",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
