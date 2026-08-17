@@ -13,9 +13,9 @@ const ROLE_LABEL: Record<string, string> = {
   admin: 'Admin', guru: 'Guru', pewawancara: 'Pewawancara', keuangan: 'Keuangan', siswa: 'Siswa', ortu: 'Orang Tua',
 };
 const LEVEL_COLOR: Record<string, string> = {
-  SD: '#F97316', SMP: '#2563EB', SMA: '#7C3AED',
+  SD: '#F97316', SMP: '#2563EB',
 };
-const LEVELS = ['SD', 'SMP', 'SMA'] as const;
+const LEVELS = ['SD', 'SMP'] as const;
 
 function Badge({ text, color }: { text: string; color: string }) {
   return (
@@ -203,8 +203,8 @@ export default function UsersPage() {
         {/* Jenjang tabs — master admin only */}
         {isMaster && (
           <div className="flex gap-2">
-            {(['', 'SD', 'SMP', 'SMA'] as const).map(j => {
-              const labels: Record<string, string> = { '': 'Semua', SD: 'SD', SMP: 'SMP', SMA: 'SMA' };
+            {(['', 'SD', 'SMP'] as const).map(j => {
+              const labels: Record<string, string> = { '': 'Semua', SD: 'SD', SMP: 'SMP' };
               const colors: Record<string, { active: string; passive: string }> = {
                 '':   { active: 'bg-gray-700 text-white', passive: 'bg-gray-100 text-gray-600 hover:bg-gray-200' },
                 SD:   { active: 'bg-orange-500 text-white', passive: 'bg-orange-50 text-orange-700 hover:bg-orange-100' },
@@ -428,7 +428,7 @@ export default function UsersPage() {
                   <span className="text-gray-400">Belum ada jenjang dipilih</span>
                 ) : selectedLevels.length === 3 ? (
                   <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#F97316] via-[#2563EB] to-[#7C3AED]">
-                    🎓 Guru Gabungan (SD + SMP + SMA)
+                    🎓 Guru Gabungan (SD + SMP)
                   </span>
                 ) : (
                   <span className="font-semibold text-gray-700">

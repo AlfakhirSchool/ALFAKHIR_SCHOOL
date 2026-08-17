@@ -159,7 +159,6 @@ export default function MasterDashboard() {
   const s = data?.sekolah || {};
   const sd  = s.sd  || { totalSiswa: 0, totalKelas: 0, absensiHariIni: 0 };
   const smp = s.smp || { totalSiswa: 0, totalKelas: 0, absensiHariIni: 0 };
-  const sma = s.sma || { totalSiswa: 0, totalKelas: 0, absensiHariIni: 0 };
 
   return (
     <div>
@@ -171,14 +170,12 @@ export default function MasterDashboard() {
           <div className="flex h-3">
             <div className="flex-1" style={{ backgroundColor: '#F97316' }} />
             <div className="flex-1" style={{ backgroundColor: '#2563EB' }} />
-            <div className="flex-1" style={{ backgroundColor: '#7C3AED' }} />
           </div>
           <div className="bg-[#1A2332] p-5 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex gap-1">
                 <span className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-black" style={{ backgroundColor: '#F97316' }}>SD</span>
                 <span className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-black" style={{ backgroundColor: '#2563EB' }}>SMP</span>
-                <span className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-black" style={{ backgroundColor: '#7C3AED' }}>SMA</span>
               </div>
               <div>
                 <p className="font-bold text-white text-lg">Master Control Center</p>
@@ -206,7 +203,6 @@ export default function MasterDashboard() {
             <div className="space-y-4">
               <LevelRow label="SD"  color="#F97316" d={sd}  delay={0} />
               <LevelRow label="SMP" color="#2563EB" d={smp} delay={0.1} />
-              <LevelRow label="SMA" color="#7C3AED" d={sma} delay={0.2} />
             </div>
 
             {(kpi.pendingJurnal ?? 0) > 0 && (

@@ -28,5 +28,6 @@ import PertanyaanForm from './PertanyaanForm';
 import CatatanSiswaGuru from './CatatanSiswaGuru';
 import Tugas from './Tugas';
 import PengumpulanTugas from './PengumpulanTugas';
+import TransaksiKeuangan from './TransaksiKeuangan';
 import Materi from './Materi';
-export { User, Sekolah, Kelas, MataPelajaran, Siswa, Guru, OrangTua, JadwalPelajaran, Absensi, QrCodeSession, Nilai, Pembayaran, PembayaranDetail, Rapor, JurnalGuru, JurnalSiswa, ActivityLog, PendingChange, Feedback, Kandidat, CatatanPewawancara, SoalAkademik, HasilTesAkademik, JawabanAkademik, RingkasanAI, JawabanForm, PertanyaanForm, CatatanSiswaGuru, Tugas, PengumpulanTugas, Materi, };
+export { User, Sekolah, Kelas, MataPelajaran, Siswa, Guru, OrangTua, JadwalPelajaran, Absensi, QrCodeSession, Nilai, Pembayaran, PembayaranDetail, Rapor, JurnalGuru, JurnalSiswa, ActivityLog, PendingChange, Feedback, Kandidat, CatatanPewawancara, SoalAkademik, HasilTesAkademik, JawabanAkademik, RingkasanAI, JawabanForm, PertanyaanForm, CatatanSiswaGuru, Tugas, PengumpulanTugas, Materi, TransaksiKeuangan, };

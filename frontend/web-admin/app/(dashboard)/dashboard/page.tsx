@@ -37,19 +37,6 @@ const SCHOOLS = [
     logo: '/logo-smp.png',
     href: '/dashboard/smp',
   },
-  {
-    key: 'sma',
-    label: 'SMA',
-    fullName: 'Sekolah Menengah Atas',
-    desc: 'Kelola siswa, kelas, absensi, dan nilai jenjang SMA',
-    color: '#3B7FD1',
-    gradient: 'from-blue-500 to-blue-700',
-    light: 'bg-blue-50',
-    ring: 'ring-blue-200',
-    text: 'text-blue-700',
-    logo: '/logo-sma.png',
-    href: '/dashboard/sma',
-  },
 ] as const;
 
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } } };

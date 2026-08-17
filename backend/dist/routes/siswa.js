@@ -39,7 +39,7 @@ const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
 router.use(auth_1.authenticate);
 router.get('/me', (0, auth_1.authorize)('siswa'), siswaController.getMe);
-router.get('/', (0, auth_1.authorize)('admin', 'guru'), siswaController.getAll);
+router.get('/', (0, auth_1.authorize)('admin', 'guru', 'keuangan'), siswaController.getAll);
 router.get('/sekolah-list', (0, auth_1.authorize)('admin', 'guru'), siswaController.getSekolahList);
 router.post('/', (0, auth_1.authorize)('admin'), siswaController.create);
 router.post('/import-csv', (0, auth_1.authorize)('admin'), siswaController.importCsv);

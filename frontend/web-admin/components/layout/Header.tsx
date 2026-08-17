@@ -32,7 +32,6 @@ interface HeaderProps {
 const LEVEL_COLOR: Record<string, string> = {
   SD:  '#F97316',
   SMP: '#1B8B87',
-  SMA: '#3B82F6',
 };
 
 export default function Header({ title }: HeaderProps) {

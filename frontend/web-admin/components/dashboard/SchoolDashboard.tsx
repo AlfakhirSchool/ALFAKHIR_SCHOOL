@@ -12,7 +12,6 @@ import { useAuthStore } from '@/store/authStore';
 const LEVEL_CONFIG = {
   SD:  { color: '#F97316', bg: 'bg-orange-500', grad: 'from-orange-400 to-orange-600', border: 'border-orange-300', light: 'bg-orange-50',  ring: 'ring-orange-200', text: 'text-orange-600', fullName: 'Sekolah Dasar' },
   SMP: { color: '#2563EB', bg: 'bg-blue-600',   grad: 'from-blue-500 to-blue-700',    border: 'border-blue-300',   light: 'bg-blue-50',    ring: 'ring-blue-200',   text: 'text-blue-700',   fullName: 'Sekolah Menengah Pertama' },
-  SMA: { color: '#7C3AED', bg: 'bg-purple-700', grad: 'from-purple-600 to-purple-800', border: 'border-purple-300', light: 'bg-purple-50', ring: 'ring-purple-200', text: 'text-purple-700', fullName: 'Sekolah Menengah Atas' },
 } as const;
 
 type Level = keyof typeof LEVEL_CONFIG;
@@ -83,7 +82,7 @@ export default function SchoolDashboard({ level }: { level: Level }) {
     refetchInterval: 30000,
   });
 
-  const d = data?.sekolah?.[level.toLowerCase() as 'sd' | 'smp' | 'sma'] || { totalSiswa: 0, totalKelas: 0, absensiHariIni: 0 };
+  const d = data?.sekolah?.[level.toLowerCase() as 'sd' | 'smp'] || { totalSiswa: 0, totalKelas: 0, absensiHariIni: 0 };
   const belum = d.totalSiswa - d.absensiHariIni;
   const pct = d.totalSiswa > 0 ? Math.round((d.absensiHariIni / d.totalSiswa) * 100) : 0;
 

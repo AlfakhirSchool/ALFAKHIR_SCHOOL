@@ -8,7 +8,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
 const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-const ALL_JENJANG = ['SD', 'SMP', 'SMA'] as const;
+const ALL_JENJANG = ['SD', 'SMP'] as const;
 const JENJANG_COLOR: Record<string, { active: string; passive: string }> = {
   SD:  { active: 'bg-orange-500 text-white', passive: 'bg-orange-50 text-orange-700 hover:bg-orange-100' },
   SMP: { active: 'bg-[#1B8B87] text-white',  passive: 'bg-teal-50 text-teal-700 hover:bg-teal-100' },
@@ -174,14 +174,14 @@ export default function JadwalPage() {
               return (
                 <div key={day} className="bg-white rounded-xl shadow-sm overflow-hidden">
                   <div className="px-6 py-3 border-b border-gray-100" style={{ background: `color-mix(in srgb, currentColor 5%, white)` }}>
-                    <h3 className={`font-semibold text-sm ${activeJenjang === 'SD' ? 'text-orange-600' : activeJenjang === 'SMA' ? 'text-blue-600' : 'text-[#1B8B87]'}`}>{day}</h3>
+                    <h3 className={`font-semibold text-sm ${activeJenjang === 'SD' ? 'text-orange-600' : 'text-[#1B8B87]'}`}>{day}</h3>
                   </div>
                   <div className="overflow-x-auto">
                   <table className="min-w-[600px] w-full text-sm">
                     <tbody className="divide-y divide-gray-50">
                       {items.sort((a: any, b: any) => a.jam_mulai.localeCompare(b.jam_mulai)).map((j: any) => (
                         <tr key={j.id} className="hover:bg-gray-50/50">
-                          <td className={`px-6 py-3 font-medium w-28 ${activeJenjang === 'SD' ? 'text-orange-600' : activeJenjang === 'SMA' ? 'text-blue-600' : 'text-[#1B8B87]'}`}>{j.jam_mulai}–{j.jam_selesai}</td>
+                          <td className={`px-6 py-3 font-medium w-28 ${activeJenjang === 'SD' ? 'text-orange-600' : 'text-[#1B8B87]'}`}>{j.jam_mulai}–{j.jam_selesai}</td>
                           <td className="px-6 py-3 font-medium text-gray-800">{j.mata_pelajaran?.nama}</td>
                           <td className="px-6 py-3 text-gray-500">{j.kelas?.nama}</td>
                           <td className="px-6 py-3 text-gray-500">{j.guru?.user?.nama}</td>

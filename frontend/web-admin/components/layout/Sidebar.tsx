@@ -136,12 +136,11 @@ const levelMenu = (level: string): SidebarEntry[] => [
   { href: '/users', icon: <UserCog size={16} />, label: 'Kelola Akun' },
 ];
 
-const LEVEL_COLOR: Record<string, string> = { SD: '#FB923C', SMP: '#2DD4BF', SMA: '#60A5FA' };
-const LEVEL_LOGO:  Record<string, string> = { SD: '/logo-sd.png', SMP: '/logo-smp.png', SMA: '/logo-sma.png' };
+const LEVEL_COLOR: Record<string, string> = { SD: '#FB923C', SMP: '#2DD4BF' };
+const LEVEL_LOGO:  Record<string, string> = { SD: '/logo-sd.png', SMP: '/logo-smp.png' };
 const LEVEL_NAME:  Record<string, string> = {
   SD:  'SD Islam Al-Fakhir',
   SMP: 'SMP Islam Al-Fakhir',
-  SMA: 'SMA Islam Al-Fakhir',
 };
 
 function GroupItem({

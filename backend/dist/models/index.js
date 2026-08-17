@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Materi = exports.PengumpulanTugas = exports.Tugas = exports.CatatanSiswaGuru = exports.PertanyaanForm = exports.JawabanForm = exports.RingkasanAI = exports.JawabanAkademik = exports.HasilTesAkademik = exports.SoalAkademik = exports.CatatanPewawancara = exports.Kandidat = exports.Feedback = exports.PendingChange = exports.ActivityLog = exports.JurnalSiswa = exports.JurnalGuru = exports.Rapor = exports.PembayaranDetail = exports.Pembayaran = exports.Nilai = exports.QrCodeSession = exports.Absensi = exports.JadwalPelajaran = exports.OrangTua = exports.Guru = exports.Siswa = exports.MataPelajaran = exports.Kelas = exports.Sekolah = exports.User = void 0;
+exports.TransaksiKeuangan = exports.Materi = exports.PengumpulanTugas = exports.Tugas = exports.CatatanSiswaGuru = exports.PertanyaanForm = exports.JawabanForm = exports.RingkasanAI = exports.JawabanAkademik = exports.HasilTesAkademik = exports.SoalAkademik = exports.CatatanPewawancara = exports.Kandidat = exports.Feedback = exports.PendingChange = exports.ActivityLog = exports.JurnalSiswa = exports.JurnalGuru = exports.Rapor = exports.PembayaranDetail = exports.Pembayaran = exports.Nilai = exports.QrCodeSession = exports.Absensi = exports.JadwalPelajaran = exports.OrangTua = exports.Guru = exports.Siswa = exports.MataPelajaran = exports.Kelas = exports.Sekolah = exports.User = void 0;
 const User_1 = __importDefault(require("./User"));
 exports.User = User_1.default;
 const Sekolah_1 = __importDefault(require("./Sekolah"));
@@ -64,6 +64,8 @@ const Tugas_1 = __importDefault(require("./Tugas"));
 exports.Tugas = Tugas_1.default;
 const PengumpulanTugas_1 = __importDefault(require("./PengumpulanTugas"));
 exports.PengumpulanTugas = PengumpulanTugas_1.default;
+const TransaksiKeuangan_1 = __importDefault(require("./TransaksiKeuangan"));
+exports.TransaksiKeuangan = TransaksiKeuangan_1.default;
 const Materi_1 = __importDefault(require("./Materi"));
 exports.Materi = Materi_1.default;
 // User <-> Guru / Siswa / OrangTua

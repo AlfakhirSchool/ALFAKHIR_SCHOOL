@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Kandidat = {
   id: string; nama: string; nama_diperbaiki: string | null;
-  level: 'SD' | 'SMP' | 'SMA'; status: 'PENDING' | 'REVIEW' | 'DITERIMA' | 'DITOLAK';
+  level: 'SD' | 'SMP'; status: 'PENDING' | 'REVIEW' | 'DITERIMA' | 'DITOLAK';
   tahun_ajaran: string; nama_ortu: string | null; no_telp_ortu: string | null;
   email_ortu: string | null; email_siswa: string | null; asal_sekolah: string | null;
   jenis_kelamin: string | null; skor_akademik: number | null;
@@ -33,7 +33,7 @@ type SoalAkademik = {
 };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-const LEVEL_COLOR: Record<string, string> = { SD: '#F97316', SMP: '#1B8B87', SMA: '#3B82F6' };
+const LEVEL_COLOR: Record<string, string> = { SD: '#F97316', SMP: '#1B8B87' };
 const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string; border: string }> = {
   PENDING:  { bg: '#FEF3C7', text: '#D97706', label: 'Menunggu',   border: '#FDE68A' },
   REVIEW:   { bg: '#EFF6FF', text: '#2563EB', label: 'Wawancara',  border: '#BFDBFE' },
@@ -244,7 +244,6 @@ function KandidatTab({ kandidatList, stats, isLoading, filterStatus, setFilterSt
                 <option value="">Semua Jenjang</option>
                 <option value="SD">SD</option>
                 <option value="SMP">SMP</option>
-                <option value="SMA">SMA</option>
               </select>
             )}
           </div>
@@ -875,7 +874,6 @@ function MonitorPewawancaraTab({ levelFromUser }: { levelFromUser: string }) {
               <option value="">Semua Jenjang</option>
               <option value="SD">SD</option>
               <option value="SMP">SMP</option>
-              <option value="SMA">SMA</option>
             </select>
           )}
           <button onClick={() => refetch()} className="text-xs text-teal-600 border border-teal-200 px-3 py-1.5 rounded-lg hover:bg-teal-50">
@@ -1021,7 +1019,6 @@ function SoalTab({ levelFromUser }: { levelFromUser: string }) {
               <option value="">Semua Jenjang</option>
               <option value="SD">SD</option>
               <option value="SMP">SMP</option>
-              <option value="SMA">SMA</option>
             </select>
           )}
           <p className="text-sm text-gray-500 self-center">{soalList.length} soal</p>
@@ -1054,7 +1051,6 @@ function SoalTab({ levelFromUser }: { levelFromUser: string }) {
                 <option value="">Semua Jenjang</option>
                 <option value="SD">SD</option>
                 <option value="SMP">SMP</option>
-                <option value="SMA">SMA</option>
               </select>
             </div>
             <div className="md:col-span-2">
@@ -1163,7 +1159,6 @@ function KandidatForm({ form, setForm, levelFromUser, showStatus }: any) {
           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:bg-gray-50">
           <option value="SD">SD</option>
           <option value="SMP">SMP</option>
-          <option value="SMA">SMA</option>
         </select>
       </div>
       {showStatus && (
@@ -1318,7 +1313,6 @@ function PertanyaanFormTab() {
                   <option value="">Semua Jenjang</option>
                   <option value="SD">SD</option>
                   <option value="SMP">SMP</option>
-                  <option value="SMA">SMA</option>
                 </select>
               </div>
               <div>

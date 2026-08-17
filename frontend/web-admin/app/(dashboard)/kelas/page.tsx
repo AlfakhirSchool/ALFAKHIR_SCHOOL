@@ -8,9 +8,9 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
 const BLANK_FORM = { nama: '', tingkat: '7', sekolah_id: '', wali_kelas_id: '', tahun_ajaran: '2025/2026' };
-const TINGKAT_OPTS: Record<string, number[]> = { SD: [1,2,3,4,5,6], SMP: [7,8,9], SMA: [10,11,12] };
+const TINGKAT_OPTS: Record<string, number[]> = { SD: [1,2,3,4,5,6], SMP: [7,8,9] };
 
-const JENJANG_LIST = ['SD', 'SMP', 'SMA'] as const;
+const JENJANG_LIST = ['SD', 'SMP'] as const;
 const JENJANG_COLOR: Record<string, { active: string; passive: string; badge: string; card: string }> = {
   SD:  { active: 'bg-orange-500 text-white', passive: 'bg-orange-50 text-orange-700 hover:bg-orange-100', badge: 'bg-orange-100 text-orange-700', card: 'border-orange-400' },
   SMP: { active: 'bg-[#1B8B87] text-white',  passive: 'bg-teal-50 text-teal-700 hover:bg-teal-100',      badge: 'bg-teal-100 text-teal-700',   card: 'border-[#1B8B87]' },

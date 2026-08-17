@@ -18,7 +18,7 @@ const LABELS: Record<string, string> = {
   'rfid-registrasi': 'Registrasi RFID', 'rekap-absensi': 'Rekap Absensi',
   nilai: 'Nilai', pembayaran: 'Pembayaran', 'jurnal-guru': 'Jurnal Guru',
   laporan: 'Laporan', observasi: 'PPDB', catatan: 'Semua Catatan',
-  interviewer: 'Pewawancara', sd: 'Unit SD', smp: 'Unit SMP', sma: 'Unit SMA',
+  interviewer: 'Pewawancara', sd: 'Unit SD', smp: 'Unit SMP',
   users: 'Kelola Akun', 'pending-changes': 'Permintaan Akun',
   'audit-log': 'Audit Log', feedback: 'Feedback', settings: 'Pengaturan',
   pewawancara: 'Portal Pewawancara', keuangan: 'Keuangan', master: 'Master',
