@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Wallet, TrendingUp, AlertCircle, ArrowRight } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, AlertCircle, ArrowRight } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 
@@ -19,6 +19,9 @@ const StatusBadge = ({ status }: { status: string }) => {
   return <span className={`px-2 py-0.5 rounded text-xs font-medium ${cls}`}>{label}</span>;
 };
 
+const nowM = new Date().getMonth() + 1;
+const nowY = new Date().getFullYear();
+
 export default function DashboardKeuanganPage() {
   const { data: laporan } = useQuery({
     queryKey: ['keuangan-laporan'],
@@ -32,11 +35,17 @@ export default function DashboardKeuanganPage() {
     queryKey: ['keuangan-lunas'],
     queryFn: () => api.get('/pembayaran', { params: { status: 'lunas', limit: 10 } }).then(r => r.data),
   });
+  const { data: rekapTransaksi } = useQuery({
+    queryKey: ['keuangan-rekap-transaksi', nowM, nowY],
+    queryFn: () => api.get('/keuangan/transaksi/rekap', { params: { bulan: nowM, tahun: nowY } }).then(r => r.data?.data),
+    staleTime: 60_000,
+  });
 
   const summary = laporan?.summary || { total_tagihan: 0, total_terbayar: 0, total_tunggakan: 0 };
   const pct = summary.total_tagihan > 0 ? Math.round((summary.total_terbayar / summary.total_tagihan) * 100) : 0;
   const belumList: any[] = belumBayar?.data || [];
   const lunasList: any[] = baru?.data || [];
+  const tSummary = rekapTransaksi?.summary;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -79,6 +88,37 @@ export default function DashboardKeuanganPage() {
             <div className="h-full bg-teal-500 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
           </div>
           <p className="text-xs text-gray-400 mt-2">{fmt(summary.total_terbayar)} dari {fmt(summary.total_tagihan)}</p>
+        </div>
+
+        {/* Transaksi bulan ini */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-gray-800 text-sm">Kas Operasional Bulan Ini</h3>
+              <p className="text-xs text-gray-400">SPP, Ekskul, UKT, Pengeluaran, dll.</p>
+            </div>
+            <Link href="/transaksi"
+              className="flex items-center gap-1 text-xs font-medium text-amber-600 hover:text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg transition-colors">
+              Kelola <ArrowRight size={12} />
+            </Link>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-3 bg-green-50 rounded-xl">
+              <TrendingUp size={16} className="text-green-600 mx-auto mb-1" />
+              <p className="text-xs text-gray-500">Pemasukan</p>
+              <p className="text-sm font-bold text-green-700">{fmt(tSummary?.total_pemasukan || 0)}</p>
+            </div>
+            <div className="text-center p-3 bg-red-50 rounded-xl">
+              <TrendingDown size={16} className="text-red-500 mx-auto mb-1" />
+              <p className="text-xs text-gray-500">Pengeluaran</p>
+              <p className="text-sm font-bold text-red-600">{fmt(tSummary?.total_pengeluaran || 0)}</p>
+            </div>
+            <div className={`text-center p-3 rounded-xl ${(tSummary?.saldo || 0) >= 0 ? 'bg-amber-50' : 'bg-red-50'}`}>
+              <Wallet size={16} className="text-amber-600 mx-auto mb-1" />
+              <p className="text-xs text-gray-500">Saldo</p>
+              <p className={`text-sm font-bold ${(tSummary?.saldo || 0) >= 0 ? 'text-amber-700' : 'text-red-600'}`}>{fmt(tSummary?.saldo || 0)}</p>
+            </div>
+          </div>
         </div>
 
         {/* Two columns */}

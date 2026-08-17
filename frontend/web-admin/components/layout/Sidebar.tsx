@@ -22,7 +22,8 @@ function isGroup(e: SidebarEntry): e is MenuGroup {
 
 const keuanganMenu: MenuItem[] = [
   { href: '/dashboard/keuangan',      icon: <LayoutDashboard size={16} />, label: 'Dashboard Keuangan' },
-  { href: '/pembayaran',              icon: <Wallet size={16} />,          label: 'Pembayaran' },
+  { href: '/transaksi',               icon: <ClipboardList size={16} />,   label: 'Transaksi' },
+  { href: '/pembayaran',              icon: <Wallet size={16} />,          label: 'Pembayaran Siswa' },
   { href: '/pembayaran/kuitansi',     icon: <Printer size={16} />,         label: 'Cetak Kuitansi' },
   { href: '/laporan',                 icon: <BarChart3 size={16} />,       label: 'Laporan' },
 ];

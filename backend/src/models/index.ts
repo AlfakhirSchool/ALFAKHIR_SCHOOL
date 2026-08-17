@@ -28,6 +28,7 @@ import PertanyaanForm from './PertanyaanForm';
 import CatatanSiswaGuru from './CatatanSiswaGuru';
 import Tugas from './Tugas';
 import PengumpulanTugas from './PengumpulanTugas';
+import TransaksiKeuangan from './TransaksiKeuangan';
 import Materi from './Materi';
 
 // User <-> Guru / Siswa / OrangTua
@@ -176,6 +177,7 @@ export {
   CatatanSiswaGuru,
   Tugas, PengumpulanTugas,
   Materi,
+  TransaksiKeuangan,
 };
 
 // Materi associations
