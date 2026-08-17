@@ -8,7 +8,7 @@ import {
   Search, Plus, Zap, BookOpen, Dumbbell, Target, Bot, GraduationCap,
   Landmark, DoorOpen, FileText, Wallet, CreditCard, ArrowLeftRight,
   School, Building2, MoreHorizontal, ChevronLeft, ChevronRight,
-  TrendingUp, AlertCircle, CheckCircle2, Clock,
+  TrendingUp, AlertCircle, CheckCircle2, Clock, Download,
 } from 'lucide-react';
 
 // ─── Preset nominal per jenis biaya ──────────────────────────────────────────
@@ -349,6 +349,78 @@ export default function PembayaranPage() {
     return [sd, smp].filter((v, i, a) => v > 0 && a.indexOf(v) === i);
   }, [catatForm.jenis_biaya, catatSiswa?.unit, catatNominalHints]);
 
+  const handlePrint = async () => {
+    const res = await api.get('/pembayaran', {
+      params: { status: filterStatus || undefined, jenis_biaya: filterJenis || undefined, limit: 500 },
+    });
+    const rows: any[] = res.data?.data || [];
+    const lap = laporan?.summary || summary;
+    const now = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    const filterDesc = [filterStatus ? `Status: ${filterStatus}` : '', filterJenis ? `Jenis: ${filterJenis}` : ''].filter(Boolean).join(' · ') || 'Semua data';
+    const html = `<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>Laporan Pembayaran - Al-Fakhir School</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 12px; color: #1a1a1a; background: #fff; padding: 24px; }
+  .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1A2332; padding-bottom: 14px; }
+  .header h1 { font-size: 18px; font-weight: 700; color: #1A2332; }
+  .header h2 { font-size: 14px; font-weight: 600; margin-top: 4px; color: #3B7FD1; }
+  .header p { font-size: 11px; color: #666; margin-top: 4px; }
+  .summary { display: flex; gap: 12px; margin-bottom: 18px; }
+  .sum-card { flex: 1; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; }
+  .sum-card .label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: .5px; }
+  .sum-card .value { font-size: 14px; font-weight: 700; margin-top: 2px; }
+  .sum-card.green .value { color: #059669; }
+  .sum-card.red .value { color: #dc2626; }
+  .sum-card.blue .value { color: #2563eb; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th { background: #1A2332; color: #fff; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; padding: 7px 10px; text-align: left; }
+  td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; font-size: 11px; vertical-align: middle; }
+  tr:nth-child(even) td { background: #f9fafb; }
+  .badge { display: inline-block; padding: 2px 7px; border-radius: 99px; font-size: 10px; font-weight: 600; }
+  .lunas { background: #d1fae5; color: #065f46; }
+  .sebagian { background: #fef3c7; color: #92400e; }
+  .belum_bayar { background: #fee2e2; color: #991b1b; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .footer { margin-top: 24px; font-size: 10px; color: #666; text-align: right; }
+  @media print { body { padding: 0; } }
+</style></head><body>
+<div class="header">
+  <h1>Al-Fakhir School</h1>
+  <h2>Laporan Pembayaran</h2>
+  <p>Dicetak: ${now} · Filter: ${filterDesc} · Total: ${rows.length} data</p>
+</div>
+<div class="summary">
+  <div class="sum-card blue"><div class="label">Total Tagihan</div><div class="value">${fmtRp(lap.total_tagihan ?? 0)}</div></div>
+  <div class="sum-card green"><div class="label">Terbayar</div><div class="value">${fmtRp(lap.total_terbayar ?? 0)}</div></div>
+  <div class="sum-card red"><div class="label">Tunggakan</div><div class="value">${fmtRp((lap.total_tagihan ?? 0) - (lap.total_terbayar ?? 0))}</div></div>
+</div>
+<table>
+  <thead><tr>
+    <th>#</th><th>Siswa</th><th>Kelas</th><th>Jenis Biaya</th>
+    <th class="num">Tagihan</th><th class="num">Terbayar</th><th class="num">Sisa</th>
+    <th>Jatuh Tempo</th><th>Status</th>
+  </tr></thead>
+  <tbody>
+    ${rows.map((p: any, i: number) => `<tr>
+      <td>${i + 1}</td>
+      <td>${p.siswa?.nama_lengkap ?? '-'}</td>
+      <td>${p.siswa?.kelas ?? '-'}</td>
+      <td>${p.jenis_biaya}</td>
+      <td class="num">${fmtRp(p.nominal_biaya)}</td>
+      <td class="num">${fmtRp(p.nominal_terbayar ?? 0)}</td>
+      <td class="num">${fmtRp(p.nominal_biaya - (p.nominal_terbayar ?? 0))}</td>
+      <td>${p.tanggal_jatuh_tempo ? new Date(p.tanggal_jatuh_tempo).toLocaleDateString('id-ID') : '-'}</td>
+      <td><span class="badge ${p.status}">${p.status === 'lunas' ? 'Lunas' : p.status === 'sebagian' ? 'Sebagian' : 'Belum Bayar'}</span></td>
+    </tr>`).join('')}
+  </tbody>
+</table>
+<div class="footer">Al-Fakhir School Management System · ${now}</div>
+<script>window.onload = () => window.print();</script>
+</body></html>`;
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); }
+  };
+
   const METODE_OPTIONS = [
     { value: 'tunai', label: 'Tunai', icon: Wallet },
     { value: 'bca', label: 'BCA', icon: CreditCard },
@@ -410,6 +482,10 @@ export default function PembayaranPage() {
             {JENIS_PEMASUKAN.map(j => <option key={j} value={j}>{j}</option>)}
           </select>
           <div className="ml-auto flex gap-2">
+            <button onClick={handlePrint}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-white rounded-xl hover:bg-gray-800 font-medium text-sm shadow-sm transition-all">
+              <Download size={14} /> PDF
+            </button>
             <button onClick={() => setShowCatat(true)}
               className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-medium text-sm shadow-sm shadow-emerald-100 transition-all">
               <Zap size={14} /> Catat Pembayaran
