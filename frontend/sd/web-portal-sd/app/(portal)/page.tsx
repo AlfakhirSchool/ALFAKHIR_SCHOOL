@@ -28,7 +28,6 @@ const MAPEL_COLORS: Record<string, { bg: string; color: string }> = {
 
 const MENU = [
   { href: '/tagihan',    icon: CreditCard,    label: 'Tagihan',       color: '#F97316', bg: '#fff7ed' },
-  { href: '/kehadiran',  icon: CalendarCheck, label: 'Kehadiran',     color: '#10B981', bg: '#ecfdf5' },
   { href: '/tugas',      icon: FileText,      label: 'Tugas',         color: '#3B82F6', bg: '#eff6ff' },
   { href: '/materi',     icon: BookOpen,      label: 'Mata\nPelajaran', color: '#F59E0B', bg: '#fffbeb' },
   { href: '/jadwal',     icon: Clock,         label: 'Jadwal',        color: '#06B6D4', bg: '#ecfeff' },
@@ -68,15 +67,6 @@ export default function BerandaPage() {
     queryFn: () => api.get('/pengumuman', { params: { limit: 5 } }).then(r => r.data.data as any[]),
   });
 
-  const nowDate = new Date();
-  const { data: absensiData } = useQuery({
-    queryKey: ['portal-absensi-summary', siswaData?.id],
-    queryFn: () => api.get(`/absensi/${siswaData?.id}/detail`, {
-      params: { bulan: nowDate.getMonth() + 1, tahun: nowDate.getFullYear() },
-    }).then(r => r.data.data as any[]),
-    enabled: !isOrtu && !!siswaData?.id,
-  });
-  const hadirCount = absensiData ? absensiData.filter((a: any) => a.status === 'hadir').length : null;
 
   const tagihan = tagihanData?.data || [];
   const belumBayar = tagihan.filter((t: any) => t.status !== 'lunas');
@@ -156,14 +146,6 @@ export default function BerandaPage() {
               </div>
               <p className="text-xs font-bold text-[#565e74] uppercase tracking-widest mb-2">KELAS</p>
               <p className="font-black text-xl text-[#191c1e] truncate">{siswaData?.kelas?.nama || '—'}</p>
-            </div>
-            {/* Kehadiran */}
-            <div className="bg-white rounded-[24px] p-5 shadow-[0_4px_16px_rgba(15,23,42,0.06)] border-l-4 border-emerald-500 relative overflow-hidden">
-              <div className="absolute right-[-10px] top-[-10px] opacity-5">
-                <CalendarCheck size={80} strokeWidth={1} />
-              </div>
-              <p className="text-xs font-bold text-[#565e74] uppercase tracking-widest mb-2">KEHADIRAN</p>
-              <p className="font-black text-xl text-[#191c1e]">{hadirCount !== null ? `${hadirCount}x` : '—'}</p>
             </div>
           </section>
         )}

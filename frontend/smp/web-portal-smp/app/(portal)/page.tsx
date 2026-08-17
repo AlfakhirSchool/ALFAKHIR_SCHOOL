@@ -46,7 +46,6 @@ export default function BerandaPage() {
       <div className="grid grid-cols-3 gap-3">
         {[
           { href: '/tagihan',   icon: CreditCard,    label: 'Tagihan',    color: '#3B7FD1', bg: '#EBF2FF' },
-          { href: '/kehadiran', icon: CalendarCheck, label: 'Kehadiran',  color: '#10B981', bg: '#ECFDF5' },
           { href: '/tugas',     icon: BookOpen,      label: 'Tugas',      color: '#F59E0B', bg: '#FFFBEB' },
         ].map(({ href, icon: Icon, label, color, bg }) => (
           <Link key={href} href={href}
