@@ -20,12 +20,17 @@ const storage = multer.diskStorage({
   },
 });
 
+const ALLOWED_EXT = ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.mp4', '.jpg', '.png'];
+const ALLOWED_MIME = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument', 'application/vnd.ms-powerpoint', 'video/mp4', 'image/jpeg', 'image/png'];
+
 const upload = multer({
   storage,
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+  limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.mp4', '.jpg', '.png'];
-    cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
+    const ext = path.extname(file.originalname).toLowerCase();
+    const extOk = ALLOWED_EXT.includes(ext);
+    const mimeOk = ALLOWED_MIME.some(m => file.mimetype.startsWith(m));
+    cb(null, extOk && mimeOk);
   },
 });
 
