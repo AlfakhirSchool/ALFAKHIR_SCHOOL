@@ -49,21 +49,22 @@ export default function Header({ title }: HeaderProps) {
   const userRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
+  const canSeeActivityFeed = user?.role === 'admin' || user?.role === 'pewawancara';
+
   const fetchNotifs = useCallback(async () => {
     setNotifLoading(true);
     try {
-      const [notifRes, actRes] = await Promise.allSettled([
-        api.get('/notifikasi'),
-        api.get('/jawaban-form/activity-feed'),
-      ]);
+      const requests: Promise<any>[] = [api.get('/notifikasi')];
+      if (canSeeActivityFeed) requests.push(api.get('/jawaban-form/activity-feed'));
+      const [notifRes, actRes] = await Promise.allSettled(requests);
       if (notifRes.status === 'fulfilled') setNotifs(notifRes.value.data.data || []);
-      if (actRes.status === 'fulfilled') setActivityFeed((actRes.value.data.data || []).slice(0, 8));
+      if (actRes && actRes.status === 'fulfilled') setActivityFeed((actRes.value.data.data || []).slice(0, 8));
     } catch {
       // silently fail
     } finally {
       setNotifLoading(false);
     }
-  }, []);
+  }, [canSeeActivityFeed]);
 
   useEffect(() => {
     if (!notifOpen) return;
