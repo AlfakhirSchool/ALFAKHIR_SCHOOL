@@ -7,7 +7,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/me', authorize('siswa'), siswaController.getMe);
-router.get('/', authorize('admin', 'guru'), siswaController.getAll);
+router.get('/', authorize('admin', 'guru', 'keuangan'), siswaController.getAll);
 router.get('/sekolah-list', authorize('admin', 'guru'), siswaController.getSekolahList);
 router.post('/', authorize('admin'), siswaController.create);
 router.post('/import-csv', authorize('admin'), siswaController.importCsv);

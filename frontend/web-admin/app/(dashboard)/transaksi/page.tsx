@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, TrendingUp, TrendingDown, Wallet, Filter, X, Pencil, Trash2,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Search, User,
 } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
+
+const KATEGORI_SISWA = ['SPP', 'Ekskul', 'UKT', 'Formulir Pendaftaran'];
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v || 0);
@@ -52,12 +54,34 @@ export default function TransaksiPage() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [filter, setFilter] = useState({ tipe: '', unit: '', bulan: String(now.getMonth() + 1), tahun: String(now.getFullYear()) });
   const [page, setPage] = useState(1);
+  const [siswaSearch, setSiswaSearch] = useState('');
+  const [showSiswaDropdown, setShowSiswaDropdown] = useState(false);
 
   const { data: rekapData } = useQuery({
     queryKey: ['transaksi-rekap', filter.bulan, filter.tahun, filter.unit],
     queryFn: () => api.get('/keuangan/transaksi/rekap', { params: { bulan: filter.bulan, tahun: filter.tahun, unit: filter.unit || undefined } }).then(r => r.data?.data),
     staleTime: 60_000,
   });
+
+  const showSiswaField = form.tipe === 'pemasukan' && KATEGORI_SISWA.includes(form.kategori);
+
+  const { data: siswaData } = useQuery({
+    queryKey: ['siswa-list-keuangan'],
+    queryFn: () => api.get('/siswa', { params: { limit: 500 } }).then(r => r.data?.data || []),
+    staleTime: 5 * 60_000,
+    enabled: showForm,
+  });
+
+  const siswaList: any[] = siswaData || [];
+  const siswaSuggestions = useMemo(() => {
+    if (!siswaSearch || siswaSearch.length < 2) return [];
+    const q = siswaSearch.toLowerCase();
+    return siswaList.filter((s: any) =>
+      (s.user?.nama || '').toLowerCase().includes(q) ||
+      (s.nis || '').includes(q) ||
+      (s.kelas?.nama || '').toLowerCase().includes(q)
+    ).slice(0, 8);
+  }, [siswaSearch, siswaList]);
 
   const { data: listData, isLoading } = useQuery({
     queryKey: ['transaksi-list', filter, page],
@@ -91,6 +115,8 @@ export default function TransaksiPage() {
 
   const openEdit = (t: Transaksi) => {
     setEditItem(t);
+    setSiswaSearch(t.nama_pihak || '');
+    setShowSiswaDropdown(false);
     setForm({
       tanggal: t.tanggal,
       tipe: t.tipe,
@@ -108,6 +134,8 @@ export default function TransaksiPage() {
   const openNew = () => {
     setEditItem(null);
     setForm({ ...EMPTY_FORM });
+    setSiswaSearch('');
+    setShowSiswaDropdown(false);
     setShowForm(true);
   };
 
@@ -345,6 +373,54 @@ export default function TransaksiPage() {
                   {kategoriList.map(k => <option key={k} value={k}>{k}</option>)}
                 </select>
               </div>
+
+              {/* Siswa selector — muncul saat kategori siswa (SPP, Ekskul, UKT, Formulir) */}
+              {showSiswaField && (
+                <div className="relative">
+                  <label className="text-xs font-semibold text-gray-500 mb-1 block flex items-center gap-1">
+                    <User size={11} /> Nama Siswa
+                  </label>
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      value={siswaSearch || form.nama_pihak}
+                      onChange={e => {
+                        setSiswaSearch(e.target.value);
+                        setForm(f => ({ ...f, nama_pihak: e.target.value }));
+                        setShowSiswaDropdown(true);
+                      }}
+                      onFocus={() => setShowSiswaDropdown(true)}
+                      placeholder="Cari nama / NIS / kelas..."
+                      className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    />
+                  </div>
+                  {showSiswaDropdown && siswaSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                      {siswaSuggestions.map((s: any) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            const nama = s.user?.nama || '';
+                            setSiswaSearch(nama);
+                            setForm(f => ({
+                              ...f,
+                              nama_pihak: nama,
+                              unit: s.kelas?.sekolah?.level || f.unit,
+                            }));
+                            setShowSiswaDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-amber-50 transition-colors border-b border-gray-50 last:border-0"
+                        >
+                          <p className="text-sm font-medium text-gray-800">{s.user?.nama}</p>
+                          <p className="text-xs text-gray-400">{s.nis} · {s.kelas?.nama}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Sub kategori ekskul */}
               {form.kategori === 'Ekskul' && (
