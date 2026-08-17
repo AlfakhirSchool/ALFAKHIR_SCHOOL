@@ -42,13 +42,12 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
     if (role === 'admin') {
       const jurnalWhere: any = { status: 'submitted' };
       if (schoolLevel) {
-        // Filter by school level via guru association
-        const guruIds = await Guru.findAll({
-          where: { school_levels: { [Op.contains]: [schoolLevel] } },
-          attributes: ['id'],
-        });
+        const guruIds = await sequelize.query<{ id: string }>(
+          `SELECT id FROM guru WHERE school_levels @> ARRAY[:level]::text[]`,
+          { replacements: { level: schoolLevel }, type: QueryTypes.SELECT },
+        );
         if (guruIds.length > 0) {
-          jurnalWhere.guru_id = { [Op.in]: guruIds.map((g: any) => g.id) };
+          jurnalWhere.guru_id = { [Op.in]: guruIds.map((g) => g.id) };
         }
       }
       const jurnalSubmitted = await JurnalGuru.count({ where: jurnalWhere });
