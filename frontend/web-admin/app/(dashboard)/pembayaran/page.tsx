@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
+import { Search, Plus, Zap } from 'lucide-react';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const styles: Record<string, string> = {
@@ -23,20 +24,10 @@ const fmt = (v: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(v);
 
 const JENIS_BIAYA_OPTIONS = [
-  'SPP',
-  'Ekskul',
-  'Panahan',
-  'Robotik',
-  'Ekskul Kelas 9',
-  'UKT',
-  'Uang Masuk',
-  'Formulir Pendaftaran',
-  'Pengeluaran Harian',
-  'Pembayaran Kas',
-  'Transfer',
-  'Pengeluaran SD',
-  'Pengeluaran SMP',
-  'Lainnya',
+  'SPP', 'Ekskul', 'Panahan', 'Robotik', 'Ekskul Kelas 9',
+  'UKT', 'Uang Masuk', 'Formulir Pendaftaran',
+  'Pengeluaran Harian', 'Pembayaran Kas', 'Transfer',
+  'Pengeluaran SD', 'Pengeluaran SMP', 'Lainnya',
 ];
 
 function JenisBiayaSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -63,6 +54,74 @@ function JenisBiayaSelect({ value, onChange }: { value: string; onChange: (v: st
   );
 }
 
+function SiswaSearch({ siswaList, value, onChange }: {
+  siswaList: any[];
+  value: { id: string; label: string } | null;
+  onChange: (v: { id: string; label: string } | null) => void;
+}) {
+  const [q, setQ] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (value) setQ(value.label);
+  }, [value]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!q || q === value?.label) return [];
+    const lower = q.toLowerCase();
+    return siswaList.filter((s: any) => {
+      const nama = s.user?.nama?.toLowerCase() || '';
+      const nis = s.no_induk?.toLowerCase() || '';
+      const kelas = s.kelas?.nama?.toLowerCase() || '';
+      return nama.includes(lower) || nis.includes(lower) || kelas.includes(lower);
+    }).slice(0, 8);
+  }, [q, siswaList, value]);
+
+  return (
+    <div ref={ref} className="relative">
+      <div className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          value={q}
+          onChange={e => { setQ(e.target.value); setOpen(true); if (!e.target.value) onChange(null); }}
+          onFocus={() => setOpen(true)}
+          placeholder="Cari nama / NIS / kelas..."
+          className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]"
+        />
+      </div>
+      {open && filtered.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
+          {filtered.map((s: any) => (
+            <button key={s.id} type="button"
+              onMouseDown={() => {
+                const label = `${s.user?.nama} — ${s.kelas?.nama || s.no_induk || ''}`;
+                onChange({ id: s.id, label });
+                setQ(label);
+                setOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm">
+              <span className="font-medium text-gray-800">{s.user?.nama}</span>
+              <span className="text-gray-400 text-xs ml-2">{s.kelas?.nama} · {s.no_induk}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const emptyAdd = { jenis_biaya: '', nominal_biaya: '', tanggal_jatuh_tempo: '', tahun_ajaran: '2025/2026' };
+const emptyCatat = { jenis_biaya: '', nominal_biaya: '', metode: 'tunai', reference_number: '', tanggal_jatuh_tempo: '', tahun_ajaran: '2025/2026' };
+
 export default function PembayaranPage() {
   const qc = useQueryClient();
   const [filterStatus, setFilterStatus] = useState('');
@@ -73,7 +132,14 @@ export default function PembayaranPage() {
   const [bayarItem, setBayarItem] = useState<any>(null);
   const [bayarForm, setBayarForm] = useState({ nominal_bayar: '', bank: 'tunai', reference_number: '' });
   const [showAdd, setShowAdd] = useState(false);
-  const [addForm, setAddForm] = useState({ siswa_id: '', jenis_biaya: '', nominal_biaya: '', tanggal_jatuh_tempo: '', va_bank: '', tahun_ajaran: '2024/2025' });
+  const [addSiswa, setAddSiswa] = useState<{ id: string; label: string } | null>(null);
+  const [addForm, setAddForm] = useState(emptyAdd);
+  const [showCatat, setShowCatat] = useState(false);
+  const [catatSiswa, setCatatSiswa] = useState<{ id: string; label: string } | null>(null);
+  const [catatForm, setCatatForm] = useState(emptyCatat);
+  const [catatError, setCatatError] = useState('');
+
+  const needSiswa = showAdd || showCatat;
 
   const { data, isLoading } = useQuery({
     queryKey: ['pembayaran', filterStatus, page],
@@ -88,7 +154,8 @@ export default function PembayaranPage() {
   const { data: siswaList = [] } = useQuery({
     queryKey: ['siswa-all'],
     queryFn: () => api.get('/siswa', { params: { limit: 500 } }).then(r => r.data.data || []),
-    enabled: showAdd,
+    enabled: needSiswa,
+    staleTime: 300_000,
   });
 
   const pembayaranList = data?.data || [];
@@ -132,8 +199,48 @@ export default function PembayaranPage() {
   });
 
   const addMut = useMutation({
-    mutationFn: () => api.post('/pembayaran', { ...addForm, nominal_biaya: Number(addForm.nominal_biaya) }),
-    onSuccess: () => { invalidate(); setShowAdd(false); setAddForm({ siswa_id: '', jenis_biaya: '', nominal_biaya: '', tanggal_jatuh_tempo: '', va_bank: '', tahun_ajaran: '2024/2025' }); },
+    mutationFn: () => api.post('/pembayaran', {
+      siswa_id: addSiswa!.id,
+      jenis_biaya: addForm.jenis_biaya,
+      nominal_biaya: Number(addForm.nominal_biaya),
+      tanggal_jatuh_tempo: addForm.tanggal_jatuh_tempo || undefined,
+      tahun_ajaran: addForm.tahun_ajaran,
+    }),
+    onSuccess: () => {
+      invalidate();
+      setShowAdd(false);
+      setAddSiswa(null);
+      setAddForm(emptyAdd);
+    },
+  });
+
+  // Catat langsung: create tagihan → bayar sekaligus
+  const catatMut = useMutation({
+    mutationFn: async () => {
+      setCatatError('');
+      const created = await api.post('/pembayaran', {
+        siswa_id: catatSiswa!.id,
+        jenis_biaya: catatForm.jenis_biaya,
+        nominal_biaya: Number(catatForm.nominal_biaya),
+        tanggal_jatuh_tempo: catatForm.tanggal_jatuh_tempo || undefined,
+        tahun_ajaran: catatForm.tahun_ajaran,
+      });
+      const id = created.data?.data?.id;
+      await api.post(`/pembayaran/${id}/bayar`, {
+        nominal_bayar: Number(catatForm.nominal_biaya),
+        bank: catatForm.metode,
+        reference_number: catatForm.reference_number || undefined,
+      });
+    },
+    onSuccess: () => {
+      invalidate();
+      setShowCatat(false);
+      setCatatSiswa(null);
+      setCatatForm(emptyCatat);
+    },
+    onError: (e: any) => {
+      setCatatError(e?.response?.data?.message || 'Gagal mencatat pembayaran');
+    },
   });
 
   return (
@@ -141,7 +248,7 @@ export default function PembayaranPage() {
       <Header title="Manajemen Pembayaran" />
       <div className="p-6">
         {/* Summary */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" mb-6>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-xl p-5 shadow-sm border-l-4 border-[#3B7FD1]">
             <p className="text-sm text-gray-500">Total Tagihan</p>
             <p className="text-xl font-bold text-[#1A2332]">{fmt(summary.total_tagihan || 0)}</p>
@@ -157,21 +264,28 @@ export default function PembayaranPage() {
         </div>
 
         {/* Filters & Actions */}
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-wrap gap-3 mb-6">
           <select
             value={filterStatus}
             onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
-            className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
+            className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B7FD1] text-sm"
           >
             <option value="">Semua Status</option>
             <option value="belum_bayar">Belum Bayar</option>
             <option value="sebagian">Sebagian</option>
             <option value="lunas">Lunas</option>
           </select>
-          <button onClick={() => setShowAdd(true)} className="px-4 py-2.5 bg-[#3B7FD1] text-white rounded-lg hover:bg-[#2d6ab5] font-medium">
-            + Buat Tagihan
+          <button
+            onClick={() => setShowCatat(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm">
+            <Zap size={15} /> Catat Pembayaran
           </button>
-          <button className="px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50">Export Excel</button>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#3B7FD1] text-white rounded-lg hover:bg-[#2d6ab5] font-medium text-sm">
+            <Plus size={15} /> Buat Tagihan
+          </button>
+          <button className="px-4 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 text-sm">Export Excel</button>
         </div>
 
         {/* Table */}
@@ -209,17 +323,12 @@ export default function PembayaranPage() {
                       {p.status !== 'lunas' && (
                         <button
                           onClick={() => { setBayarItem(p); setBayarForm({ nominal_bayar: String(p.nominal_biaya - p.nominal_terbayar), bank: 'tunai', reference_number: '' }); }}
-                          className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs hover:bg-green-100 font-medium"
-                        >
+                          className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs hover:bg-green-100 font-medium">
                           Bayar
                         </button>
                       )}
-                      <button onClick={() => openEdit(p)} className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 font-medium">
-                        Edit
-                      </button>
-                      <button onClick={() => setDeleteId(p.id)} className="px-2 py-1 bg-red-50 text-red-600 rounded text-xs hover:bg-red-100 font-medium">
-                        Hapus
-                      </button>
+                      <button onClick={() => openEdit(p)} className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 font-medium">Edit</button>
+                      <button onClick={() => setDeleteId(p.id)} className="px-2 py-1 bg-red-50 text-red-600 rounded text-xs hover:bg-red-100 font-medium">Hapus</button>
                     </div>
                   </td>
                 </tr>
@@ -253,6 +362,82 @@ export default function PembayaranPage() {
         })()}
       </div>
 
+      {/* Modal: Catat Pembayaran Langsung */}
+      {showCatat && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+              <div>
+                <h2 className="font-semibold text-[#1A2332]">Catat Pembayaran</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Buat tagihan & langsung catat lunas</p>
+              </div>
+              <button onClick={() => { setShowCatat(false); setCatatError(''); }} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Siswa <span className="text-red-500">*</span></label>
+                <SiswaSearch siswaList={siswaList as any[]} value={catatSiswa} onChange={setCatatSiswa} />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Jenis Biaya <span className="text-red-500">*</span></label>
+                <JenisBiayaSelect value={catatForm.jenis_biaya} onChange={v => setCatatForm(f => ({ ...f, jenis_biaya: v }))} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Nominal (Rp) <span className="text-red-500">*</span></label>
+                  <input type="number" value={catatForm.nominal_biaya}
+                    onChange={e => setCatatForm(f => ({ ...f, nominal_biaya: e.target.value }))}
+                    placeholder="500000"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Tahun Ajaran</label>
+                  <input value={catatForm.tahun_ajaran}
+                    onChange={e => setCatatForm(f => ({ ...f, tahun_ajaran: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Metode Bayar <span className="text-red-500">*</span></label>
+                <select value={catatForm.metode}
+                  onChange={e => setCatatForm(f => ({ ...f, metode: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
+                  <option value="tunai">Tunai</option>
+                  <option value="bca">BCA Transfer</option>
+                  <option value="mandiri">Mandiri Transfer</option>
+                  <option value="bni">BNI Transfer</option>
+                  <option value="qris">QRIS</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">No. Referensi (opsional)</label>
+                <input value={catatForm.reference_number}
+                  onChange={e => setCatatForm(f => ({ ...f, reference_number: e.target.value }))}
+                  placeholder="No. transaksi bank / QRIS"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Jatuh Tempo (opsional)</label>
+                <input type="date" value={catatForm.tanggal_jatuh_tempo}
+                  onChange={e => setCatatForm(f => ({ ...f, tanggal_jatuh_tempo: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
+              </div>
+              {catatError && <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{catatError}</p>}
+            </div>
+            <div className="flex gap-3 px-6 pb-6 sticky bottom-0 bg-white pt-2 border-t border-gray-100">
+              <button
+                onClick={() => catatMut.mutate()}
+                disabled={catatMut.isPending || !catatSiswa || !catatForm.jenis_biaya || !catatForm.nominal_biaya}
+                className="flex-1 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
+                {catatMut.isPending ? 'Mencatat...' : 'Catat Lunas'}
+              </button>
+              <button onClick={() => { setShowCatat(false); setCatatError(''); }}
+                className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Batal</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Buat Tagihan */}
       {showAdd && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -264,39 +449,37 @@ export default function PembayaranPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Siswa <span className="text-red-500">*</span></label>
-                <select value={addForm.siswa_id} onChange={e => setAddForm({ ...addForm, siswa_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
-                  <option value="">-- Pilih Siswa --</option>
-                  {(siswaList as any[]).map((s: any) => (
-                    <option key={s.id} value={s.id}>{s.user?.nama} — {s.kelas?.nama}</option>
-                  ))}
-                </select>
+                <SiswaSearch siswaList={siswaList as any[]} value={addSiswa} onChange={setAddSiswa} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Jenis Biaya <span className="text-red-500">*</span></label>
-                <JenisBiayaSelect value={addForm.jenis_biaya} onChange={v => setAddForm({ ...addForm, jenis_biaya: v })} />
+                <JenisBiayaSelect value={addForm.jenis_biaya} onChange={v => setAddForm(f => ({ ...f, jenis_biaya: v }))} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Nominal (Rp) <span className="text-red-500">*</span></label>
-                  <input type="number" value={addForm.nominal_biaya} onChange={e => setAddForm({ ...addForm, nominal_biaya: e.target.value })}
+                  <input type="number" value={addForm.nominal_biaya}
+                    onChange={e => setAddForm(f => ({ ...f, nominal_biaya: e.target.value }))}
                     placeholder="500000"
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Tahun Ajaran</label>
-                  <input value={addForm.tahun_ajaran} onChange={e => setAddForm({ ...addForm, tahun_ajaran: e.target.value })}
+                  <input value={addForm.tahun_ajaran}
+                    onChange={e => setAddForm(f => ({ ...f, tahun_ajaran: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Jatuh Tempo</label>
-                <input type="date" value={addForm.tanggal_jatuh_tempo} onChange={e => setAddForm({ ...addForm, tanggal_jatuh_tempo: e.target.value })}
+                <input type="date" value={addForm.tanggal_jatuh_tempo}
+                  onChange={e => setAddForm(f => ({ ...f, tanggal_jatuh_tempo: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
               </div>
             </div>
             <div className="flex gap-3 px-6 pb-6">
-              <button onClick={() => addMut.mutate()} disabled={addMut.isPending || !addForm.siswa_id || !addForm.jenis_biaya || !addForm.nominal_biaya}
+              <button onClick={() => addMut.mutate()}
+                disabled={addMut.isPending || !addSiswa || !addForm.jenis_biaya || !addForm.nominal_biaya}
                 className="flex-1 py-2.5 bg-[#3B7FD1] text-white rounded-lg text-sm font-medium hover:bg-[#2d6ab5] disabled:opacity-50">
                 {addMut.isPending ? 'Menyimpan...' : 'Buat Tagihan'}
               </button>
@@ -318,21 +501,23 @@ export default function PembayaranPage() {
               <p className="text-sm text-gray-500">Siswa: <span className="font-medium text-gray-800">{editItem.siswa?.user?.nama}</span></p>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Jenis Biaya</label>
-                <JenisBiayaSelect value={editForm.jenis_biaya} onChange={v => setEditForm({ ...editForm, jenis_biaya: v })} />
+                <JenisBiayaSelect value={editForm.jenis_biaya} onChange={v => setEditForm(f => ({ ...f, jenis_biaya: v }))} />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Nominal (Rp)</label>
-                <input type="number" value={editForm.nominal_biaya} onChange={e => setEditForm({ ...editForm, nominal_biaya: e.target.value })}
+                <input type="number" value={editForm.nominal_biaya}
+                  onChange={e => setEditForm(f => ({ ...f, nominal_biaya: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Jatuh Tempo</label>
-                <input type="date" value={editForm.tanggal_jatuh_tempo} onChange={e => setEditForm({ ...editForm, tanggal_jatuh_tempo: e.target.value })}
+                <input type="date" value={editForm.tanggal_jatuh_tempo}
+                  onChange={e => setEditForm(f => ({ ...f, tanggal_jatuh_tempo: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
-                <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                <select value={editForm.status} onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
                   <option value="belum_bayar">Belum Bayar</option>
                   <option value="sebagian">Sebagian</option>
@@ -351,7 +536,7 @@ export default function PembayaranPage() {
         </div>
       )}
 
-      {/* Modal Catat Bayar */}
+      {/* Modal Catat Bayar (per baris) */}
       {bayarItem && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
@@ -366,12 +551,13 @@ export default function PembayaranPage() {
               </p>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Nominal Bayar (Rp)</label>
-                <input type="number" value={bayarForm.nominal_bayar} onChange={e => setBayarForm({ ...bayarForm, nominal_bayar: e.target.value })}
+                <input type="number" value={bayarForm.nominal_bayar}
+                  onChange={e => setBayarForm(f => ({ ...f, nominal_bayar: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Metode Bayar</label>
-                <select value={bayarForm.bank} onChange={e => setBayarForm({ ...bayarForm, bank: e.target.value })}
+                <select value={bayarForm.bank} onChange={e => setBayarForm(f => ({ ...f, bank: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none">
                   <option value="tunai">Tunai</option>
                   <option value="bca">BCA Transfer</option>
@@ -382,7 +568,8 @@ export default function PembayaranPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">No. Referensi (opsional)</label>
-                <input value={bayarForm.reference_number} onChange={e => setBayarForm({ ...bayarForm, reference_number: e.target.value })}
+                <input value={bayarForm.reference_number}
+                  onChange={e => setBayarForm(f => ({ ...f, reference_number: e.target.value }))}
                   placeholder="No. transaksi bank"
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#3B7FD1]" />
               </div>
@@ -415,9 +602,7 @@ export default function PembayaranPage() {
                   className="flex-1 py-2.5 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
                   {deleteMut.isPending ? 'Menghapus...' : 'Ya, Hapus'}
                 </button>
-                <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">
-                  Batal
-                </button>
+                <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Batal</button>
               </div>
             </div>
           </div>
