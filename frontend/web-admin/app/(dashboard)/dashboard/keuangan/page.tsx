@@ -187,6 +187,69 @@ export default function DashboardKeuanganPage() {
           ))}
         </div>
 
+        {/* ── SD vs SMP breakdown ──────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* SD */}
+          <div className="relative overflow-hidden rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-cyan-50 p-5 shadow-sm">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-sky-100 rounded-full -translate-y-8 translate-x-8 opacity-60" />
+            <div className="absolute bottom-0 left-0 w-16 h-16 bg-cyan-100 rounded-full translate-y-6 -translate-x-6 opacity-40" />
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-sky-500 rounded-xl flex items-center justify-center shadow-sm shadow-sky-200">
+                  <School size={18} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-sky-500 uppercase tracking-wider">Unit</p>
+                  <h3 className="text-lg font-black text-sky-800">SD Al-Fakhir</h3>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: 'Pemasukan', val: rekapSD?.summary?.total_pemasukan, color: 'text-emerald-700' },
+                  { label: 'Pengeluaran', val: rekapSD?.summary?.total_pengeluaran, color: 'text-red-600' },
+                  { label: 'Saldo', val: rekapSD?.summary?.saldo, color: (rekapSD?.summary?.saldo || 0) >= 0 ? 'text-sky-700' : 'text-red-600' },
+                ].map(({ label, val, color }) => (
+                  <div key={label} className="bg-white/70 rounded-xl p-2.5 text-center backdrop-blur-sm">
+                    <p className="text-[10px] text-gray-500 font-medium mb-0.5">{label}</p>
+                    <p className={`text-xs font-black ${color}`}>Rp {fmtShort(val || 0)}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-sky-400 mt-2.5 font-medium">{BULAN[nowM - 1]} {nowY}</p>
+            </div>
+          </div>
+
+          {/* SMP */}
+          <div className="relative overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-purple-50 p-5 shadow-sm">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-violet-100 rounded-full -translate-y-8 translate-x-8 opacity-60" />
+            <div className="absolute bottom-0 left-0 w-16 h-16 bg-purple-100 rounded-full translate-y-6 -translate-x-6 opacity-40" />
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-violet-500 rounded-xl flex items-center justify-center shadow-sm shadow-violet-200">
+                  <Building2 size={18} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-violet-500 uppercase tracking-wider">Unit</p>
+                  <h3 className="text-lg font-black text-violet-800">SMP Al-Fakhir</h3>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: 'Pemasukan', val: rekapSMP?.summary?.total_pemasukan, color: 'text-emerald-700' },
+                  { label: 'Pengeluaran', val: rekapSMP?.summary?.total_pengeluaran, color: 'text-red-600' },
+                  { label: 'Saldo', val: rekapSMP?.summary?.saldo, color: (rekapSMP?.summary?.saldo || 0) >= 0 ? 'text-violet-700' : 'text-red-600' },
+                ].map(({ label, val, color }) => (
+                  <div key={label} className="bg-white/70 rounded-xl p-2.5 text-center backdrop-blur-sm">
+                    <p className="text-[10px] text-gray-500 font-medium mb-0.5">{label}</p>
+                    <p className={`text-xs font-black ${color}`}>Rp {fmtShort(val || 0)}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-violet-400 mt-2.5 font-medium">{BULAN[nowM - 1]} {nowY}</p>
+            </div>
+          </div>
+        </div>
+
         {/* ── Progress + Kas Operasional ────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Progress */}
