@@ -139,17 +139,26 @@ export const scanQr = async (req: AuthRequest, res: Response): Promise<void> => 
     return;
   }
 
-  const absensi = await Absensi.create({
-    siswa_id,
-    jadwal_pelajaran_id: parsedQr.jadwal_id,
-    tanggal: new Date(parsedQr.tanggal),
-    waktu_hadir: new Date(),
-    status: 'hadir',
-    qr_code_scanned: true,
-    latitude: latitude ?? null,
-    longitude: longitude ?? null,
-    created_by: req.user!.id,
-  });
+  let absensi;
+  try {
+    absensi = await Absensi.create({
+      siswa_id,
+      jadwal_pelajaran_id: parsedQr.jadwal_id,
+      tanggal: new Date(parsedQr.tanggal),
+      waktu_hadir: new Date(),
+      status: 'hadir',
+      qr_code_scanned: true,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
+      created_by: req.user!.id,
+    });
+  } catch (e: any) {
+    if (e.name === 'SequelizeUniqueConstraintError') {
+      res.status(400).json({ success: false, message: 'Absensi sudah tercatat' });
+      return;
+    }
+    throw e;
+  }
 
   redis.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
   res.status(201).json({ success: true, message: 'Absensi berhasil dicatat', data: absensi });
@@ -173,18 +182,27 @@ export const inputCode = async (req: AuthRequest, res: Response): Promise<void> 
     return;
   }
 
-  const absensi = await Absensi.create({
-    siswa_id,
-    jadwal_pelajaran_id,
-    tanggal: new Date(tanggal),
-    waktu_hadir: new Date(),
-    status: 'hadir',
-    qr_code_scanned: false,
-    input_code: code,
-    latitude: latitude ?? null,
-    longitude: longitude ?? null,
-    created_by: req.user!.id,
-  });
+  let absensi;
+  try {
+    absensi = await Absensi.create({
+      siswa_id,
+      jadwal_pelajaran_id,
+      tanggal: new Date(tanggal),
+      waktu_hadir: new Date(),
+      status: 'hadir',
+      qr_code_scanned: false,
+      input_code: code,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
+      created_by: req.user!.id,
+    });
+  } catch (e: any) {
+    if (e.name === 'SequelizeUniqueConstraintError') {
+      res.status(400).json({ success: false, message: 'Absensi sudah tercatat' });
+      return;
+    }
+    throw e;
+  }
 
   redis.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
   res.status(201).json({ success: true, message: 'Absensi berhasil dicatat', data: absensi });

@@ -105,6 +105,13 @@ export const studentDashboard = async (req: AuthRequest, res: Response): Promise
     return;
   }
 
+  const today = new Date().toISOString().split('T')[0];
+  const cacheKey = `dashboard:siswa:${siswa.id}:${today}`;
+  try {
+    const cached = await redis.get(cacheKey);
+    if (cached) { res.json({ success: true, data: JSON.parse(cached) }); return; }
+  } catch { /* Redis miss */ }
+
   const tahunAjaran = `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
 
   const [absensiSummary, nilaiList, pembayaranList] = await Promise.all([
@@ -117,8 +124,7 @@ export const studentDashboard = async (req: AuthRequest, res: Response): Promise
     Pembayaran.findAll({ where: { siswa_id: siswa.id, tahun_ajaran: tahunAjaran } }),
   ]);
 
-  res.json({
-    success: true,
-    data: { absensi: absensiSummary, nilai: nilaiList, pembayaran: pembayaranList },
-  });
+  const data = { absensi: absensiSummary, nilai: nilaiList, pembayaran: pembayaranList };
+  redis.setex(cacheKey, 300, JSON.stringify(data)).catch(() => {});
+  res.json({ success: true, data });
 };

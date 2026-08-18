@@ -92,11 +92,20 @@ export const submitTes = async (req: AuthRequest, res: Response): Promise<void> 
   const totalSkor = soalList.length > 0 ? (totalBenar / soalList.length) * 100 : 0;
 
   await JawabanAkademik.bulkCreate(jawabanRows, { ignoreDuplicates: true });
-  const hasil = await HasilTesAkademik.create({
-    kandidat_id,
-    total_skor: Math.round(totalSkor * 10) / 10,
-    skor_per_mapel: JSON.stringify(skorPerMapel),
-  });
+  let hasil;
+  try {
+    hasil = await HasilTesAkademik.create({
+      kandidat_id,
+      total_skor: Math.round(totalSkor * 10) / 10,
+      skor_per_mapel: JSON.stringify(skorPerMapel),
+    });
+  } catch (e: any) {
+    if (e.name === 'SequelizeUniqueConstraintError') {
+      res.status(409).json({ success: false, message: 'Tes sudah dikerjakan' });
+      return;
+    }
+    throw e;
+  }
   await k.update({ skor_akademik: hasil.total_skor });
 
   res.json({ success: true, data: hasil });

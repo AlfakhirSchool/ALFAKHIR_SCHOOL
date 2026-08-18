@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
+import { rateLimiter } from '../middleware/rateLimiter';
 import * as ctrl from '../controllers/soalAkademikController';
 
 const router = Router();
 
 // Public routes (no auth)
-router.post('/kandidat/:kandidat_id/submit', ctrl.submitTes);
+router.post('/kandidat/:kandidat_id/submit', rateLimiter(5, 10 * 60 * 1000), ctrl.submitTes);
 router.get('/publik', ctrl.getAllPublik);
 
 router.use(authenticate);
