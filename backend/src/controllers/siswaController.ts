@@ -97,7 +97,7 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   }
   const password_hash = await bcrypt.hash(autoPassword, 10);
 
-  const user = await User.create({ email: finalEmail, password_hash, nama, role: 'siswa', password_default: autoPassword } as any);
+  const user = await User.create({ email: finalEmail, username: nis || null, password_hash, nama, role: 'siswa', password_default: autoPassword } as any);
   const siswa = await Siswa.create({ user_id: user.id, kelas_id, nisn: finalNisn, nis, no_induk: no_induk || nis, tempat_lahir, tanggal_lahir, alamat, jenis_kelamin: jenis_kelamin || null });
 
   // Kirim ke n8n async — tidak block response
@@ -169,7 +169,7 @@ async function doImportRows(rows: { nama: string; kelas_nama: string; nis: strin
           const autoPassword = nis.slice(-4);
           const password_hash = await bcrypt.hash(autoPassword, 10);
           await existingByNama.update({ nis, nisn: nis, no_induk: nis });
-          await (existingByNama as any).user.update({ password_hash, password_default: autoPassword });
+          await (existingByNama as any).user.update({ username: nis, password_hash, password_default: autoPassword });
           results.push({ nama, nis, status: 'updated', reason: 'NIS diperbarui dari Sheets' });
         } catch (err: any) {
           results.push({ nama, nis, status: 'skipped', reason: `Gagal update NIS: ${err.message}` });
@@ -186,7 +186,7 @@ async function doImportRows(rows: { nama: string; kelas_nama: string; nis: strin
     const autoPassword = nis ? nis.slice(-4) : Math.random().toString(36).slice(-4);
     const is_active = !row.status || row.status.toUpperCase() !== 'TIDAK AKTIF';
     const password_hash = await bcrypt.hash(autoPassword, 10);
-    const user = await User.create({ email: null, password_hash, nama, role: 'siswa', password_default: nis ? autoPassword : null, is_active } as any);
+    const user = await User.create({ email: null, username: nis || null, password_hash, nama, role: 'siswa', password_default: nis ? autoPassword : null, is_active } as any);
     await Siswa.create({ user_id: user.id, kelas_id: (kelas as any).id, nisn: nis || null, nis: nis || null, no_induk: nis || null, jenis_kelamin: row.jenis_kelamin || null });
     results.push({ nama, nis, status: 'created' });
   }

@@ -445,7 +445,7 @@ function KandidatTab({ kandidatList, stats, isLoading, filterStatus, setFilterSt
               {daftarResult ? (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                   <p className="text-sm font-semibold text-green-700 mb-2">✓ Berhasil didaftarkan!</p>
-                  <p className="text-xs text-gray-600">Email: <span className="font-mono font-medium">{daftarResult.email}</span></p>
+                  
                   <p className="text-xs text-gray-600 mt-1">Password: <span className="font-mono font-medium">{daftarResult.password}</span></p>
                   <p className="text-xs text-gray-400 mt-2">Simpan dan bagikan ke siswa/wali.</p>
                 </div>

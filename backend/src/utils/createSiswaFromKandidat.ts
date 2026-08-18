@@ -20,7 +20,7 @@ export async function createSiswaWithAccount(opts: CreateSiswaOptions): Promise<
   const t = await sequelize.transaction();
   try {
     const user = await User.create({
-      email: null, password_hash, nama: opts.nama,
+      email: null, username: opts.nis || null, password_hash, nama: opts.nama,
       role: 'siswa', password_default: autoPassword, is_active: true,
     } as any, { transaction: t });
 
