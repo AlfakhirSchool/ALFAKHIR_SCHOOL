@@ -5,6 +5,7 @@ import redis from '../config/redis';
 import { sendWAMessage, buildMasukMessage, buildPulangMessage } from '../utils/waNotification';
 import logger from '../config/logger';
 import { rateLimiter } from '../middleware/rateLimiter';
+import { scanKeys } from '../utils/redisScan';
 
 const router = Router();
 
@@ -52,8 +53,8 @@ const getSiswaByRfid = async (rfid_uid: string) => {
 // Body: { device_key, rfid_uid, mode: 'masuk'|'pulang' }
 // Response JSON: { ok, msg, nama?, kelas?, waktu?, foto_url? }
 router.post('/scan', rateLimiter(60, 60 * 1000), async (req: Request, res: Response): Promise<void> => {
-  const { device_key, rfid_uid, mode } = req.body as {
-    device_key: string; rfid_uid: string; mode: string;
+  const { device_key, rfid_uid, mode, ts, sig } = req.body as {
+    device_key: string; rfid_uid: string; mode: string; ts?: number; sig?: string;
   };
 
   if (!device_key || !rfid_uid || !mode) {
@@ -63,6 +64,30 @@ router.post('/scan', rateLimiter(60, 60 * 1000), async (req: Request, res: Respo
   if (mode !== 'masuk' && mode !== 'pulang') {
     res.status(400).json({ ok: false, msg: 'mode: masuk atau pulang' });
     return;
+  }
+
+  // Optional HMAC signature check — enforced only when RFID_HMAC_SECRET is set
+  const hmacSecret = process.env.RFID_HMAC_SECRET;
+  if (hmacSecret) {
+    if (!ts || !sig) {
+      res.status(401).json({ ok: false, msg: 'ts dan sig wajib saat HMAC aktif' });
+      return;
+    }
+    const ageSec = Math.abs(Date.now() / 1000 - ts);
+    if (ageSec > 60) {
+      res.status(401).json({ ok: false, msg: 'Request kedaluwarsa (replay protection)' });
+      return;
+    }
+    const expected = require('crypto')
+      .createHmac('sha256', hmacSecret)
+      .update(`${device_key}:${rfid_uid}:${mode}:${ts}`)
+      .digest('hex');
+    const sigBuf = Buffer.from(sig, 'hex');
+    const expBuf = Buffer.from(expected, 'hex');
+    if (sigBuf.length !== expBuf.length || !require('crypto').timingSafeEqual(sigBuf, expBuf)) {
+      res.status(401).json({ ok: false, msg: 'Signature tidak valid' });
+      return;
+    }
   }
 
   const device = await validateDevice(device_key);
@@ -77,7 +102,7 @@ router.post('/scan', rateLimiter(60, 60 * 1000), async (req: Request, res: Respo
   if (!siswa) {
     // Kartu tidak dikenal — cek apakah ada sesi registrasi aktif
     try {
-      const regKeys = await redis.keys('rfid_reg:*');
+      const regKeys = await scanKeys('rfid_reg:*');
       if (regKeys.length > 0) {
         for (const key of regKeys) {
           const userId = key.replace('rfid_reg:', '');

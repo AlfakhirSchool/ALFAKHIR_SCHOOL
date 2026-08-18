@@ -30,7 +30,7 @@ export const upload = multer({
 });
 
 const generateTokens = (user: { id: string; email: string; nama: string; role: string; school_level?: string | null }) => {
-  const accessOpts: SignOptions = { expiresIn: (process.env.JWT_EXPIRES_IN || '24h') as SignOptions['expiresIn'] };
+  const accessOpts: SignOptions = { expiresIn: (process.env.JWT_EXPIRES_IN || '15m') as SignOptions['expiresIn'] };
   const refreshOpts: SignOptions = { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as SignOptions['expiresIn'] };
 
   const accessToken = jwt.sign(
@@ -147,7 +147,19 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   });
 };
 
-export const logout = async (_req: AuthRequest, res: Response): Promise<void> => {
+export const logout = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { refreshToken: token } = req.body;
+  if (token) {
+    try {
+      const decoded = jwt.decode(token) as { exp?: number } | null;
+      const ttl = decoded?.exp ? decoded.exp - Math.floor(Date.now() / 1000) : 7 * 24 * 3600;
+      if (ttl > 0) {
+        redis.setex(`revoked:${token}`, ttl, '1').catch(() => {});
+      }
+    } catch {
+      // ignore malformed token
+    }
+  }
   res.json({ success: true, message: 'Logout berhasil' });
 };
 
@@ -159,6 +171,11 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
   }
 
   try {
+    const revoked = await redis.get(`revoked:${token}`).catch(() => null);
+    if (revoked) {
+      res.status(401).json({ success: false, message: 'Token sudah tidak valid' });
+      return;
+    }
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET as string) as { id: string };
     const user = await User.findOne({ where: { id: decoded.id, is_active: true } });
     if (!user) {

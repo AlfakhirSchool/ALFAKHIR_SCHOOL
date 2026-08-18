@@ -8,6 +8,7 @@ import { Absensi, QrCodeSession, JadwalPelajaran, Siswa, Kelas, MataPelajaran, G
 import sequelize from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { scanKeys } from '../utils/redisScan';
 import redis from '../config/redis';
 import { kelasIdFilter } from '../utils/levelFilter';
 import { sendWAMessage, buildMasukMessage, buildPulangMessage } from '../utils/waNotification';
@@ -160,7 +161,7 @@ export const scanQr = async (req: AuthRequest, res: Response): Promise<void> => 
     throw e;
   }
 
-  redis.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
+  scanKeys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
   res.status(201).json({ success: true, message: 'Absensi berhasil dicatat', data: absensi });
 };
 
@@ -204,7 +205,7 @@ export const inputCode = async (req: AuthRequest, res: Response): Promise<void> 
     throw e;
   }
 
-  redis.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
+  scanKeys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
   res.status(201).json({ success: true, message: 'Absensi berhasil dicatat', data: absensi });
 };
 
@@ -217,7 +218,7 @@ export const manualInput = async (req: AuthRequest, res: Response): Promise<void
   const existing = await Absensi.findOne({ where: { siswa_id, jadwal_pelajaran_id, tanggal } });
   if (existing) {
     await existing.update({ status, catatan, created_by: req.user!.id });
-    redis.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
+    scanKeys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
     res.json({ success: true, message: 'Absensi berhasil diperbarui', data: existing });
     return;
   }
@@ -231,7 +232,7 @@ export const manualInput = async (req: AuthRequest, res: Response): Promise<void
     created_by: req.user!.id,
   });
 
-  redis.keys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
+  scanKeys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
   res.status(201).json({ success: true, message: 'Absensi berhasil dicatat', data: absensi });
 };
 
@@ -240,7 +241,7 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
   if (!absensi) throw createError('Absensi tidak ditemukan', 404);
 
   await absensi.update({ status: req.body.status, catatan: req.body.catatan });
-  redis.keys(`absensi:detail:${(absensi as any).siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
+  scanKeys(`absensi:detail:${(absensi as any).siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
   res.json({ success: true, message: 'Absensi berhasil diperbarui', data: absensi });
 };
 

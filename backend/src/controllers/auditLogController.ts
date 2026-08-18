@@ -5,7 +5,8 @@ import ActivityLog from '../models/ActivityLog';
 export const getAuditLogs = async (req: Request, res: Response): Promise<void> => {
   try {
     const { page = 1, limit = 50, table_name, action, start_date, end_date, search } = req.query;
-    const offset = (Number(page) - 1) * Number(limit);
+    const limitCapped = Math.min(Number(limit), 200);
+    const offset = (Number(page) - 1) * limitCapped;
 
     const where: any = {};
     if (table_name) where.table_name = table_name;
@@ -29,12 +30,12 @@ export const getAuditLogs = async (req: Request, res: Response): Promise<void> =
     const { count, rows } = await ActivityLog.findAndCountAll({
       where,
       order: [['created_at', 'DESC']],
-      limit: Number(limit),
+      limit: limitCapped,
       offset,
       attributes: ['id', 'user_id', 'action', 'table_name', 'record_id', 'old_value', 'new_value', 'ip_address', 'created_at'],
     });
 
-    res.json({ success: true, data: rows, pagination: { total: count, page: Number(page), limit: Number(limit), totalPages: Math.ceil(count / Number(limit)) } });
+    res.json({ success: true, data: rows, pagination: { total: count, page: Number(page), limit: limitCapped, totalPages: Math.ceil(count / limitCapped) } });
   } catch {
     res.status(500).json({ success: false, message: 'Gagal memuat audit log' });
   }

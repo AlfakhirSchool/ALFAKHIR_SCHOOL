@@ -10,7 +10,8 @@ import { logAction } from '../middleware/auditLog';
 
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
   const { level, status, search, page = '1', limit = '20', tahun_ajaran } = req.query;
-  const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
+  const limitCapped = Math.min(parseInt(limit as string) || 20, 100);
+  const offset = (parseInt(page as string) - 1) * limitCapped;
 
   const where: any = {};
   if (level) where.level = level;
@@ -26,7 +27,7 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
       { model: HasilTesAkademik, as: 'hasil_tes', attributes: ['total_skor'] },
       { model: RingkasanAI, as: 'ringkasan_ai', attributes: ['ringkasan'] },
     ],
-    limit: parseInt(limit as string),
+    limit: limitCapped,
     offset,
     order: [['created_at', 'DESC']],
   });
@@ -51,7 +52,7 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
     success: true,
     data: rows,
     stats: { total, pending, review, diterima, ditolak },
-    pagination: { total: count, page: parseInt(page as string), limit: parseInt(limit as string), totalPages: Math.ceil(count / parseInt(limit as string)) },
+    pagination: { total: count, page: parseInt(page as string), limit: limitCapped, totalPages: Math.ceil(count / limitCapped) },
   });
 };
 
