@@ -5,7 +5,7 @@ export type SchoolLevel = 'SD' | 'SMP' | 'SMA' | null;
 
 interface User {
   id: string;
-  email: string;
+  email?: string | null;
   username?: string;
   nama: string;
   role: string;

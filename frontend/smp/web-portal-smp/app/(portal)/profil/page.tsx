@@ -31,8 +31,8 @@ export default function ProfilPage() {
         <div className="px-4 py-3 flex items-center gap-3">
           <Mail size={16} className="text-gray-400 flex-shrink-0" />
           <div>
-            <p className="text-xs text-gray-400">Email</p>
-            <p className="text-sm text-gray-800">{user?.email || '-'}</p>
+            <p className="text-xs text-gray-400">NIS</p>
+            <p className="text-sm text-gray-800">{user?.username || '-'}</p>
           </div>
         </div>
         <div className="px-4 py-3 flex items-center gap-3">

@@ -27,7 +27,7 @@ export default function LoginPage() {
         setError('Akun ini tidak memiliki akses ke portal siswa/orang tua.');
         return;
       }
-      const enrichedUser = { ...user, nis: profile_detail?.nis || user.username || user.email };
+      const enrichedUser = { ...user, nis: profile_detail?.nis || user.username };
       login(enrichedUser, accessToken, refreshToken);
       setSuccess(true);
       setTimeout(() => router.push('/'), 700);

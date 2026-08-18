@@ -20,7 +20,7 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await api.post('/auth/login', { email: username, password });
+      const res = await api.post('/auth/login', { username, password });
       const { user, accessToken, refreshToken } = res.data;
       if (!['siswa', 'ortu'].includes(user.role)) {
         setError('Akun ini tidak memiliki akses ke portal siswa/orang tua.');
@@ -29,7 +29,7 @@ export default function LoginPage() {
       login(user, accessToken, refreshToken);
       router.push('/');
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Email/password salah');
+      setError(err?.response?.data?.message || 'NIS atau password salah');
     } finally {
       setLoading(false);
     }
@@ -58,12 +58,12 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Email / Username</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">NIS</label>
               <input
                 type="text"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                placeholder="email@sekolah.sch.id"
+                placeholder="Masukkan NIS"
                 required
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#1A6B3C]"
               />
