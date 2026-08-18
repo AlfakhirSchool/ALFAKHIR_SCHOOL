@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import api from '@/lib/api';
 import styles from './kuitansi.module.css';
 
 // ── helpers ─────────────────────────────────────────────────────────────────
@@ -109,6 +110,9 @@ export default function KuitansiApp() {
   const [addingKelas, setAddingKelas] = useState(false);
   const [newKelasInput, setNewKelasInput] = useState('');
   const [kelasList, setKelasList] = useState<string[]>([]);
+  const [siswaSuggestions, setSiswaSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const namaSearchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const { user } = useAuthStore();
   // Deteksi signer berdasarkan nama user login
@@ -211,7 +215,6 @@ export default function KuitansiApp() {
   const grand = subtotal - potonganAmt;
   const invoiceNo = buildInvoiceNo(unit, noUrut, tanggal);
   const terbilangText = terbilang(grand) + ' Rupiah';
-  const nonZeroRows = rows.filter(r => parseNum(r.jumlah) > 0);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
     'https://' + (unit === 'SD' ? 'sdialfakhir.sch.id' : 'smpialfakhir.sch.id')
   )}`;
@@ -257,6 +260,31 @@ export default function KuitansiApp() {
     setKelasList(list);
     setKelas(s.kelas || list[0] || '');
     setShowHistory(false);
+  }
+
+  function searchSiswa(q: string) {
+    clearTimeout(namaSearchTimer.current);
+    if (q.length < 2) { setSiswaSuggestions([]); setShowSuggestions(false); return; }
+    namaSearchTimer.current = setTimeout(async () => {
+      try {
+        const res = await api.get('/siswa', { params: { search: q, limit: 8, unit } });
+        const list = res.data?.data || [];
+        setSiswaSuggestions(list);
+        setShowSuggestions(list.length > 0);
+      } catch { /* ignore */ }
+    }, 300);
+  }
+
+  function pickSiswa(s: any) {
+    setNama(s.nama || s.name || '');
+    const kelasNama = s.kelas?.nama || s.kelas_nama || '';
+    if (kelasNama) {
+      const list = loadKelasList(unit);
+      if (!list.includes(kelasNama)) { list.push(kelasNama); saveKelasList(unit, list); setKelasList([...list]); }
+      setKelas(kelasNama);
+    }
+    setSiswaSuggestions([]);
+    setShowSuggestions(false);
   }
 
   function addKelasFromInput() {
@@ -309,10 +337,25 @@ export default function KuitansiApp() {
                 <option value="A4">A4 landscape</option>
               </select>
             </div>
-            <div className="flex-1 min-w-[160px]">
+            <div className="flex-1 min-w-[160px] relative">
               <label className="block text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Nama Siswa</label>
               <input className="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm text-slate-900 focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/10"
-                value={nama} onChange={e => setNama(e.target.value)} placeholder="Nama siswa" />
+                value={nama}
+                onChange={e => { setNama(e.target.value); searchSiswa(e.target.value); }}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                placeholder="Ketik nama siswa..." />
+              {showSuggestions && (
+                <div className="absolute top-full left-0 right-0 z-50 bg-white border border-slate-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+                  {siswaSuggestions.map((s: any) => (
+                    <button key={s.id} type="button"
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-teal-50 border-b border-slate-50 last:border-0"
+                      onMouseDown={() => pickSiswa(s)}>
+                      <div className="font-medium text-slate-800">{s.nama || s.name}</div>
+                      <div className="text-xs text-slate-400">{s.kelas?.nama || s.kelas_nama || 'Tanpa kelas'} · {s.nis || s.no_induk || ''}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex-1 min-w-[160px]">
               <label className="block text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Kelas</label>
@@ -495,15 +538,12 @@ export default function KuitansiApp() {
 
               {/* Kuitansi lines */}
               <div className={styles.kuitansiLines}>
-                {(nama || kelas) && (
-                  <div className={styles.kuitansiUntuk}>
-                    <span className="label">Untuk pembayaran</span>
-                    {' '}: <span className="val">
-                      {nama || '(Siswa Baru)'}
-                      {kelas ? ` (Kelas ${kelas})` : ''}
-                    </span>
-                  </div>
-                )}
+                <div className={styles.kuitansiUntuk}>
+                  <span className="label">Untuk pembayaran</span>
+                  {' '}: <span className="val">
+                    {untuk || `${nama || '(Siswa Baru)'}${kelas ? ` (Kelas ${kelas})` : ''}`}
+                  </span>
+                </div>
                 <table className={styles.kuitansiTable}>
                   <thead>
                     <tr>
@@ -513,11 +553,13 @@ export default function KuitansiApp() {
                     </tr>
                   </thead>
                   <tbody>
-                    {nonZeroRows.map((r, i) => (
+                    {rows.map((r, i) => (
                       <tr key={i}>
                         <td>{i+1}</td>
                         <td>{r.ket.split('(')[0].trim() || r.ket}</td>
-                        <td className={styles.kitNominal}>Rp {fmtNum(parseNum(r.jumlah))}</td>
+                        <td className={styles.kitNominal}>
+                          {parseNum(r.jumlah) > 0 ? `Rp ${fmtNum(parseNum(r.jumlah))}` : '—'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
