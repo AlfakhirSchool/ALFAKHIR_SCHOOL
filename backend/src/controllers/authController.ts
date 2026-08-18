@@ -9,6 +9,7 @@ import { User, Guru, Siswa, OrangTua, Kelas, Sekolah } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
 import { logAction } from '../middleware/auditLog';
+import redis from '../config/redis';
 
 const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'profiles');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
@@ -57,32 +58,24 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   let user: InstanceType<typeof User> | null = null;
 
   if (nis) {
-    const siswa = await Siswa.findOne({
-      where: { nis },
-      include: [{ model: User, as: 'user' }],
-    });
+    const siswa = await Siswa.findOne({ where: { nis } });
     if (!siswa) {
       res.status(401).json({ success: false, message: 'NIS atau password salah' });
       return;
     }
     const targetRole = loginRole || 'siswa';
     if (targetRole === 'ortu') {
-      const ortu = await OrangTua.findOne({
-        where: { siswa_id: siswa.id },
-        include: [{ model: User, as: 'user' }],
-      });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      user = (ortu as any)?.user ?? null;
+      const ortu = await OrangTua.findOne({ where: { siswa_id: siswa.id } });
+      user = ortu ? await User.unscoped().findOne({ where: { id: (ortu as any).user_id, is_active: true } }) : null;
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      user = (siswa as any).user ?? null;
+      user = await User.unscoped().findOne({ where: { id: siswa.user_id, is_active: true } });
     }
   } else {
     // cari by username dulu, fallback ke email, lalu NIS (siswa login dengan NIS saja)
-    user = await User.findOne({ where: { username: loginIdentifier, is_active: true } });
-    if (!user) user = await User.findOne({ where: { email: loginIdentifier, is_active: true } });
+    user = await User.unscoped().findOne({ where: { username: loginIdentifier, is_active: true } });
+    if (!user) user = await User.unscoped().findOne({ where: { email: loginIdentifier, is_active: true } });
     if (!user && !loginIdentifier.includes('@'))
-      user = await User.findOne({ where: { email: `${loginIdentifier}@siswa.alfakhir.sch.id`, is_active: true } });
+      user = await User.unscoped().findOne({ where: { email: `${loginIdentifier}@siswa.alfakhir.sch.id`, is_active: true } });
   }
 
   if (!user || !(user as any).is_active) {
@@ -181,9 +174,15 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
 };
 
 export const getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
-  const user = await User.findByPk(req.user!.id, {
-    attributes: { exclude: ['password_hash'] },
-  });
+  const cacheKey = `profile:${req.user!.id}`;
+  const cached = await redis.get(cacheKey).catch(() => null);
+  if (cached) {
+    res.json({ success: true, data: JSON.parse(cached) });
+    return;
+  }
+
+  // defaultScope already excludes password_hash and password_default
+  const user = await User.findByPk(req.user!.id);
   if (!user) {
     throw createError('User tidak ditemukan', 404);
   }
@@ -215,6 +214,7 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
     profileData.ortu = ortuList.map((o) => o.toJSON());
   }
 
+  redis.setex(cacheKey, 60, JSON.stringify(profileData)).catch(() => {});
   res.json({ success: true, data: profileData });
 };
 
@@ -254,7 +254,7 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
     return;
   }
 
-  const user = await User.findByPk(req.user!.id);
+  const user = await User.unscoped().findByPk(req.user!.id);
   if (!user) {
     throw createError('User tidak ditemukan', 404);
   }

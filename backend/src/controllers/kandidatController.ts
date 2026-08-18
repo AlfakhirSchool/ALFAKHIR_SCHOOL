@@ -6,6 +6,7 @@ import sequelize from '../config/database';
 import { kelasIdFilter } from '../utils/levelFilter';
 import { getTahunAjaran } from '../utils/getTahunAjaran';
 import { createSiswaWithAccount } from '../utils/createSiswaFromKandidat';
+import { logAction } from '../middleware/auditLog';
 
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
   const { level, status, search, page = '1', limit = '20', tahun_ajaran } = req.query;
@@ -135,6 +136,14 @@ export const daftarkan = async (req: AuthRequest, res: Response): Promise<void> 
     tanggal_lahir: k.tanggal_lahir ? new Date(k.tanggal_lahir) : null,
   });
   await k.update({ status: 'DITERIMA', siswa_id: (siswa as any).id });
+
+  logAction({
+    user_id: req.user!.id, nama: req.user!.nama, role: req.user!.role,
+    school_level: req.user!.school_level,
+    action: 'Daftarkan Kandidat', table: 'siswa', record_id: (siswa as any).id,
+    new_value: { email, note: 'password awal diberikan ke admin' } as any,
+    ip: req.ip,
+  });
 
   res.json({ success: true, message: `${k.nama} berhasil didaftarkan`, email, password });
 };

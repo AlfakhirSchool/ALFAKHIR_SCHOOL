@@ -50,6 +50,9 @@ User.init(
     device_id: { type: DataTypes.STRING(255), allowNull: true },
   },
   {
+    defaultScope: {
+      attributes: { exclude: ['password_hash', 'password_default'] },
+    },
     sequelize,
     tableName: 'users',
     timestamps: true,

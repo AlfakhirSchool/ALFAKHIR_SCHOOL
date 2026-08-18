@@ -16,7 +16,7 @@ export const requestChange = async (req: AuthRequest, res: Response): Promise<vo
     return;
   }
 
-  const user = await User.findByPk(userId);
+  const user = await User.unscoped().findByPk(userId);
   if (!user) { res.status(404).json({ success: false, message: 'User tidak ditemukan' }); return; }
 
   if (type === 'password') {
@@ -44,7 +44,7 @@ export const requestChange = async (req: AuthRequest, res: Response): Promise<vo
     user_id: userId,
     type: type as 'password' | 'nama',
     new_value,
-    current_password_hash: new_hash,
+    new_password_hash: new_hash,
   });
 
   res.json({ success: true, message: `Permintaan ${type === 'password' ? 'ubah password' : 'ubah nama'} berhasil dikirim. Menunggu persetujuan Admin Master.` });
@@ -88,7 +88,7 @@ export const reviewChange = async (req: AuthRequest, res: Response): Promise<voi
     const user = await User.findByPk(item.user_id);
     if (user) {
       if (item.type === 'password') {
-        await (user as any).update({ password_hash: item.current_password_hash!, password_default: item.new_value });
+        await (user as any).update({ password_hash: item.new_password_hash!, password_default: item.new_value });
       } else {
         await user.update({ nama: item.new_value });
       }
