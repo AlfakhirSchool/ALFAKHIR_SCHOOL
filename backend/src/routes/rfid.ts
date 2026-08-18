@@ -4,6 +4,7 @@ import sequelize from '../config/database';
 import redis from '../config/redis';
 import { sendWAMessage, buildMasukMessage, buildPulangMessage } from '../utils/waNotification';
 import logger from '../config/logger';
+import { rateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
@@ -50,7 +51,7 @@ const getSiswaByRfid = async (rfid_uid: string) => {
 // ── POST /rfid/scan — ESP32 tap kartu ────────────────────────────────────────
 // Body: { device_key, rfid_uid, mode: 'masuk'|'pulang' }
 // Response JSON: { ok, msg, nama?, kelas?, waktu?, foto_url? }
-router.post('/scan', async (req: Request, res: Response): Promise<void> => {
+router.post('/scan', rateLimiter(60, 60 * 1000), async (req: Request, res: Response): Promise<void> => {
   const { device_key, rfid_uid, mode } = req.body as {
     device_key: string; rfid_uid: string; mode: string;
   };

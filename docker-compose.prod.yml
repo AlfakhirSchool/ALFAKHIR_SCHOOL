@@ -215,7 +215,7 @@ services:
     container_name: alfakhir_web_admin
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       backend:
         condition: service_healthy
@@ -241,7 +241,7 @@ services:
     container_name: alfakhir_web_guru
     restart: unless-stopped
     ports:
-      - "3002:3000"
+      - "127.0.0.1:3002:3000"
     depends_on:
       backend:
         condition: service_healthy
@@ -267,7 +267,7 @@ services:
     container_name: alfakhir_web_portal
     restart: unless-stopped
     ports:
-      - "3004:3000"
+      - "127.0.0.1:3004:3000"
     depends_on:
       backend:
         condition: service_healthy
@@ -290,7 +290,7 @@ services:
     container_name: alfakhir_web_admin_sd
     restart: unless-stopped
     ports:
-      - "3010:3000"
+      - "127.0.0.1:3010:3000"
     depends_on:
       backend:
         condition: service_healthy
@@ -312,7 +312,7 @@ services:
     container_name: alfakhir_web_guru_sd
     restart: unless-stopped
     ports:
-      - "3011:3000"
+      - "127.0.0.1:3011:3000"
     depends_on:
       backend:
         condition: service_healthy
@@ -334,7 +334,7 @@ services:
     container_name: alfakhir_web_portal_sd
     restart: unless-stopped
     ports:
-      - "3012:3000"
+      - "127.0.0.1:3012:3000"
     depends_on:
       backend:
         condition: service_healthy
@@ -361,7 +361,7 @@ services:
     container_name: alfakhir_web_admin_smp
     restart: unless-stopped
     ports:
-      - "3020:3000"
+      - "127.0.0.1:3020:3000"
     depends_on:
       backend:
         condition: service_healthy
@@ -383,7 +383,7 @@ services:
     container_name: alfakhir_web_guru_smp
     restart: unless-stopped
     ports:
-      - "3021:3000"
+      - "127.0.0.1:3021:3000"
     depends_on:
       backend:
         condition: service_healthy
@@ -405,7 +405,7 @@ services:
     container_name: alfakhir_web_portal_smp
     restart: unless-stopped
     ports:
-      - "3022:3000"
+      - "127.0.0.1:3022:3000"
     depends_on:
       backend:
         condition: service_healthy

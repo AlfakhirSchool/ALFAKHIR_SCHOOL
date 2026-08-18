@@ -36,6 +36,7 @@ import aiChatRoutes from './routes/aiChat';
 import tugasRoutes from './routes/tugas';
 import materiRoutes from './routes/materi';
 import { errorHandler, notFound } from './middleware/errorHandler';
+import { authenticate as authenticateUpload } from './middleware/auth';
 import { globalAuditLogger } from './middleware/auditLog';
 import logger from './config/logger';
 import { testEmailConnection } from './utils/emailService';
@@ -82,6 +83,14 @@ app.use(morgan('combined', {
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+// Sensitive upload dirs require JWT; /uploads/materi is public
+const SENSITIVE_UPLOAD_DIRS = ['/jurnal-foto', '/catatan-siswa', '/profiles'];
+app.use('/uploads', (req, res, next) => {
+  if (SENSITIVE_UPLOAD_DIRS.some(d => req.path.startsWith(d))) {
+    return (authenticateUpload as any)(req, res, next);
+  }
+  next();
+});
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 app.use(globalAuditLogger as any);
 

@@ -11,7 +11,7 @@ export const getPengumuman = async (req: AuthRequest, res: Response): Promise<vo
     const data = await Pengumuman.findAll({
       where,
       order: [['tanggal_publish', 'DESC']],
-      limit: limit ? parseInt(limit as string) : undefined,
+      limit: limit ? parseInt(limit as string) : 50,
     });
     res.json({ success: true, data });
   } catch (e: any) {
@@ -39,7 +39,7 @@ export const createPengumuman = async (req: AuthRequest, res: Response): Promise
       judul, isi,
       kategori: kategori || 'Pengumuman',
       target_role: target_role || 'all',
-      school_level: school_level || 'SD',
+      school_level: school_level || 'all',
       tanggal_publish: tanggal_publish ? new Date(tanggal_publish) : new Date(),
       created_by: req.user?.id || null,
     });
