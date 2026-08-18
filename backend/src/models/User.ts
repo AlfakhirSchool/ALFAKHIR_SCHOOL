@@ -6,7 +6,7 @@ export type SchoolLevel = 'SD' | 'SMP' | 'SMA' | null;
 
 interface UserAttributes {
   id: string;
-  email: string;
+  email: string | null;
   username: string | null;
   password_hash: string;
   nama: string;
@@ -23,7 +23,7 @@ interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'is_act
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   declare id: string;
-  declare email: string;
+  declare email: string | null;
   declare username: string | null;
   declare password_hash: string;
   declare nama: string;
@@ -39,7 +39,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
 User.init(
   {
     id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
-    email: { type: DataTypes.STRING(255), allowNull: false, unique: true },
+    email: { type: DataTypes.STRING(255), allowNull: true, unique: true },
     username: { type: DataTypes.STRING(255), allowNull: true, unique: true },
     password_hash: { type: DataTypes.STRING(255), allowNull: false },
     nama: { type: DataTypes.STRING(255), allowNull: false },

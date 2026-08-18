@@ -13,17 +13,14 @@ interface CreateSiswaOptions {
   observasi_kandidat_id?: string | null;
 }
 
-export async function createSiswaWithAccount(opts: CreateSiswaOptions): Promise<{ user: any; siswa: any; email: string; password: string }> {
-  const slug = opts.nama.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z.]/g, '');
-  const ts = Date.now().toString().slice(-4);
-  const autoEmail = `${slug}.${ts}@siswa.alfakhir.sch.id`;
+export async function createSiswaWithAccount(opts: CreateSiswaOptions): Promise<{ user: any; siswa: any; password: string }> {
   const autoPassword = Math.random().toString(36).slice(-6).toUpperCase();
   const password_hash = await bcrypt.hash(autoPassword, 10);
 
   const t = await sequelize.transaction();
   try {
     const user = await User.create({
-      email: autoEmail, password_hash, nama: opts.nama,
+      email: null, password_hash, nama: opts.nama,
       role: 'siswa', password_default: autoPassword, is_active: true,
     } as any, { transaction: t });
 
@@ -39,7 +36,7 @@ export async function createSiswaWithAccount(opts: CreateSiswaOptions): Promise<
     } as any, { transaction: t });
 
     await t.commit();
-    return { user, siswa, email: autoEmail, password: autoPassword };
+    return { user, siswa, password: autoPassword };
   } catch (err) {
     await t.rollback();
     throw err;

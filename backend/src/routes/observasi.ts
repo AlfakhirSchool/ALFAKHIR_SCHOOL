@@ -55,12 +55,12 @@ router.post('/daftarkan', authorize('admin'), async (req: AuthRequest, res: Resp
       }
     }
 
-    const { email, password } = await createSiswaWithAccount({
+    const { password } = await createSiswaWithAccount({
       nama, kelas_id, nisn: nisn || null, nis: no_induk || null, no_induk: no_induk || null,
       observasi_kandidat_id: kandidat_id || null,
     });
 
-    res.json({ success: true, message: `${nama} berhasil didaftarkan sebagai siswa`, email, password });
+    res.json({ success: true, message: `${nama} berhasil didaftarkan sebagai siswa`, password });
   } catch (err: any) {
     res.status(500).json({ success: false, message: 'Gagal mendaftarkan siswa: ' + err.message });
   }

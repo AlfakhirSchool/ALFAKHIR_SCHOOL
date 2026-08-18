@@ -29,7 +29,7 @@ export const upload = multer({
   },
 });
 
-const generateTokens = (user: { id: string; email: string; nama: string; role: string; school_level?: string | null }) => {
+const generateTokens = (user: { id: string; email: string | null; nama: string; role: string; school_level?: string | null }) => {
   const accessOpts: SignOptions = { expiresIn: (process.env.JWT_EXPIRES_IN || '15m') as SignOptions['expiresIn'] };
   const refreshOpts: SignOptions = { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as SignOptions['expiresIn'] };
 
@@ -71,11 +71,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       user = await User.unscoped().findOne({ where: { id: siswa.user_id, is_active: true } });
     }
   } else {
-    // cari by username dulu, fallback ke email, lalu NIS (siswa login dengan NIS saja)
+    // cari by username dulu, fallback ke email
     user = await User.unscoped().findOne({ where: { username: loginIdentifier, is_active: true } });
     if (!user) user = await User.unscoped().findOne({ where: { email: loginIdentifier, is_active: true } });
-    if (!user && !loginIdentifier.includes('@'))
-      user = await User.unscoped().findOne({ where: { email: `${loginIdentifier}@siswa.alfakhir.sch.id`, is_active: true } });
   }
 
   if (!user || !(user as any).is_active) {

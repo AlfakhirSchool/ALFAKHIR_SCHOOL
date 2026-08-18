@@ -131,7 +131,7 @@ export const daftarkan = async (req: AuthRequest, res: Response): Promise<void> 
   const kelas = await Kelas.findByPk(kelas_id);
   if (!kelas) { res.status(404).json({ success: false, message: 'Kelas tidak ditemukan' }); return; }
 
-  const { siswa, email, password } = await createSiswaWithAccount({
+  const { siswa, password } = await createSiswaWithAccount({
     nama: k.nama, kelas_id, nisn: nisn || null, nis: nis || null, no_induk: nis || null,
     jenis_kelamin: k.jenis_kelamin || null,
     tanggal_lahir: k.tanggal_lahir ? new Date(k.tanggal_lahir) : null,
@@ -142,11 +142,11 @@ export const daftarkan = async (req: AuthRequest, res: Response): Promise<void> 
     user_id: req.user!.id, nama: req.user!.nama, role: req.user!.role,
     school_level: req.user!.school_level,
     action: 'Daftarkan Kandidat', table: 'siswa', record_id: (siswa as any).id,
-    new_value: { email, note: 'password awal diberikan ke admin' } as any,
+    new_value: { note: 'password awal diberikan ke admin' } as any,
     ip: req.ip,
   });
 
-  res.json({ success: true, message: `${k.nama} berhasil didaftarkan`, email, password });
+  res.json({ success: true, message: `${k.nama} berhasil didaftarkan`, password });
 };
 
 // Public — tidak butuh auth

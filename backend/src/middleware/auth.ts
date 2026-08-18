@@ -6,7 +6,7 @@ import { UserRole, SchoolLevel } from '../models/User';
 export interface AuthRequest extends Request {
   user?: {
     id: string;
-    email: string;
+    email: string | null;
     nama: string;
     role: UserRole;
     school_level: SchoolLevel;
@@ -23,7 +23,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     const token = authHeader.split(' ')[1];
     const secret = process.env.JWT_SECRET as string;
-    const decoded = jwt.verify(token, secret) as { id: string; email: string; nama: string; role: UserRole; school_level: SchoolLevel };
+    const decoded = jwt.verify(token, secret) as { id: string; email: string | null; nama: string; role: UserRole; school_level: SchoolLevel };
 
     const user = await User.findOne({ where: { id: decoded.id, is_active: true } });
     if (!user) {
