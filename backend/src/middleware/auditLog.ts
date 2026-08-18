@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from './auth';
 import { ActivityLog } from '../models';
+import logger from '../config/logger';
 
 // Map URL path → (action label, table name)
 function resolveAction(method: string, path: string): { action: string; table: string | null } {
@@ -111,7 +112,7 @@ export const globalAuditLogger = (req: AuthRequest, res: Response, next: NextFun
           new_value: Object.keys(safeBody).length ? safeBody : null,
           ip_address: req.ip || null,
           user_agent: req.headers['user-agent'] || null,
-        }).catch((e: Error) => console.error('[AUDIT_LOG_ERROR]', e.message));
+        }).catch((e: Error) => logger.error({ event: 'audit_log_error', error: e.message }));
       }
       return originalJson(body);
     };

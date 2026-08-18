@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Op, QueryTypes } from 'sequelize';
+import logger from '../config/logger';
 import User from '../models/User';
 import JurnalGuru from '../models/JurnalGuru';
 import Siswa from '../models/Siswa';
@@ -169,7 +170,7 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
       pagination: { total: notifications.length, page: 1, limit: 20, totalPages: 1 },
     });
   } catch (error) {
-    console.error('Notifikasi error:', error);
+    logger.error({ event: 'notifikasi_error', error });
     res.status(500).json({ success: false, message: 'Gagal memuat notifikasi' });
   }
 };

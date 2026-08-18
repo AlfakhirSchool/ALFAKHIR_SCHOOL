@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import Groq from 'groq-sdk';
+import logger from '../config/logger';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { rateLimiter } from '../middleware/rateLimiter';
 import { User, Siswa, Guru, Kelas, JurnalGuru, Sekolah } from '../models';
@@ -196,7 +197,7 @@ Aturan untuk bantuan pendidikan:
     const text = response.choices[0]?.message?.content || '';
     res.json({ success: true, data: { reply: text } });
   } catch (e: any) {
-    console.error('Groq AI error:', e?.message);
+    logger.error({ event: 'groq_ai_error', error: e?.message });
     const status = e?.status === 429 ? 503 : 500;
     const msg = status === 503
       ? 'Kuota AI sedang penuh, coba beberapa menit lagi'

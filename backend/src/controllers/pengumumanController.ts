@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import Pengumuman from '../models/Pengumuman';
 import { AuthRequest } from '../middleware/auth';
+import logger from '../config/logger';
 
 export const getPengumuman = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -15,7 +16,7 @@ export const getPengumuman = async (req: AuthRequest, res: Response): Promise<vo
     });
     res.json({ success: true, data });
   } catch (e: any) {
-    console.error('GET /pengumuman error:', e.message);
+    logger.error({ event: 'get_pengumuman_error', error: e.message });
     res.status(500).json({ success: false, message: 'Gagal memuat pengumuman' });
   }
 };
@@ -45,7 +46,7 @@ export const createPengumuman = async (req: AuthRequest, res: Response): Promise
     });
     res.status(201).json({ success: true, data: p });
   } catch (e: any) {
-    console.error('POST /pengumuman error:', e.message);
+    logger.error({ event: 'create_pengumuman_error', error: e.message });
     res.status(500).json({ success: false, message: 'Gagal membuat pengumuman' });
   }
 };
