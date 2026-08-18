@@ -22,8 +22,31 @@ const KEHADIRAN_COLOR: Record<string, string> = {
   alfa:  'bg-red-100 text-red-700 border-red-300',
 };
 
+// Parse tanggal dari API (bisa berupa ISO string UTC) ke string YYYY-MM-DD lokal
+function localDateStr(tgl: string | null | undefined): string {
+  if (!tgl) return '';
+  const d = new Date(tgl);
+  if (isNaN(d.getTime())) return tgl.split('T')[0] || '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
+function todayLocalStr(): string {
+  return localDateStr(new Date().toISOString());
+}
+
+function fmtTgl(tgl: string | null | undefined, opts?: Intl.DateTimeFormatOptions): string {
+  if (!tgl) return '—';
+  const s = localDateStr(tgl);
+  const [y, m, d] = s.split('-').map(Number);
+  if (!y) return '—';
+  return new Date(y, m - 1, d).toLocaleDateString('id-ID', opts || { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 const emptyForm = {
-  kelas_id: '', mata_pelajaran_id: '', tanggal: new Date().toISOString().split('T')[0],
+  kelas_id: '', mata_pelajaran_id: '', tanggal: todayLocalStr(),
   topik_pelajaran: '', deskripsi_pembelajaran: '', hasil_pembelajaran: '', rencana_tindak_lanjut: '',
 };
 
@@ -121,7 +144,7 @@ export default function JurnalPage() {
   });
 
   const filteredJurnal = filterTgl
-    ? (jurnalList || []).filter((j: any) => j.tanggal?.split('T')[0] === filterTgl)
+    ? (jurnalList || []).filter((j: any) => localDateStr(j.tanggal) === filterTgl)
     : (jurnalList || []);
 
   const saveJurnal = useMutation({
@@ -165,7 +188,7 @@ export default function JurnalPage() {
       return items.filter((d: any) => {
         const tgl = d.jurnal?.tanggal;
         if (!tgl) return false;
-        const year = new Date(tgl).getFullYear();
+        const year = parseInt(localDateStr(tgl).split('-')[0], 10);
         const [y1, y2] = psTahunAjaran.split('/');
         return String(year) === y1 || String(year) === y2;
       });
@@ -187,7 +210,7 @@ export default function JurnalPage() {
   const openEdit = (j: any) => {
     setForm({
       kelas_id: j.kelas_id, mata_pelajaran_id: j.mata_pelajaran_id,
-      tanggal: j.tanggal?.split('T')[0] || '',
+      tanggal: localDateStr(j.tanggal),
       topik_pelajaran: j.topik_pelajaran || '',
       deskripsi_pembelajaran: j.deskripsi_pembelajaran || '',
       hasil_pembelajaran: j.hasil_pembelajaran || '',
@@ -250,7 +273,7 @@ export default function JurnalPage() {
                   onClick={async () => {
                     const XLSX = await import('xlsx');
                     const rows = (jurnalList || []).map((j: any) => ({
-                      'Tanggal': j.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '',
+                      'Tanggal': fmtTgl(j.tanggal),
                       'Kelas': j.kelas?.nama || '',
                       'Mata Pelajaran': j.mata_pelajaran?.nama || '',
                       'Topik Pelajaran': j.topik_pelajaran || '',
@@ -303,7 +326,7 @@ export default function JurnalPage() {
                         <span className={`text-xs px-2 py-0.5 rounded font-medium ${STATUS_STYLES[j.status]}`}>{j.status}</span>
                       </div>
                       <p className="text-sm text-gray-500">
-                        {j.kelas?.nama} · {j.mata_pelajaran?.nama || '—'} · {new Date(j.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        {j.kelas?.nama} · {j.mata_pelajaran?.nama || '—'} · {fmtTgl(j.tanggal)}
                       </p>
                       {(j.jumlah_siswa_hadir > 0 || j.jumlah_siswa_sakit > 0 || j.jumlah_siswa_izin > 0 || j.jumlah_siswa_alfa > 0) && (
                         <div className="flex gap-3 mt-2 text-xs">
@@ -419,7 +442,7 @@ export default function JurnalPage() {
               <div className="px-6 py-4 bg-[#1B8B87]/5 border-b border-[#1B8B87]/10">
                 <h2 className="font-semibold text-[#1A2332]">{activeJurnal.topik_pelajaran}</h2>
                 <p className="text-sm text-gray-500 mt-0.5">
-                  {activeJurnal.kelas?.nama} · {activeJurnal.mata_pelajaran?.nama} · {new Date(activeJurnal.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  {activeJurnal.kelas?.nama} · {activeJurnal.mata_pelajaran?.nama} · {fmtTgl(activeJurnal.tanggal)}
                 </p>
               </div>
 
@@ -580,7 +603,7 @@ export default function JurnalPage() {
                   <p className="text-xs text-gray-500 mb-3">{(psRiwayat as any[]).length} catatan ditemukan</p>
                   {(psRiwayat as any[]).map((d: any) => {
                     const j = d.jurnal;
-                    const tgl = j?.tanggal ? new Date(j.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+                    const tgl = fmtTgl(j?.tanggal);
                     const kehadiranColor: Record<string, string> = { hadir: 'bg-green-100 text-green-700', sakit: 'bg-yellow-100 text-yellow-700', izin: 'bg-blue-100 text-blue-700', alfa: 'bg-red-100 text-red-700' };
                     return (
                       <div key={d.id} className="border border-gray-100 rounded-xl p-4 hover:bg-gray-50/50">
@@ -625,7 +648,7 @@ export default function JurnalPage() {
               <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
                 <div><span className="font-medium block">Kelas</span>{detailJurnal.kelas?.nama || '—'}</div>
                 <div><span className="font-medium block">Mata Pelajaran</span>{detailJurnal.mata_pelajaran?.nama || '—'}</div>
-                <div><span className="font-medium block">Tanggal</span>{new Date(detailJurnal.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                <div><span className="font-medium block">Tanggal</span>{fmtTgl(detailJurnal.tanggal, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</div>
               </div>
               {detailJurnal.deskripsi_pembelajaran && (
                 <div><p className="text-xs font-medium text-gray-600 mb-1">Tugas</p><p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{detailJurnal.deskripsi_pembelajaran}</p></div>
