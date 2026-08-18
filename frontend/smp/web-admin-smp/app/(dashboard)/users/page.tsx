@@ -15,7 +15,7 @@ const ROLE_LABEL: Record<string, string> = {
 const LEVEL_COLOR: Record<string, string> = {
   SD: '#F97316', SMP: '#2563EB', SMA: '#7C3AED',
 };
-const LEVELS = ['SD', 'SMP', 'SMA'] as const;
+const LEVELS = ['SD', 'SMP'] as const;
 
 function Badge({ text, color }: { text: string; color: string }) {
   return (
@@ -203,8 +203,8 @@ export default function UsersPage() {
         {/* Jenjang tabs — master admin only */}
         {isMaster && (
           <div className="flex gap-2">
-            {(['', 'SD', 'SMP', 'SMA'] as const).map(j => {
-              const labels: Record<string, string> = { '': 'Semua', SD: 'SD', SMP: 'SMP', SMA: 'SMA' };
+            {(['', 'SD', 'SMP'] as const).map(j => {
+              const labels: Record<string, string> = { '': 'Semua', SD: 'SD', SMP: 'SMP' };
               const colors: Record<string, { active: string; passive: string }> = {
                 '':   { active: 'bg-gray-700 text-white', passive: 'bg-gray-100 text-gray-600 hover:bg-gray-200' },
                 SD:   { active: 'bg-orange-500 text-white', passive: 'bg-orange-50 text-orange-700 hover:bg-orange-100' },

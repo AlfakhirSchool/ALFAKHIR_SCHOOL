@@ -11,7 +11,7 @@ const LEVEL_COLOR: Record<string, string> = {
   SD: '#F97316', SMP: '#2563EB', SMA: '#7C3AED',
 };
 
-const LEVELS = ['SD', 'SMP', 'SMA'] as const;
+const LEVELS = ['SD', 'SMP'] as const;
 
 function LevelBadges({ levels }: { levels: string[] | null }) {
   if (!levels || levels.length === 0) {

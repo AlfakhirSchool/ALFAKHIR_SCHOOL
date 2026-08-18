@@ -106,7 +106,7 @@ export default function HasilTesPage() {
             />
           </div>
           <div className="flex gap-2">
-            {['', 'SD', 'SMP', 'SMA'].map(l => (
+            {['', 'SD', 'SMP'].map(l => (
               <button key={l} onClick={() => setLevel(l)}
                 className={`px-3 py-1.5 rounded-xl text-sm font-medium border transition-all ${level === l ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-600 border-slate-200 hover:border-teal-300'}`}>
                 {l || 'Semua'}

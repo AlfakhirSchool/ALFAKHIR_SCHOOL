@@ -81,7 +81,7 @@ export default function RekapAbsensiAdminPage() {
 
       {/* Jenjang tabs */}
       <div className="flex flex-wrap gap-2 mb-4">
-        {(['SD', 'SMP', 'SMA'] as const).map(j => {
+        {(['SD', 'SMP'] as const).map(j => {
           const c = JENJANG_COLOR[j];
           const isActive = jenjang === j;
           return (

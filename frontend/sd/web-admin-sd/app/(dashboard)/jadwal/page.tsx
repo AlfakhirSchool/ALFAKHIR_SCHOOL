@@ -8,7 +8,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
 const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-const ALL_JENJANG = ['SD', 'SMP', 'SMA'] as const;
+const ALL_JENJANG = ['SD', 'SMP'] as const;
 const JENJANG_COLOR: Record<string, { active: string; passive: string }> = {
   SD:  { active: 'bg-orange-500 text-white', passive: 'bg-orange-50 text-orange-700 hover:bg-orange-100' },
   SMP: { active: 'bg-[#1B8B87] text-white',  passive: 'bg-teal-50 text-teal-700 hover:bg-teal-100' },

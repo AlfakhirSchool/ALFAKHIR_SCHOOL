@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
-const JENJANG_LIST = ['SD', 'SMP', 'SMA'] as const;
+const JENJANG_LIST = ['SD', 'SMP'] as const;
 const JENJANG_COLOR: Record<string, { active: string; passive: string; badge: string }> = {
   SD:  { active: 'bg-orange-500 text-white', passive: 'bg-orange-50 text-orange-700 hover:bg-orange-100', badge: 'bg-orange-100 text-orange-700' },
   SMP: { active: 'bg-[#1B8B87] text-white',  passive: 'bg-teal-50 text-teal-700 hover:bg-teal-100',      badge: 'bg-teal-100 text-teal-700' },

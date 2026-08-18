@@ -64,7 +64,7 @@ export default function JadwalPage() {
   const myJenjangFromProfile = new Set<string>((user as any)?.school_levels || []);
   // Gabung keduanya — jadwal aktual prioritas, school_levels sebagai fallback
   const myJenjangSet = myJenjangFromJadwal.size > 0 ? myJenjangFromJadwal : myJenjangFromProfile;
-  const availableTabs = ['Semua', 'SD', 'SMP', 'SMA'].filter(j => j === 'Semua' || myJenjangSet.has(j));
+  const availableTabs = ['Semua', 'SD', 'SMP'].filter(j => j === 'Semua' || myJenjangSet.has(j));
 
   // Set default tab sekali setelah data load
   if (!jenjangInit && !isLoading && (myJenjangSet.size > 0 || myJenjangFromProfile.size > 0)) {

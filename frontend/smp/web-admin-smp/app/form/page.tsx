@@ -59,7 +59,7 @@ export default function FormPortalPage() {
           <div>
             <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Pilih Jenjang</p>
             <div className="flex gap-2">
-              {['SD', 'SMP', 'SMA'].map(l => (
+              {['SD', 'SMP'].map(l => (
                 <button key={l} onClick={() => { setLevel(l); setSelected(null); }}
                   className={`flex-1 py-2.5 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${level === l ? 'bg-[#1B8B87] text-white shadow-lg shadow-teal-500/20' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
                   {l}

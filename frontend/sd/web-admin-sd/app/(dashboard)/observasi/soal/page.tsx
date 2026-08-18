@@ -12,7 +12,7 @@ type Soal = {
   jawaban_benar: string; gambar_url: string | null; urutan: number; level: string | null;
 };
 
-const LEVELS  = ['SD', 'SMP', 'SMA'];
+const LEVELS  = ['SD', 'SMP'];
 const MAPELS  = ['Matematika', 'Bahasa Indonesia', 'Bahasa Inggris', 'IPA', 'IPS', 'Agama', 'PKn'];
 const PILIHAN_KEYS = ['A', 'B', 'C', 'D'];
 

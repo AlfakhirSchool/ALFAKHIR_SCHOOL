@@ -51,7 +51,7 @@ export default function TesPortalPage() {
         <div className="bg-white rounded-[40px] p-8 shadow-2xl shadow-slate-200 border border-slate-100 space-y-6">
           {/* Level */}
           <div className="flex gap-2">
-            {['SD', 'SMP', 'SMA'].map(l => (
+            {['SD', 'SMP'].map(l => (
               <button key={l} onClick={() => setLevel(l)}
                 className={`flex-1 py-2.5 rounded-2xl text-sm font-bold transition-all ${level === l ? 'bg-[#1B8B87] text-white shadow-lg shadow-teal-500/20' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
                 {l}

@@ -7,7 +7,7 @@ import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/authStore';
 
-const ALL_JENJANG = ['SD', 'SMP', 'SMA'] as const;
+const ALL_JENJANG = ['SD', 'SMP'] as const;
 
 const JENJANG_COLOR: Record<string, { active: string; passive: string }> = {
   SD:  { active: 'bg-orange-500 text-white', passive: 'bg-orange-50 text-orange-700 hover:bg-orange-100' },
