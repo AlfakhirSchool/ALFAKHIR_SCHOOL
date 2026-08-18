@@ -125,7 +125,8 @@ export const remove = async (req: AuthRequest, res: Response): Promise<void> => 
 export const getLaporan = async (req: AuthRequest, res: Response): Promise<void> => {
   const { kelas_id, mata_pelajaran_id, semester, tahun_ajaran } = req.query;
 
-  if (!kelas_id && !mata_pelajaran_id) {
+  // Guru wajib filter; admin boleh lihat semua
+  if (!kelas_id && !mata_pelajaran_id && req.user!.role === 'guru') {
     res.status(400).json({ success: false, message: 'kelas_id atau mata_pelajaran_id wajib diisi' });
     return;
   }

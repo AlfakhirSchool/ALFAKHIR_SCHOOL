@@ -194,8 +194,7 @@ async function doImportRows(rows: { nama: string; kelas_nama: string; nis: strin
     const is_active = !row.status || row.status.toUpperCase() !== 'TIDAK AKTIF';
     const password_hash = await bcrypt.hash(autoPassword, 10);
     const user = await User.create({ email: autoEmail, password_hash, nama, role: 'siswa', password_default: nis ? autoPassword : null, is_active } as any);
-    const noInduk = nis || `TMP${Date.now()}${idx}`;
-    await Siswa.create({ user_id: user.id, kelas_id: (kelas as any).id, nisn: nis || null, nis: nis || null, no_induk: noInduk, jenis_kelamin: row.jenis_kelamin || null });
+    await Siswa.create({ user_id: user.id, kelas_id: (kelas as any).id, nisn: nis || null, nis: nis || null, no_induk: nis || null, jenis_kelamin: row.jenis_kelamin || null });
     results.push({ nama, nis, status: 'created' });
   }
   return results;

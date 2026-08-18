@@ -422,10 +422,10 @@ export default function KandidatDetailPage({ params }: { params: Promise<{ level
                 {aiLoading ? 'Generating...' : 'Generate'}
               </button>
             </div>
-            {aiSummary || k.ringkasan_ai ? (
+            {aiSummary || k.ringkasan_ai?.ringkasan ? (
               <div
                 className="text-sm text-slate-600 leading-relaxed prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(aiSummary || k.ringkasan_ai) }}
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(aiSummary || k.ringkasan_ai?.ringkasan || '') }}
               />
             ) : (
               <p className="text-xs text-slate-400 italic">Klik Generate untuk membuat ringkasan AI dari data kandidat ini.</p>
