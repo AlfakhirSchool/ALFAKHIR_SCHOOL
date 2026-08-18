@@ -210,7 +210,6 @@ services:
     build:
       context: ./frontend
       dockerfile: web-admin/Dockerfile
-      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
     container_name: alfakhir_web_admin
@@ -237,7 +236,6 @@ services:
     build:
       context: ./frontend
       dockerfile: web-guru/Dockerfile
-      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
     container_name: alfakhir_web_guru
@@ -264,7 +262,6 @@ services:
     build:
       context: ./frontend
       dockerfile: web-portal/Dockerfile
-      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
     container_name: alfakhir_web_portal
@@ -288,7 +285,6 @@ services:
     build:
       context: ./frontend
       dockerfile: sd/web-admin-sd/Dockerfile
-      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
     container_name: alfakhir_web_admin_sd
@@ -311,7 +307,6 @@ services:
     build:
       context: ./frontend
       dockerfile: sd/web-guru-sd/Dockerfile
-      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
     container_name: alfakhir_web_guru_sd
@@ -334,7 +329,6 @@ services:
     build:
       context: ./frontend
       dockerfile: sd/web-portal-sd/Dockerfile
-      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
     container_name: alfakhir_web_portal_sd
@@ -362,7 +356,6 @@ services:
     build:
       context: ./frontend
       dockerfile: smp/web-admin-smp/Dockerfile
-      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
     container_name: alfakhir_web_admin_smp
@@ -385,7 +378,6 @@ services:
     build:
       context: ./frontend
       dockerfile: smp/web-guru-smp/Dockerfile
-      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
     container_name: alfakhir_web_guru_smp
@@ -408,7 +400,6 @@ services:
     build:
       context: ./frontend
       dockerfile: smp/web-portal-smp/Dockerfile
-      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.smpialfakhir.sch.id/api}
     container_name: alfakhir_web_portal_smp
