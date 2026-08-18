@@ -8,7 +8,14 @@ const router = Router();
 function webhookAuth(req: import('express').Request, res: import('express').Response, next: import('express').NextFunction) {
   const token = req.headers['x-callback-token'];
   const expected = process.env.WEBHOOK_CALLBACK_TOKEN;
-  if (!expected || token !== expected) {
+  if (!expected || typeof token !== 'string') {
+    res.status(401).json({ status: 'unauthorized' });
+    return;
+  }
+  const crypto = require('crypto');
+  const a = Buffer.from(token);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
     res.status(401).json({ status: 'unauthorized' });
     return;
   }

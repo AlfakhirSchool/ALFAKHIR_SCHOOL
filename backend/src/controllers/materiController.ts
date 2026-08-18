@@ -23,6 +23,7 @@ export const getMateri = async (req: AuthRequest, res: Response): Promise<void> 
         { model: Guru, as: 'guru', attributes: ['id'], include: [{ model: User, as: 'user', attributes: ['nama'] }] },
       ],
       order: [['created_at', 'DESC']],
+      limit: 100,
     });
     res.json({ success: true, data });
   } catch (e: any) {

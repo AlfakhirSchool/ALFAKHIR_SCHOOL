@@ -125,6 +125,24 @@ export const remove = async (req: AuthRequest, res: Response): Promise<void> => 
 export const getLaporan = async (req: AuthRequest, res: Response): Promise<void> => {
   const { kelas_id, mata_pelajaran_id, semester, tahun_ajaran } = req.query;
 
+  if (!kelas_id && !mata_pelajaran_id) {
+    res.status(400).json({ success: false, message: 'kelas_id atau mata_pelajaran_id wajib diisi' });
+    return;
+  }
+
+  // Guru: pastikan kelas yang diminta adalah kelas yang diampu
+  if (req.user!.role === 'guru' && kelas_id) {
+    const { JadwalPelajaran } = await import('../models');
+    const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
+    if (guru) {
+      const jadwal = await JadwalPelajaran.findOne({ where: { guru_id: (guru as any).id, kelas_id: kelas_id as string } });
+      if (!jadwal) {
+        res.status(403).json({ success: false, message: 'Anda tidak mengajar di kelas tersebut' });
+        return;
+      }
+    }
+  }
+
   // Filter kelas berdasarkan school_level admin
   const levelWhere = await kelasIdFilter(req.user?.school_level);
   const kelasFilter = kelas_id ? { id: kelas_id } : (levelWhere.kelas_id ? { id: levelWhere.kelas_id } : undefined);
@@ -152,6 +170,6 @@ export const getLaporan = async (req: AuthRequest, res: Response): Promise<void>
     where.siswa_id = { [Op.in]: siswaList.map((s: any) => s.id) };
   }
 
-  const nilaiList = await Nilai.findAll({ where, include, order: [['nilai_akhir', 'DESC']] });
+  const nilaiList = await Nilai.findAll({ where, include, order: [['nilai_akhir', 'DESC']], limit: 500 });
   res.json({ success: true, data: nilaiList });
 };

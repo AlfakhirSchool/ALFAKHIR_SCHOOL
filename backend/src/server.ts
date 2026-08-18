@@ -7,6 +7,14 @@ import path from 'path';
 
 const PORT = parseInt(process.env.PORT || '3001');
 
+const REQUIRED_ENV = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
+const missingEnv = REQUIRED_ENV.filter(k => !process.env[k]);
+if (missingEnv.length > 0) {
+  console.error(`[STARTUP ERROR] Env var wajib tidak diset: ${missingEnv.join(', ')}`);
+  console.error('Periksa file .env — server tidak akan start.');
+  process.exit(1);
+}
+
 const runMigrations = async (): Promise<void> => {
   const migrationsDir = path.join(__dirname, 'migrations');
   if (!fs.existsSync(migrationsDir)) return;
