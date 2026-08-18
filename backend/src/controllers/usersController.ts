@@ -54,7 +54,8 @@ const assertInScope = async (adminJenjang: string | null, targetUserId: string, 
 
 export const listUsers = async (req: AuthRequest, res: Response): Promise<void> => {
   const { role, search, page = 1, limit = 50, jenjang: jenjangParam } = req.query;
-  const offset = (Number(page) - 1) * Number(limit);
+  const limitCapped = Math.min(Number(limit), 200);
+  const offset = (Number(page) - 1) * limitCapped;
   const adminJenjang = req.user?.school_level ?? null;
   // Master admin can filter by jenjang via query param
   const effectiveJenjang = adminJenjang ?? (jenjangParam && VALID_JENJANG.includes(jenjangParam as string) ? (jenjangParam as string) : null);
@@ -99,14 +100,14 @@ export const listUsers = async (req: AuthRequest, res: Response): Promise<void> 
       { model: Siswa, as: 'siswa_detail', required: false, include: [{ model: Kelas, as: 'kelas', include: [{ model: Sekolah, as: 'sekolah', attributes: ['level', 'nama'] }] }] },
     ],
     order: [['created_at', 'DESC']],
-    limit: Number(limit),
+    limit: limitCapped,
     offset,
   });
 
   res.json({
     success: true,
     data: rows,
-    pagination: { total: count, page: Number(page), limit: Number(limit), totalPages: Math.ceil(count / Number(limit)) },
+    pagination: { total: count, page: Number(page), limit: limitCapped, totalPages: Math.ceil(count / limitCapped) },
   });
 };
 

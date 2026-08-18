@@ -7,7 +7,7 @@ const router = Router();
 
 // Public routes (no auth)
 router.post('/kandidat/:kandidat_id/submit', rateLimiter(5, 10 * 60 * 1000), ctrl.submitTes);
-router.get('/publik', ctrl.getAllPublik);
+router.get('/publik', rateLimiter(30, 60 * 1000), ctrl.getAllPublik);
 
 router.use(authenticate);
 

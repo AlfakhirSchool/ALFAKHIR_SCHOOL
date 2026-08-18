@@ -236,6 +236,7 @@ export const uploadProfilePhoto = async (req: AuthRequest, res: Response): Promi
 
   const profilePicUrl = `/uploads/profiles/${file.filename}`;
   await user.update({ profile_pic: profilePicUrl });
+  redis.del(`profile:${req.user!.id}`).catch(() => {});
 
   res.json({ success: true, data: { profile_pic: profilePicUrl } });
 };
@@ -267,6 +268,7 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
 
   const hashed = await bcrypt.hash(new_password, 10);
   await user.update({ password_hash: hashed });
+  redis.del(`profile:${req.user!.id}`).catch(() => {});
 
   res.json({ success: true, message: 'Password berhasil diubah' });
 };

@@ -159,6 +159,7 @@ export const getLaporanKelas = async (req: AuthRequest, res: Response): Promise<
       { model: MataPelajaran, as: 'mata_pelajaran' },
     ],
     order: [['tanggal', 'DESC']],
+    limit: 500,
   });
 
   const summary = {

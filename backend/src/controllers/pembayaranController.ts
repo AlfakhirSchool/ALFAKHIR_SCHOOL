@@ -173,6 +173,7 @@ export const getLaporan = async (req: AuthRequest, res: Response): Promise<void>
       { model: Siswa, as: 'siswa', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
     ],
     order: [['tanggal_jatuh_tempo', 'ASC']],
+    limit: 200,
   });
 
   const totalTagihan = pembayaranList.reduce((sum, p) => sum + Number(p.nominal_biaya), 0);
