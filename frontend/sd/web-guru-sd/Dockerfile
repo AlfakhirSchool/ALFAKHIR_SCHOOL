@@ -1,12 +1,13 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY sd/web-guru-sd/package.json sd/web-guru-sd/package-lock.json ./
 RUN npm ci --frozen-lockfile
 
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY shared/ ./shared/
+COPY sd/web-guru-sd/ .
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001/api
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
