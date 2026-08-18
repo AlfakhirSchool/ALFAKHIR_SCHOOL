@@ -10,7 +10,7 @@ const siswaWithUser = {
   model: User,
   as: 'user',
   where: { is_active: true, role: 'siswa' },
-  attributes: ['id', 'nama', 'email'],
+  attributes: ['id', 'nama', 'username'],
 };
 
 export const getRaporByKelas = async (req: Request, res: Response): Promise<void> => {

@@ -158,7 +158,7 @@ export default function SettingsPage() {
   });
 
   const filtered = (usersData || []).filter((u: any) =>
-    !search || u.nama?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase())
+    !search || u.nama?.toLowerCase().includes(search.toLowerCase()) || u.username?.toLowerCase().includes(search.toLowerCase())
   );
 
   const tabs: { key: Tab; icon: React.ElementType; label: string }[] = [

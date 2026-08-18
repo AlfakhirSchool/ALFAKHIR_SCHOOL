@@ -228,7 +228,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <p className="font-semibold text-[#1A2332] text-lg">{user?.nama}</p>
-              <p className="text-gray-500 text-sm">{user?.username || user?.email?.replace(/@[^@]+$/, '')}</p>
+              <p className="text-gray-500 text-sm">{user?.username || user?.username?.replace(/@[^@]+$/, '')}</p>
               <span className="text-xs bg-[#1B8B87]/10 text-[#1B8B87] px-2 py-0.5 rounded-full mt-1 inline-block capitalize">{user?.role}</span>
               {photoMsg && (
                 <p className={`text-xs mt-2 ${photoMsg.includes('berhasil') ? 'text-green-600' : 'text-red-500'}`}>{photoMsg}</p>

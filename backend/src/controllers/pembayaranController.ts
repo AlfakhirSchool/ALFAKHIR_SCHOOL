@@ -139,7 +139,7 @@ export const bayar = async (req: AuthRequest, res: Response): Promise<void> => {
 
   if (newStatus === 'lunas' && process.env.N8N_WEBHOOK_URL) {
     const siswaData = await Pembayaran.findByPk(pembayaranId, {
-      include: [{ model: Siswa, as: 'siswa', include: [{ model: User, as: 'user', attributes: ['nama', 'email'] }] }],
+      include: [{ model: Siswa, as: 'siswa', include: [{ model: User, as: 'user', attributes: ['nama', 'username'] }] }],
     });
     const email = (siswaData as any)?.siswa?.user?.email;
     const nama_siswa = (siswaData as any)?.siswa?.user?.nama;

@@ -25,7 +25,7 @@ router.get('/', authorize('admin'), async (req: AuthRequest, res: Response): Pro
   if (kategori) where.kategori = kategori;
   const list = await Feedback.findAll({
     where,
-    include: [{ model: User, as: 'pengirim', attributes: ['nama', 'role', 'email'] }],
+    include: [{ model: User, as: 'pengirim', attributes: ['nama', 'role', 'username'] }],
     order: [['created_at', 'DESC']],
   });
   res.json({ success: true, data: list });

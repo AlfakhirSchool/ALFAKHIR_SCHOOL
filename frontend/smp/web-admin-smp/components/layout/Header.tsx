@@ -119,7 +119,7 @@ export default function Header({ title }: HeaderProps) {
       const { accessToken, user: targetUser } = res.data.data;
       switchAccount({
         id: targetUser.id,
-        email: targetUser.email,
+        username: targetUser.username,
         nama: targetUser.nama,
         role: targetUser.role,
         school_level: targetUser.school_level,
@@ -324,7 +324,7 @@ export default function Header({ title }: HeaderProps) {
             <div className="absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
               <div className="px-4 py-2.5 border-b border-gray-100">
                 <p className="text-sm font-semibold text-gray-800 truncate">{user?.nama}</p>
-                <p className="text-xs text-gray-400 truncate">{(user?.email || '').replace(/@[^@]+$/, '')}</p>
+                <p className="text-xs text-gray-400 truncate">{user?.username || ''}</p>
                 {originalToken && (
                   <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded mt-1 inline-block">Akun dialihkan</span>
                 )}

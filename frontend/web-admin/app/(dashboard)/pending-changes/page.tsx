@@ -110,7 +110,7 @@ export default function PendingChangesPage() {
                   <tr key={item.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <p className="font-medium text-[#1A2332]">{item.requester?.nama || '—'}</p>
-                      <p className="text-xs text-gray-400">{(item.requester?.email || '').replace(/@[^@]+$/, '')}</p>
+                      <p className="text-xs text-gray-400">{(item.requester?.username || '')}</p>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${item.type === 'password' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}`}>

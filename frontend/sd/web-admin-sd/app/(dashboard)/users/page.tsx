@@ -64,7 +64,7 @@ function generatePassword(nama: string) {
   return `${base}${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
-type CreateForm = { email: string; password: string; nama: string; role: string; school_level: string; };
+type CreateForm = { username: string; password: string; nama: string; role: string; school_level: string; };
 
 export default function UsersPage() {
   const { user } = useAuthStore();
@@ -83,7 +83,7 @@ export default function UsersPage() {
   const [showNewPw, setShowNewPw] = useState(false);
 
   const [createModal, setCreateModal] = useState(false);
-  const [createForm, setCreateForm] = useState<CreateForm>({ email: '', password: '', nama: '', role: 'admin', school_level: adminJenjang || '' });
+  const [createForm, setCreateForm] = useState<CreateForm>({ username: '', password: '', nama: '', role: 'admin', school_level: adminJenjang || '' });
   const [showCreatePw, setShowCreatePw] = useState(false);
 
   // Modal set jenjang guru
@@ -131,13 +131,13 @@ export default function UsersPage() {
 
   const createMut = useMutation({
     mutationFn: (form: CreateForm) => {
-      const username = form.email;
+      const username = form.username;
       return api.post('/users', { ...form, username, school_level: form.school_level || null }).then(r => r.data);
     },
     onSuccess: (d) => {
       showFeedback('success', d.message);
       setCreateModal(false);
-      setCreateForm({ email: '', password: '', nama: '', role: 'admin', school_level: adminJenjang || '' });
+      setCreateForm({ username: '', password: '', nama: '', role: 'admin', school_level: adminJenjang || '' });
       qc.invalidateQueries({ queryKey: ['users'] });
       qc.invalidateQueries({ queryKey: ['users-stats'] });
     },
@@ -307,7 +307,7 @@ export default function UsersPage() {
                 <tr key={u.id} className="hover:bg-gray-50/60 transition-colors">
                   <td className="px-5 py-3.5">
                     <p className="font-semibold text-[#1A2332] text-sm">{u.nama}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{u.username || u.email || '—'}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{u.username || '—'}</p>
                   </td>
                   <td className="px-5 py-3.5">
                     <Badge text={ROLE_LABEL[u.role] || u.role} color={ROLE_COLOR[u.role] || '#888'} />
@@ -521,8 +521,8 @@ export default function UsersPage() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Username <span className="text-red-400">*</span></label>
                 <input
                   type="text"
-                  value={createForm.email}
-                  onChange={e => setCreateForm(f => ({ ...f, email: e.target.value.trim().toLowerCase().replace(/[@\s]/g, '') }))}
+                  value={createForm.username}
+                  onChange={e => setCreateForm(f => ({ ...f, username: e.target.value.trim().toLowerCase().replace(/[@\s]/g, '') }))}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F97316]"
                   placeholder="nama.admin"
                   autoComplete="off"
@@ -597,10 +597,10 @@ export default function UsersPage() {
                 </div>
               )}
               <div className="flex gap-3 pt-2">
-                <button onClick={() => { setCreateModal(false); setCreateForm({ email: '', password: '', nama: '', role: 'admin', school_level: adminJenjang || '' }); }}
+                <button onClick={() => { setCreateModal(false); setCreateForm({ username: '', password: '', nama: '', role: 'admin', school_level: adminJenjang || '' }); }}
                   className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50">Batal</button>
                 <button onClick={() => createMut.mutate(createForm)}
-                  disabled={!createForm.email || !createForm.password || !createForm.nama || createMut.isPending}
+                  disabled={!createForm.username || !createForm.password || !createForm.nama || createMut.isPending}
                   className="flex-1 px-4 py-2.5 bg-[#F97316] text-white rounded-xl text-sm font-bold hover:bg-orange-600 disabled:opacity-50">
                   {createMut.isPending ? 'Membuat...' : '✓ Buat Akun'}
                 </button>

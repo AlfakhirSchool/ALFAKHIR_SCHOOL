@@ -66,7 +66,6 @@ export const listUsers = async (req: AuthRequest, res: Response): Promise<void> 
     where[Op.or] = [
       { nama: { [Op.iLike]: `%${search}%` } },
       { username: { [Op.iLike]: `%${search}%` } },
-      { email: { [Op.iLike]: `%${search}%` } },
     ];
   }
 
@@ -132,9 +131,8 @@ export const getUserDetail = async (req: AuthRequest, res: Response): Promise<vo
 };
 
 export const createUser = async (req: AuthRequest, res: Response): Promise<void> => {
-  // Support 'username' or 'email' as login identifier from frontend
-  const { email, username: usernameInput, password, nama, role, school_level } = req.body;
-  const loginId = (usernameInput || email || '').trim().toLowerCase();
+  const { username: usernameInput, password, nama, role, school_level } = req.body;
+  const loginId = (usernameInput || '').trim().toLowerCase();
   const adminJenjang = req.user?.school_level ?? null;
 
   if (!loginId || !password || !nama || !role) {
@@ -153,13 +151,12 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
     }
   }
 
-  const exists = await User.findOne({ where: { [Op.or]: [{ username: loginId }, { email: loginId }] } });
+  const exists = await User.findOne({ where: { username: loginId } });
   if (exists) { res.status(400).json({ success: false, message: 'Username sudah terdaftar' }); return; }
 
   const password_hash = await bcrypt.hash(password, 10);
   const user = await User.create({
     username: loginId,
-    email: loginId.includes('@') ? loginId : null,
     password_hash, nama, role,
     school_level: role === 'admin' ? (school_level || null) : null,
     is_active: true,
@@ -177,7 +174,7 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nama,
-          login: email.split('@')[0],
+          login: loginId,
           password_default: password,
           pelajaran: '',
           jenjang: school_level || '',
@@ -190,7 +187,7 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
   res.status(201).json({
     success: true,
     message: 'Akun berhasil dibuat',
-    data: { id: user.id, username: user.username, email: user.email, nama: user.nama, role: user.role, school_level: user.school_level },
+    data: { id: user.id, username: user.username, nama: user.nama, role: user.role, school_level: user.school_level },
   });
 };
 

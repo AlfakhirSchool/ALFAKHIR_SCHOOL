@@ -74,18 +74,9 @@ export const getById = async (req: AuthRequest, res: Response): Promise<void> =>
 };
 
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { email, password, nama, nisn, nis, no_induk, kelas_id, tempat_lahir, tanggal_lahir, alamat, jenis_kelamin } = req.body;
+  const { password, nama, nisn, nis, no_induk, kelas_id, tempat_lahir, tanggal_lahir, alamat, jenis_kelamin } = req.body;
 
-  const finalEmail = email || null;
   const autoPassword = password || (nis ? nis.slice(-4) : Math.random().toString(36).slice(-4));
-
-  if (finalEmail) {
-    const existing = await User.findOne({ where: { email: finalEmail } });
-    if (existing) {
-      res.status(400).json({ success: false, message: 'Email sudah terdaftar' });
-      return;
-    }
-  }
 
   const finalNisn = nisn || nis;
   if (finalNisn) {
@@ -97,7 +88,7 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
   }
   const password_hash = await bcrypt.hash(autoPassword, 10);
 
-  const user = await User.create({ email: finalEmail, username: nis || null, password_hash, nama, role: 'siswa', password_default: autoPassword } as any);
+  const user = await User.create({ username: nis || null, password_hash, nama, role: 'siswa', password_default: autoPassword } as any);
   const siswa = await Siswa.create({ user_id: user.id, kelas_id, nisn: finalNisn, nis, no_induk: no_induk || nis, tempat_lahir, tanggal_lahir, alamat, jenis_kelamin: jenis_kelamin || null });
 
   // Kirim ke n8n async — tidak block response
@@ -186,7 +177,7 @@ async function doImportRows(rows: { nama: string; kelas_nama: string; nis: strin
     const autoPassword = nis ? nis.slice(-4) : Math.random().toString(36).slice(-4);
     const is_active = !row.status || row.status.toUpperCase() !== 'TIDAK AKTIF';
     const password_hash = await bcrypt.hash(autoPassword, 10);
-    const user = await User.create({ email: null, username: nis || null, password_hash, nama, role: 'siswa', password_default: nis ? autoPassword : null, is_active } as any);
+    const user = await User.create({ username: nis || null, password_hash, nama, role: 'siswa', password_default: nis ? autoPassword : null, is_active } as any);
     await Siswa.create({ user_id: user.id, kelas_id: (kelas as any).id, nisn: nis || null, nis: nis || null, no_induk: nis || null, jenis_kelamin: row.jenis_kelamin || null });
     results.push({ nama, nis, status: 'created' });
   }
@@ -239,11 +230,10 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
   const siswa = await Siswa.findByPk(req.params.id as string, { include: [{ model: User, as: 'user' }] });
   if (!siswa) throw createError('Siswa tidak ditemukan', 404);
 
-  const { nama, email, kelas_id, nisn, nis, no_induk, tempat_lahir, tanggal_lahir, alamat, is_active, jenis_kelamin } = req.body;
+  const { nama, kelas_id, nisn, nis, no_induk, tempat_lahir, tanggal_lahir, alamat, is_active, jenis_kelamin } = req.body;
 
   const userUpdate: any = {};
   if (nama !== undefined) userUpdate.nama = nama;
-  if (email !== undefined) userUpdate.email = email;
   if (is_active !== undefined) userUpdate.is_active = is_active;
   if (Object.keys(userUpdate).length) await (siswa as any).user.update(userUpdate);
 

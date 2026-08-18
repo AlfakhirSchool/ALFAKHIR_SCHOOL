@@ -119,7 +119,7 @@ export default function Header({ title }: HeaderProps) {
       const { accessToken, user: targetUser } = res.data.data;
       switchAccount({
         id: targetUser.id,
-        email: targetUser.email,
+        username: targetUser.username,
         nama: targetUser.nama,
         role: targetUser.role,
         school_level: targetUser.school_level,

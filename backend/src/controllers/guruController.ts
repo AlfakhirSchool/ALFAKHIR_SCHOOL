@@ -62,16 +62,16 @@ export const getById = async (req: AuthRequest, res: Response): Promise<void> =>
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
   const { password, nama, nip, spesialisasi, no_telp, school_levels } = req.body;
 
-  // Generate unique email from nama (used as identifier, not real email)
-  let autoEmail = nama;
+  // username dari frontend; fallback auto-generate dari nama
+  let autoUsername = (req.body.username || nama || '').trim().toLowerCase().replace(/\s+/g, '.');
   let suffix = 2;
-  while (await User.findOne({ where: { email: autoEmail } })) {
-    autoEmail = `${nama} ${suffix++}`;
+  while (await User.findOne({ where: { username: autoUsername } })) {
+    autoUsername = `${(req.body.username || nama || '').trim().toLowerCase().replace(/\s+/g, '.')}.${suffix++}`;
   }
 
   const autoPassword = password || '12345678';
   const password_hash = await bcrypt.hash(autoPassword, 10);
-  const user = await User.create({ email: autoEmail, password_hash, nama, role: 'guru' });
+  const user = await User.create({ username: autoUsername, password_hash, nama, role: 'guru' });
   const guru = await Guru.create({
     user_id: user.id,
     nip: nip || null,
@@ -88,8 +88,7 @@ export const create = async (req: AuthRequest, res: Response): Promise<void> => 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nama,
-        email: req.body.email || null,
-        login: req.body.email || nama,
+        login: autoUsername,
         password_default: autoPassword,
         nip: nip || '',
         spesialisasi: spesialisasi || '',
@@ -107,8 +106,7 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
   if (!guru) throw createError('Guru tidak ditemukan', 404);
 
   const { nama, nip, spesialisasi, no_telp, is_active, school_levels } = req.body;
-  // email field = nama (identifier), update when nama changes
-  await (guru as any).user.update({ nama, email: nama, is_active });
+  await (guru as any).user.update({ nama, is_active });
   await guru.update({
     nip: nip || null,
     spesialisasi: spesialisasi || null,

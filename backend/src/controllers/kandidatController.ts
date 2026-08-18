@@ -239,7 +239,7 @@ export const monitorPewawancara = async (req: any, res: Response): Promise<void>
     where,
     attributes: ['id', 'status', 'pewawancara_id', 'pewawancara_nama', 'level'],
     include: [
-      { model: Guru, as: 'pewawancara', include: [{ model: User, as: 'user', attributes: ['nama', 'email'] }] },
+      { model: Guru, as: 'pewawancara', include: [{ model: User, as: 'user', attributes: ['nama', 'username'] }] },
       { model: CatatanPewawancara, as: 'catatan_list', attributes: ['id', 'is_locked'] },
     ],
   });

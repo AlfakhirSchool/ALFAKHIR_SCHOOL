@@ -29,12 +29,12 @@ export const upload = multer({
   },
 });
 
-const generateTokens = (user: { id: string; email: string | null; nama: string; role: string; school_level?: string | null }) => {
+const generateTokens = (user: { id: string; nama: string; role: string; school_level?: string | null }) => {
   const accessOpts: SignOptions = { expiresIn: (process.env.JWT_EXPIRES_IN || '15m') as SignOptions['expiresIn'] };
   const refreshOpts: SignOptions = { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as SignOptions['expiresIn'] };
 
   const accessToken = jwt.sign(
-    { id: user.id, email: user.email, nama: user.nama, role: user.role, school_level: user.school_level ?? null },
+    { id: user.id, nama: user.nama, role: user.role, school_level: user.school_level ?? null },
     process.env.JWT_SECRET as string,
     accessOpts
   );
@@ -84,7 +84,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const validPassword = await bcrypt.compare(password, (user as any).password_hash);
   if (!validPassword) {
-    res.status(401).json({ success: false, message: 'NIS/email atau password salah' });
+    res.status(401).json({ success: false, message: 'NIS atau password salah' });
     return;
   }
 
@@ -133,7 +133,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       refreshToken,
       user: {
         id: user.id,
-        email: user.email,
         username: user.username,
         nama: user.nama,
         role: user.role,
@@ -308,20 +307,20 @@ export const switchAccount = async (req: AuthRequest, res: Response): Promise<vo
   }
 
   const { accessToken } = generateTokens({
-    id: target.id, email: target.email, nama: target.nama, role: target.role, school_level: targetLevel,
+    id: target.id, nama: target.nama, role: target.role, school_level: targetLevel,
   });
 
   logAction({
     user_id: current.id, nama: current.nama, role: current.role, school_level: currentLevel,
     action: 'switch_account', table: 'users', record_id: target.id,
-    new_value: { target_id: target.id, target_nama: target.nama, target_email: target.email },
+    new_value: { target_id: target.id, target_nama: target.nama, target_username: target.username },
   });
 
   res.json({
     success: true,
     data: {
       accessToken,
-      user: { id: target.id, email: target.email, nama: target.nama, role: target.role, school_level: targetLevel, profile_pic: target.profile_pic },
+      user: { id: target.id, username: target.username, nama: target.nama, role: target.role, school_level: targetLevel, profile_pic: target.profile_pic },
     },
   });
 };

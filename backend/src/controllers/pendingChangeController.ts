@@ -64,7 +64,7 @@ export const listPending = async (req: AuthRequest, res: Response): Promise<void
   const statusStr = typeof status === 'string' ? status : 'pending';
   const items = await PendingChange.findAll({
     where: statusStr !== 'all' ? { status: statusStr as any } : {},
-    include: [{ model: User, as: 'requester', attributes: ['id', 'nama', 'email', 'role'] }],
+    include: [{ model: User, as: 'requester', attributes: ['id', 'nama', 'username', 'role'] }],
     order: [['created_at', 'DESC']],
   });
   res.json({ success: true, data: items });

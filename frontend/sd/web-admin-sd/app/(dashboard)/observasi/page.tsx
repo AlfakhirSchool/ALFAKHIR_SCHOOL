@@ -70,7 +70,7 @@ export default function ObservasiPage() {
   const [detail, setDetail] = useState<Kandidat | null>(null);
   const [daftarModal, setDaftarModal] = useState<Kandidat | null>(null);
   const [selectedKelas, setSelectedKelas] = useState('');
-  const [daftarResult, setDaftarResult] = useState<{ email: string; password: string } | null>(null);
+  const [daftarResult, setDaftarResult] = useState<{ password: string } | null>(null);
 
   // ── Queries ──
   const { data, isLoading } = useQuery({

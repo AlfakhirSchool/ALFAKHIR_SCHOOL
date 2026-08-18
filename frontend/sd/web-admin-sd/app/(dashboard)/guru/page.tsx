@@ -36,12 +36,12 @@ function LevelBadges({ levels }: { levels: string[] | null }) {
 }
 
 type GuruForm = {
-  nama: string; email: string; password: string;
+  nama: string; username: string; password: string;
   nip: string; spesialisasi: string; no_telp: string;
   school_levels: string[];
 };
 
-const emptyForm: GuruForm = { nama: '', email: '', password: '', nip: '', spesialisasi: '', no_telp: '', school_levels: [] };
+const emptyForm: GuruForm = { nama: '', username: '', password: '', nip: '', spesialisasi: '', no_telp: '', school_levels: [] };
 
 export default function GuruPage() {
   const { user } = useAuthStore();
@@ -82,11 +82,9 @@ export default function GuruPage() {
     mapelByJenjang[j].push(m.nama);
   });
 
-  const buildEmail = (username: string) =>
-    username;
 
   const createMut = useMutation({
-    mutationFn: (f: GuruForm) => api.post('/guru', { ...f, email: buildEmail(f.email) }).then(r => r.data),
+    mutationFn: (f: GuruForm) => api.post('/guru', { ...f, username: f.username }).then(r => r.data),
     onSuccess: (d) => {
       showFeedback('success', d.message);
       setModal(null);
@@ -98,7 +96,7 @@ export default function GuruPage() {
 
   const updateMut = useMutation({
     mutationFn: ({ id, f }: { id: string; f: Partial<GuruForm> }) =>
-      api.put(`/guru/${id}`, { ...f, email: f.email ? buildEmail(f.email) : undefined }).then(r => r.data),
+      api.put(`/guru/${id}`, { ...f, username: f.username || undefined }).then(r => r.data),
     onSuccess: (d) => {
       showFeedback('success', d.message);
       setModal(null);
@@ -131,7 +129,7 @@ export default function GuruPage() {
     setEditTarget(g);
     setForm({
       nama: g.user?.nama || '',
-      email: g.user?.email || '',
+      username: g.user?.username || '',
       password: '',
       nip: g.nip || '',
       spesialisasi: g.spesialisasi || '',
@@ -339,8 +337,8 @@ export default function GuruPage() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Username <span className="text-red-400">*</span></label>
                 <input
                   type="text"
-                  value={form.email}
-                  onChange={e => setForm(f => ({ ...f, email: e.target.value.trim().toLowerCase().replace(/[@\s]/g, '') }))}
+                  value={form.username}
+                  onChange={e => setForm(f => ({ ...f, username: e.target.value.trim().toLowerCase().replace(/[@\s]/g, '') }))}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7FD1]"
                   placeholder="nama.guru"
                 />
@@ -459,7 +457,7 @@ export default function GuruPage() {
                     if (modal === 'create') createMut.mutate(form);
                     else updateMut.mutate({ id: editTarget.id, f: form });
                   }}
-                  disabled={!form.nama || !form.email || (modal === 'create' && !form.password) || createMut.isPending || updateMut.isPending}
+                  disabled={!form.nama || !form.username || (modal === 'create' && !form.password) || createMut.isPending || updateMut.isPending}
                   className="flex-1 px-4 py-2.5 bg-[#3B7FD1] text-white rounded-xl text-sm font-bold hover:bg-[#2d6ab5] disabled:opacity-50"
                 >
                   {(createMut.isPending || updateMut.isPending) ? (

@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
-const DOMAIN = '';
 
 
 export default function LoginPage() {
@@ -23,9 +22,8 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const email = username.includes('@') ? username : `${username}${DOMAIN}`;
     try {
-      const res = await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { username, password });
       const { user, accessToken, refreshToken } = res.data.data;
       if (!['guru', 'admin'].includes(user.role)) {
         setError('Akses hanya untuk Guru');
@@ -170,7 +168,7 @@ export default function LoginPage() {
                   onFocus={() => setFocused('user')}
                   onBlur={() => setFocused(null)}
                   className="w-full px-4 py-3.5 bg-transparent rounded-xl focus:outline-none text-[#1A2332]"
-                  placeholder="Username atau email"
+                  placeholder="Username"
                   autoComplete="username"
                 />
               </div>
