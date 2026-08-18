@@ -1,4 +1,5 @@
 'use client';
+import AuthImage from '@/components/AuthImage';
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -94,7 +95,7 @@ export default function CatatanSiswaAdminPage() {
           {catatan.map((c: any) => (
             <div key={c.id} className="bg-white rounded-xl shadow-sm p-5 flex gap-4">
               {c.foto_url && (
-                <img src={`${API_BASE}${c.foto_url}`} alt="foto"
+                <AuthImage src={c.foto_url} alt="foto"
                   className="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-gray-100" />
               )}
               <div className="flex-1 min-w-0">

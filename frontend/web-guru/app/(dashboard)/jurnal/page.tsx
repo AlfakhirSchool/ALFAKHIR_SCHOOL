@@ -1,4 +1,5 @@
 'use client';
+import AuthImage from '@/components/AuthImage';
 
 import { useState } from 'react';
 import { X, Download, Users, ChevronLeft, Camera, Trash2 } from 'lucide-react';
@@ -503,7 +504,7 @@ export default function JurnalPage() {
                             {row.foto_url ? (
                               <div className="flex flex-col items-center gap-1">
                                 <a href={`${(process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '')}${row.foto_url}`} target="_blank" rel="noreferrer">
-                                  <img src={`${(process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '')}${row.foto_url}`} alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-200 hover:opacity-80" />
+                                  <AuthImage src={row.foto_url} alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-200 hover:opacity-80" />
                                 </a>
                                 <button onClick={() => setSiswaRows(prev => ({ ...prev, [s.id]: { ...prev[s.id], foto_url: undefined } }))}
                                   className="text-red-400 hover:text-red-600"><Trash2 size={11} /></button>
@@ -621,7 +622,7 @@ export default function JurnalPage() {
                         )}
                         {d.foto_url && (
                           <a href={`${(process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '')}${d.foto_url}`} target="_blank" rel="noreferrer" className="mt-2 inline-block">
-                            <img src={`${(process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '')}${d.foto_url}`} alt="foto" className="h-20 rounded-lg object-cover border border-gray-200 hover:opacity-80" />
+                            <AuthImage src={d.foto_url} alt="foto" className="h-20 rounded-lg object-cover border border-gray-200 hover:opacity-80" />
                           </a>
                         )}
                       </div>

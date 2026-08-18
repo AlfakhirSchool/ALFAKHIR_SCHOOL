@@ -1,4 +1,5 @@
 'use client';
+import AuthImage from '@/components/AuthImage';
 
 import { useState, useRef } from 'react';
 import { ChevronLeft, Save, Camera, Image as ImageIcon, X, Plus, Trash2, Edit2 } from 'lucide-react';
@@ -174,7 +175,7 @@ export default function CatatanSiswaPage() {
                 <div key={c.id} className="bg-white rounded-xl shadow-sm p-5 flex gap-4">
                   {/* Foto thumbnail */}
                   {c.foto_url && (
-                    <img src={`${API_BASE}${c.foto_url}`} alt="foto"
+                    <AuthImage src={c.foto_url} alt="foto"
                       className="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-gray-100" />
                   )}
                   <div className="flex-1 min-w-0">
@@ -281,8 +282,9 @@ export default function CatatanSiswaPage() {
                 {/* Preview */}
                 {(formFotoPreview || existingFotoUrl) && (
                   <div className="relative inline-block mb-2">
-                    <img src={formFotoPreview || `${API_BASE}${existingFotoUrl}`} alt="preview"
-                      className="w-32 h-32 object-cover rounded-lg border border-gray-200" />
+                    {formFotoPreview ? <img src={formFotoPreview} alt="preview"
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-200" /> : <AuthImage src={existingFotoUrl || ''} alt="preview"
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-200" />}
                     <button onClick={() => { setFormFoto(null); setFormFotoPreview(null); setExistingFotoUrl(null); }}
                       className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
                       <X size={10} />
