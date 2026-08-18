@@ -1,7 +1,6 @@
 import { Sekolah, Kelas } from '../models';
 import { Op } from 'sequelize';
 
-// Cache sederhana per request tidak diperlukan — queries ini cepat dan di-pool oleh Postgres
 export async function getSekolahIdForLevel(level: string): Promise<string | null> {
   const sekolah = await Sekolah.findOne({ where: { level } });
   return sekolah?.id ?? null;

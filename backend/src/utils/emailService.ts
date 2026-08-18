@@ -12,23 +12,6 @@ const transporter = nodemailer.createTransport({
 
 const FROM = `"Al Fakhir School" <${process.env.SMTP_USER}>`;
 
-export const sendWelcomeEmail = async (to: string, nama: string, password: string) => {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return;
-  await transporter.sendMail({
-    from: FROM,
-    to,
-    subject: 'Selamat Datang di Al Fakhir School LMS',
-    html: `
-      <h2>Assalamu'alaikum ${nama},</h2>
-      <p>Akun Anda telah dibuat di sistem LMS Al Fakhir School.</p>
-      <p><b>Email:</b> ${to}<br/><b>Password:</b> ${password}</p>
-      <p>Silakan login di: <a href="${process.env.FRONTEND_ADMIN_URL}">${process.env.FRONTEND_ADMIN_URL}</a></p>
-      <p>Segera ganti password setelah login pertama.</p>
-      <br/><p>Wassalamu'alaikum,<br/>Tim Al Fakhir School</p>
-    `,
-  });
-};
-
 export const sendPaymentConfirmation = async (
   to: string,
   nama: string,
@@ -57,22 +40,6 @@ export const sendPaymentConfirmation = async (
   });
 };
 
-export const sendPasswordResetEmail = async (to: string, nama: string, newPassword: string) => {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return;
-  await transporter.sendMail({
-    from: FROM,
-    to,
-    subject: 'Reset Password - Al Fakhir School LMS',
-    html: `
-      <h2>Reset Password</h2>
-      <p>Assalamu'alaikum ${nama},</p>
-      <p>Password Anda telah direset oleh administrator.</p>
-      <p><b>Password baru:</b> ${newPassword}</p>
-      <p>Silakan login dan segera ganti password Anda.</p>
-      <p>Wassalamu'alaikum,<br/>Tim Al Fakhir School</p>
-    `,
-  });
-};
 
 export const testEmailConnection = async (): Promise<boolean> => {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) return false;

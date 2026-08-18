@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import logger from '../config/logger';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -94,7 +95,7 @@ router.post('/', authorize('guru', 'admin'), uploadTugas.single('file'), async (
 
     res.status(201).json({ success: true, data: tugas });
   } catch (e: any) {
-    console.error('POST /tugas error:', e.message);
+    logger.error('POST /tugas error:', { error: e.message });
     res.status(500).json({ success: false, message: 'Gagal membuat tugas' });
   }
 });
@@ -174,7 +175,7 @@ router.post('/:id/submit', authorize('siswa'), uploadJawaban.single('file'), asy
       data: record,
     });
   } catch (e: any) {
-    console.error('POST /tugas/:id/submit error:', e.message);
+    logger.error('POST /tugas/:id/submit error:', { error: e.message });
     res.status(500).json({ success: false, message: 'Gagal mengumpulkan tugas' });
   }
 });
@@ -210,7 +211,7 @@ router.get('/:id/submissions', authorize('guru', 'admin'), async (req: AuthReque
 
     res.json({ success: true, data: submissions });
   } catch (e: any) {
-    console.error('GET /tugas/:id/submissions error:', e.message);
+    logger.error('GET /tugas/:id/submissions error:', { error: e.message });
     res.status(500).json({ success: false, message: 'Gagal memuat submission' });
   }
 });
@@ -253,7 +254,7 @@ router.put('/submissions/:submissionId/nilai', authorize('guru', 'admin'), async
 
     res.json({ success: true, message: 'Nilai berhasil disimpan', data: submission });
   } catch (e: any) {
-    console.error('PUT /submissions/:id/nilai error:', e.message);
+    logger.error('PUT /submissions/:id/nilai error:', { error: e.message });
     res.status(500).json({ success: false, message: 'Gagal menyimpan nilai' });
   }
 });
