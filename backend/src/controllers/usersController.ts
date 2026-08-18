@@ -65,6 +65,7 @@ export const listUsers = async (req: AuthRequest, res: Response): Promise<void> 
   if (search) {
     where[Op.or] = [
       { nama: { [Op.iLike]: `%${search}%` } },
+      { username: { [Op.iLike]: `%${search}%` } },
       { email: { [Op.iLike]: `%${search}%` } },
     ];
   }
@@ -131,11 +132,13 @@ export const getUserDetail = async (req: AuthRequest, res: Response): Promise<vo
 };
 
 export const createUser = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { email, password, nama, role, school_level } = req.body;
+  // Support 'username' or 'email' as login identifier from frontend
+  const { email, username: usernameInput, password, nama, role, school_level } = req.body;
+  const loginId = (usernameInput || email || '').trim().toLowerCase();
   const adminJenjang = req.user?.school_level ?? null;
 
-  if (!email || !password || !nama || !role) {
-    res.status(400).json({ success: false, message: 'email, password, nama, role wajib diisi' });
+  if (!loginId || !password || !nama || !role) {
+    res.status(400).json({ success: false, message: 'username, password, nama, role wajib diisi' });
     return;
   }
 
@@ -150,12 +153,14 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
     }
   }
 
-  const exists = await User.findOne({ where: { email } });
-  if (exists) { res.status(400).json({ success: false, message: 'Email sudah terdaftar' }); return; }
+  const exists = await User.findOne({ where: { [Op.or]: [{ username: loginId }, { email: loginId }] } });
+  if (exists) { res.status(400).json({ success: false, message: 'Username sudah terdaftar' }); return; }
 
   const password_hash = await bcrypt.hash(password, 10);
   const user = await User.create({
-    email, password_hash, nama, role,
+    username: loginId,
+    email: loginId.includes('@') ? loginId : null,
+    password_hash, nama, role,
     school_level: role === 'admin' ? (school_level || null) : null,
     is_active: true,
     password_default: password,
@@ -185,7 +190,7 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
   res.status(201).json({
     success: true,
     message: 'Akun berhasil dibuat',
-    data: { id: user.id, email: user.email, nama: user.nama, role: user.role, school_level: user.school_level },
+    data: { id: user.id, username: user.username, email: user.email, nama: user.nama, role: user.role, school_level: user.school_level },
   });
 };
 

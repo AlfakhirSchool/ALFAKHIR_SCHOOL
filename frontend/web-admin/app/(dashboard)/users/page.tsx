@@ -131,8 +131,8 @@ export default function UsersPage() {
 
   const createMut = useMutation({
     mutationFn: (form: CreateForm) => {
-      const email = form.email;
-      return api.post('/users', { ...form, email, school_level: form.school_level || null }).then(r => r.data);
+      const username = form.email;
+      return api.post('/users', { ...form, username, school_level: form.school_level || null }).then(r => r.data);
     },
     onSuccess: (d) => {
       showFeedback('success', d.message);

@@ -131,8 +131,8 @@ export default function UsersPage() {
 
   const createMut = useMutation({
     mutationFn: (form: CreateForm) => {
-      const email = form.email;
-      return api.post('/users', { ...form, email, school_level: form.school_level || null }).then(r => r.data);
+      const username = form.email;
+      return api.post('/users', { ...form, username, school_level: form.school_level || null }).then(r => r.data);
     },
     onSuccess: (d) => {
       showFeedback('success', d.message);
@@ -307,7 +307,7 @@ export default function UsersPage() {
                 <tr key={u.id} className="hover:bg-gray-50/60 transition-colors">
                   <td className="px-5 py-3.5">
                     <p className="font-semibold text-[#1A2332] text-sm">{u.nama}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{u.username}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{u.username || u.email || '—'}</p>
                   </td>
                   <td className="px-5 py-3.5">
                     <Badge text={ROLE_LABEL[u.role] || u.role} color={ROLE_COLOR[u.role] || '#888'} />
