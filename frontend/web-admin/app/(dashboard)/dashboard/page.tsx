@@ -71,7 +71,7 @@ export default function DashboardSelectPage() {
           <p className="text-gray-400 text-base">Pilih jenjang yang ingin Anda kelola</p>
         </motion.div>
 
-        <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+        <motion.div variants={stagger} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
           {SCHOOLS.map((s) => {
             const d = sekolah[s.key] || { totalSiswa: 0, totalKelas: 0, absensiHariIni: 0 };
             return (
@@ -128,7 +128,7 @@ export default function DashboardSelectPage() {
         </motion.div>
 
         {/* Keuangan card */}
-        <motion.div variants={fadeUp} initial="hidden" animate="show" className="mt-8 w-full max-w-4xl">
+        <motion.div variants={fadeUp} initial="hidden" animate="show" className="mt-6 w-full max-w-2xl">
           <motion.button
             onClick={() => router.push('/dashboard/keuangan')}
             whileHover={{ y: -4, boxShadow: '0 12px 32px rgba(0,0,0,0.10)' }}
