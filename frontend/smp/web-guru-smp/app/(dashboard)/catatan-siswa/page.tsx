@@ -120,6 +120,11 @@ export default function CatatanSiswaPage() {
   const onFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Ukuran foto maksimal 2MB. Silakan pilih foto yang lebih kecil.');
+      e.target.value = '';
+      return;
+    }
     setFormFoto(file);
     setFormFotoPreview(URL.createObjectURL(file));
   };

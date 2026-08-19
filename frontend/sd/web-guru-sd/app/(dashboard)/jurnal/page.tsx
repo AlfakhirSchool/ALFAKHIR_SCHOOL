@@ -26,6 +26,8 @@ const KEHADIRAN_COLOR: Record<string, string> = {
 // Parse tanggal dari API (bisa berupa ISO string UTC) ke string YYYY-MM-DD lokal
 function localDateStr(tgl: string | null | undefined): string {
   if (!tgl) return '';
+  // DATEONLY dari Sequelize: kembalikan langsung tanpa Date object (hindari timezone shift)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(tgl)) return tgl;
   const d = new Date(tgl);
   if (isNaN(d.getTime())) return tgl.split('T')[0] || '';
   const y = d.getFullYear();
