@@ -5,8 +5,11 @@ import { rateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-// Max 20 percobaan login per 15 menit per IP
-router.post('/login', rateLimiter(20, 15 * 60 * 1000), authController.login);
+// Max 10 percobaan per username per 15 menit (bukan per IP — sekolah pakai WiFi shared/NAT)
+router.post('/login', rateLimiter(10, 15 * 60 * 1000, (req) => {
+  const id = req.body?.username || req.body?.nis || req.body?.email || req.ip || 'unknown';
+  return `login:${id}`;
+}), authController.login);
 router.post('/logout', authenticate, authController.logout);
 router.post('/refresh', rateLimiter(30, 15 * 60 * 1000), authController.refreshToken);
 router.get('/profile', authenticate, authController.getProfile);

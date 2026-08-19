@@ -8,9 +8,9 @@ setInterval(() => {
   store.forEach((v, k) => { if (now > v.resetAt) store.delete(k); });
 }, 60 * 1000);
 
-export function rateLimiter(maxRequests: number, windowMs: number) {
+export function rateLimiter(maxRequests: number, windowMs: number, keyFn?: (req: Request) => string) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const key = req.ip || 'unknown';
+    const key = keyFn ? keyFn(req) : (req.ip || 'unknown');
     const now = Date.now();
     const entry = store.get(key);
 
