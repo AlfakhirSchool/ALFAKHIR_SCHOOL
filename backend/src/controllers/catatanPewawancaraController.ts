@@ -44,7 +44,7 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
   if (!c) { res.status(404).json({ success: false, message: 'Catatan tidak ditemukan' }); return; }
 
   const role = (req.user as any)?.role;
-  const email = ((req.user as any)?.nama;
+  const email = (req.user as any)?.nama;
 
   // Pewawancara hanya bisa edit catatan miliknya sendiri
   if (role === 'pewawancara' && c.pewawancara_email && c.pewawancara_email !== email) {
