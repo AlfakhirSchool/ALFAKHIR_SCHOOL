@@ -1,27 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
-
-const store = new Map<string, { count: number; resetAt: number }>();
-
-// Bersihkan entri expired setiap 60 detik agar map tidak tumbuh tak terbatas
-setInterval(() => {
-  const now = Date.now();
-  store.forEach((v, k) => { if (now > v.resetAt) store.delete(k); });
-}, 60 * 1000);
+import redis from '../config/redis';
 
 export function rateLimiter(maxRequests: number, windowMs: number, keyFn?: (req: Request) => string) {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const key = keyFn ? keyFn(req) : (req.ip || 'unknown');
-    const now = Date.now();
-    const entry = store.get(key);
-
-    if (!entry || now > entry.resetAt) {
-      store.set(key, { count: 1, resetAt: now + windowMs });
-      next(); return;
-    }
-    entry.count++;
-    if (entry.count > maxRequests) {
-      res.status(429).json({ success: false, message: 'Terlalu banyak percobaan. Coba lagi nanti.' });
-      return;
+  const windowSec = Math.ceil(windowMs / 1000);
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const key = `rl:${keyFn ? keyFn(req) : (req.ip || 'unknown')}`;
+    try {
+      const count = await redis.incr(key);
+      if (count === 1) await redis.expire(key, windowSec);
+      if (count > maxRequests) {
+        res.status(429).json({ success: false, message: 'Terlalu banyak percobaan. Coba lagi nanti.' });
+        return;
+      }
+    } catch {
+      // Redis down → fail open (jangan block user)
     }
     next();
   };
