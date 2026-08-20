@@ -84,7 +84,7 @@ export default function JurnalPage() {
 
   const { data: jurnalList, isLoading } = useQuery({
     queryKey: ['jurnal-guru', user?.id],
-    queryFn: () => api.get('/jurnal-guru').then(r => r.data.data || []),
+    queryFn: () => api.get('/jurnal-guru', { params: { limit: 200 } }).then(r => r.data.data || []),
     enabled: !!user?.id,
     staleTime: 0,
   });

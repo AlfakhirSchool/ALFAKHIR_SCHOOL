@@ -19,7 +19,7 @@ export default function AnnouncementBanner({ feedbackPath = '/feedback' }: { fee
   if (!show) return null;
 
   return (
-    <div className="bg-[#1B8B87] text-white text-sm px-4 py-2.5 flex items-center justify-between gap-3">
+    <div className="sticky top-0 z-10 bg-[#1B8B87] text-white text-sm px-4 py-2.5 flex items-center justify-between gap-3">
       <span className="flex items-center gap-2">
         <span className="text-base">💬</span>
         <span>
