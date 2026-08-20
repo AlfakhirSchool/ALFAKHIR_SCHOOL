@@ -3,70 +3,40 @@ import { Op } from 'sequelize';
 import ActivityLog from '../models/ActivityLog';
 
 export const getAuditLogs = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { page = 1, limit = 50, table_name, action, start_date, end_date, search } = req.query;
-    const limitCapped = Math.min(Number(limit), 200);
-    const offset = (Number(page) - 1) * limitCapped;
+  const { page = 1, limit = 50, table_name, action, start_date, end_date, search } = req.query;
+  const limitCapped = Math.min(Number(limit), 200);
+  const offset = (Number(page) - 1) * limitCapped;
 
-    const where: any = {};
-    if (table_name) where.table_name = table_name;
-    if (action) where.action = { [Op.iLike]: `%${action}%` };
-    if (search) {
-      where[Op.or] = [
-        { action: { [Op.iLike]: `%${search}%` } },
-        { table_name: { [Op.iLike]: `%${search}%` } },
-      ];
-    }
-    if (start_date || end_date) {
-      where.created_at = {};
-      if (start_date) where.created_at[Op.gte] = new Date(start_date as string);
-      if (end_date) {
-        const end = new Date(end_date as string);
-        end.setHours(23, 59, 59, 999);
-        where.created_at[Op.lte] = end;
-      }
-    }
-
-    const { count, rows } = await ActivityLog.findAndCountAll({
-      where,
-      order: [['created_at', 'DESC']],
-      limit: limitCapped,
-      offset,
-      attributes: ['id', 'user_id', 'action', 'table_name', 'record_id', 'old_value', 'new_value', 'ip_address', 'created_at'],
-    });
-
-    res.json({ success: true, data: rows, pagination: { total: count, page: Number(page), limit: limitCapped, totalPages: Math.ceil(count / limitCapped) } });
-  } catch {
-    res.status(500).json({ success: false, message: 'Gagal memuat audit log' });
+  const where: any = {};
+  if (table_name) where.table_name = table_name;
+  if (action) where.action = { [Op.iLike]: `%${action}%` };
+  if (search) where[Op.or] = [{ action: { [Op.iLike]: `%${search}%` } }, { table_name: { [Op.iLike]: `%${search}%` } }];
+  if (start_date || end_date) {
+    where.created_at = {};
+    if (start_date) where.created_at[Op.gte] = new Date(start_date as string);
+    if (end_date) { const end = new Date(end_date as string); end.setHours(23, 59, 59, 999); where.created_at[Op.lte] = end; }
   }
+
+  const { count, rows } = await ActivityLog.findAndCountAll({
+    where, order: [['created_at', 'DESC']], limit: limitCapped, offset,
+    attributes: ['id', 'user_id', 'action', 'table_name', 'record_id', 'old_value', 'new_value', 'ip_address', 'created_at'],
+  });
+
+  res.json({ success: true, data: rows, pagination: { total: count, page: Number(page), limit: limitCapped, totalPages: Math.ceil(count / limitCapped) } });
 };
 
 export const getLiveFeed = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const limit = Math.min(Number(req.query.limit || 20), 100);
-    const rows = await ActivityLog.findAll({
-      order: [['created_at', 'DESC']],
-      limit,
-      attributes: ['id', 'user_id', 'action', 'table_name', 'record_id', 'created_at'],
-    });
-    res.json({ success: true, data: rows });
-  } catch {
-    res.status(500).json({ success: false, message: 'Gagal memuat live feed' });
-  }
+  const limit = Math.min(Number(req.query.limit || 20), 100);
+  const rows = await ActivityLog.findAll({ order: [['created_at', 'DESC']], limit, attributes: ['id', 'user_id', 'action', 'table_name', 'record_id', 'created_at'] });
+  res.json({ success: true, data: rows });
 };
 
 export const getAuditLogStats = async (_req: Request, res: Response): Promise<void> => {
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const [total, todayCount] = await Promise.all([
-      ActivityLog.count(),
-      ActivityLog.count({ where: { created_at: { [Op.gte]: today } } }),
-    ]);
-
-    res.json({ success: true, data: { total, today: todayCount } });
-  } catch {
-    res.status(500).json({ success: false, message: 'Gagal memuat statistik' });
-  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const [total, todayCount] = await Promise.all([
+    ActivityLog.count(),
+    ActivityLog.count({ where: { created_at: { [Op.gte]: today } } }),
+  ]);
+  res.json({ success: true, data: { total, today: todayCount } });
 };

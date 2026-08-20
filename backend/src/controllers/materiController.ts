@@ -10,74 +10,42 @@ const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'materi');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 export const getMateri = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const mata_pelajaran_id = req.query.mata_pelajaran_id as string | undefined;
-    const kelas_id = req.query.kelas_id as string | undefined;
-    const where: any = { is_active: true };
-    if (mata_pelajaran_id) where.mata_pelajaran_id = mata_pelajaran_id;
-    if (kelas_id) where.kelas_id = kelas_id;
-
-    const data = await Materi.findAll({
-      where,
-      include: [
-        { model: Guru, as: 'guru', attributes: ['id'], include: [{ model: User, as: 'user', attributes: ['nama'] }] },
-      ],
-      order: [['created_at', 'DESC']],
-      limit: 100,
-    });
-    res.json({ success: true, data });
-  } catch (e: any) {
-    console.error('GET /materi error:', e.message);
-    res.status(500).json({ success: false, message: 'Gagal memuat materi' });
-  }
+  const where: any = { is_active: true };
+  if (req.query.mata_pelajaran_id) where.mata_pelajaran_id = req.query.mata_pelajaran_id;
+  if (req.query.kelas_id) where.kelas_id = req.query.kelas_id;
+  const data = await Materi.findAll({
+    where,
+    include: [{ model: Guru, as: 'guru', attributes: ['id'], include: [{ model: User, as: 'user', attributes: ['nama'] }] }],
+    order: [['created_at', 'DESC']], limit: 100,
+  });
+  res.json({ success: true, data });
 };
 
 export const uploadMateri = async (req: AuthRequest, res: Response): Promise<void> => {
   const { judul, deskripsi, mata_pelajaran_id, kelas_id, link_video } = req.body;
-  if (!judul || !mata_pelajaran_id) {
-    res.status(400).json({ success: false, message: 'Judul dan mata pelajaran wajib diisi' });
-    return;
-  }
+  if (!judul || !mata_pelajaran_id) { res.status(400).json({ success: false, message: 'Judul dan mata pelajaran wajib diisi' }); return; }
 
   const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
   if (!guru) { res.status(403).json({ success: false, message: 'Akun guru tidak ditemukan' }); return; }
 
-  let file_url = null, file_name = null, file_size = null;
-  if (req.file) {
-    file_url = `/uploads/materi/${req.file.filename}`;
-    file_name = req.file.originalname;
-    file_size = req.file.size;
-  }
-
   const materi = await Materi.create({
-    judul,
-    deskripsi: deskripsi || null,
-    mata_pelajaran_id,
-    kelas_id: kelas_id || null,
+    judul, deskripsi: deskripsi || null, mata_pelajaran_id, kelas_id: kelas_id || null,
     guru_id: guru.id,
-    file_url,
-    file_name,
-    file_size,
+    file_url: req.file ? `/uploads/materi/${req.file.filename}` : null,
+    file_name: req.file?.originalname || null,
+    file_size: req.file?.size || null,
     link_video: link_video || null,
   });
-
   res.status(201).json({ success: true, data: materi });
 };
 
 export const deleteMateri = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const materi = await Materi.findByPk(req.params.id as string);
-    if (!materi) { res.status(404).json({ success: false, message: 'Materi tidak ditemukan' }); return; }
-
-    if (materi.file_url) {
-      const filePath = path.join(process.cwd(), materi.file_url);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
-
-    await materi.update({ is_active: false });
-    res.json({ success: true, message: 'Materi dihapus' });
-  } catch (e: any) {
-    console.error('DELETE /materi error:', e.message);
-    res.status(500).json({ success: false, message: 'Gagal menghapus materi' });
+  const materi = await Materi.findByPk(req.params.id as string);
+  if (!materi) { res.status(404).json({ success: false, message: 'Materi tidak ditemukan' }); return; }
+  if (materi.file_url) {
+    const filePath = path.join(process.cwd(), materi.file_url);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   }
+  await materi.update({ is_active: false });
+  res.json({ success: true, message: 'Materi dihapus' });
 };
