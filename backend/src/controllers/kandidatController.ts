@@ -1,12 +1,26 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
+import * as XLSX from 'xlsx';
+import QRCode from 'qrcode';
 import { Kandidat, Guru, User, Kelas, CatatanPewawancara, HasilTesAkademik, RingkasanAI, JawabanForm } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import sequelize from '../config/database';
-import { kelasIdFilter } from '../utils/levelFilter';
 import { getTahunAjaran } from '../utils/getTahunAjaran';
 import { createSiswaWithAccount } from '../utils/createSiswaFromKandidat';
 import { logAction } from '../middleware/auditLog';
+
+const kandPayload = (body: any, tahun_ajaran?: string) => ({
+  nama: body.nama,
+  level: body.level,
+  nama_ortu: body.nama_ortu || null,
+  no_telp_ortu: body.no_telp_ortu || null,
+  email_ortu: body.email_ortu || null,
+  asal_sekolah: body.asal_sekolah || null,
+  jenis_kelamin: body.jenis_kelamin || null,
+  tanggal_lahir: body.tanggal_lahir || null,
+  tahun_ajaran: tahun_ajaran || body.tahun_ajaran || getTahunAjaran(),
+  status: 'PENDING' as const,
+});
 
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
   const { level, status, search, page = '1', limit = '20', tahun_ajaran } = req.query;
@@ -20,60 +34,38 @@ export const getAll = async (req: AuthRequest, res: Response): Promise<void> => 
   if (tahun_ajaran) where.tahun_ajaran = tahun_ajaran;
   if (search) where.nama = { [Op.iLike]: `%${search}%` };
 
-  const { count, rows } = await Kandidat.findAndCountAll({
-    where,
-    include: [
-      { model: Guru, as: 'pewawancara', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
-      { model: HasilTesAkademik, as: 'hasil_tes', attributes: ['total_skor'] },
-      { model: RingkasanAI, as: 'ringkasan_ai', attributes: ['ringkasan'] },
-    ],
-    limit: limitCapped,
-    offset,
-    order: [['created_at', 'DESC']],
-  });
+  const [{ count, rows }, statRows] = await Promise.all([
+    Kandidat.findAndCountAll({
+      where,
+      include: [
+        { model: Guru, as: 'pewawancara', include: [{ model: User, as: 'user', attributes: ['nama'] }] },
+        { model: HasilTesAkademik, as: 'hasil_tes', attributes: ['total_skor'] },
+        { model: RingkasanAI, as: 'ringkasan_ai', attributes: ['ringkasan'] },
+      ],
+      limit: limitCapped, offset, order: [['created_at', 'DESC']],
+    }),
+    Kandidat.findAll({
+      where: req.user?.school_level ? { level: req.user.school_level } : {},
+      attributes: ['status', [sequelize.fn('COUNT', sequelize.col('status')), 'count']],
+      group: ['status'], raw: true,
+    }) as any,
+  ]);
 
-  // Stats — satu query GROUP BY status
-  const baseWhere = req.user?.school_level ? { level: req.user.school_level } : {};
-  const statRows = await Kandidat.findAll({
-    where: baseWhere,
-    attributes: ['status', [sequelize.fn('COUNT', sequelize.col('status')), 'count']],
-    group: ['status'],
-    raw: true,
-  }) as any[];
-  const statMap: Record<string, number> = {};
-  let total = 0;
-  for (const r of statRows) { statMap[r.status] = parseInt(r.count, 10); total += parseInt(r.count, 10); }
-  const pending = statMap['PENDING'] || 0;
-  const review = statMap['REVIEW'] || 0;
-  const diterima = statMap['DITERIMA'] || 0;
-  const ditolak = statMap['DITOLAK'] || 0;
+  const statMap = Object.fromEntries((statRows as any[]).map((r: any) => [r.status, parseInt(r.count, 10)]));
+  const total = Object.values(statMap).reduce((a: any, b: any) => a + b, 0);
 
   res.json({
-    success: true,
-    data: rows,
-    stats: { total, pending, review, diterima, ditolak },
+    success: true, data: rows,
+    stats: { total, pending: statMap['PENDING'] || 0, review: statMap['REVIEW'] || 0, diterima: statMap['DITERIMA'] || 0, ditolak: statMap['DITOLAK'] || 0 },
     pagination: { total: count, page: parseInt(page as string), limit: limitCapped, totalPages: Math.ceil(count / limitCapped) },
   });
 };
 
 export const create = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { nama, level, nama_ortu, no_telp_ortu, email_ortu, asal_sekolah, jenis_kelamin, tanggal_lahir, tahun_ajaran } = req.body;
-  if (!nama || !level) {
-    res.status(400).json({ success: false, message: 'nama dan level wajib diisi' });
-    return;
+  if (!req.body.nama || !req.body.level) {
+    res.status(400).json({ success: false, message: 'nama dan level wajib diisi' }); return;
   }
-  const kandidat = await Kandidat.create({
-    nama,
-    level,
-    nama_ortu: nama_ortu || null,
-    no_telp_ortu: no_telp_ortu || null,
-    email_ortu: email_ortu || null,
-    asal_sekolah: asal_sekolah || null,
-    jenis_kelamin: jenis_kelamin || null,
-    tanggal_lahir: tanggal_lahir || null,
-    tahun_ajaran: tahun_ajaran || getTahunAjaran(),
-    status: 'PENDING',
-  });
+  const kandidat = await Kandidat.create(kandPayload(req.body));
   res.status(201).json({ success: true, data: kandidat });
 };
 
@@ -98,9 +90,7 @@ export const update = async (req: AuthRequest, res: Response): Promise<void> => 
     'email_siswa', 'asal_sekolah', 'jenis_kelamin', 'tanggal_lahir', 'catatan', 'ruangan',
     'pewawancara_id', 'pewawancara_nama', 'skor_akademik', 'rekomendasi'];
   const updates: any = {};
-  for (const key of allowed) {
-    if (req.body[key] !== undefined) updates[key] = req.body[key];
-  }
+  for (const key of allowed) { if (req.body[key] !== undefined) updates[key] = req.body[key]; }
   await k.update(updates);
   res.json({ success: true, data: k });
 };
@@ -110,6 +100,7 @@ export const remove = async (req: AuthRequest, res: Response): Promise<void> => 
   if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
   try {
     await k.destroy();
+    res.json({ success: true, message: 'Kandidat dihapus' });
   } catch (err: any) {
     if (err?.original?.code === '23503' || err?.message?.includes('foreign key')) {
       res.status(409).json({ success: false, message: 'Kandidat tidak dapat dihapus karena memiliki data terkait (catatan, hasil tes). Hapus data terkait dulu.' });
@@ -117,7 +108,6 @@ export const remove = async (req: AuthRequest, res: Response): Promise<void> => 
     }
     throw err;
   }
-  res.json({ success: true, message: 'Kandidat dihapus' });
 };
 
 export const daftarkan = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -139,33 +129,25 @@ export const daftarkan = async (req: AuthRequest, res: Response): Promise<void> 
   await k.update({ status: 'DITERIMA', siswa_id: (siswa as any).id });
 
   logAction({
-    user_id: req.user!.id, nama: req.user!.nama, role: req.user!.role,
-    school_level: req.user!.school_level,
+    user_id: req.user!.id, nama: req.user!.nama, role: req.user!.role, school_level: req.user!.school_level,
     action: 'Daftarkan Kandidat', table: 'siswa', record_id: (siswa as any).id,
-    new_value: { note: 'password awal diberikan ke admin' } as any,
-    ip: req.ip,
+    new_value: { note: 'password awal diberikan ke admin' } as any, ip: req.ip,
   });
 
   res.json({ success: true, message: `${k.nama} berhasil didaftarkan`, password });
 };
 
-// Public — tidak butuh auth
-// Publik: cari kandidat untuk portal tes
 export const cariPublik = async (req: any, res: Response): Promise<void> => {
-  const { search, level } = req.query;
   const where: any = { status: ['PENDING', 'REVIEW'] };
-  if (level) where.level = level;
-  if (search) where.nama = { [Op.iLike]: `%${search}%` };
+  if (req.query.level) where.level = req.query.level;
+  if (req.query.search) where.nama = { [Op.iLike]: `%${req.query.search}%` };
   const kandidat = await Kandidat.findAll({
-    where,
-    attributes: ['id', 'nama', 'nama_diperbaiki', 'level', 'tahun_ajaran'],
-    order: [['nama', 'ASC']],
-    limit: 50,
+    where, attributes: ['id', 'nama', 'nama_diperbaiki', 'level', 'tahun_ajaran'],
+    order: [['nama', 'ASC']], limit: 50,
   });
   res.json({ success: true, data: kandidat });
 };
 
-// Publik: info kandidat untuk halaman tes
 export const infoPublik = async (req: any, res: Response): Promise<void> => {
   const k = await Kandidat.findByPk(req.params.id as string, {
     attributes: ['id', 'nama', 'nama_diperbaiki', 'level', 'tahun_ajaran'],
@@ -177,10 +159,7 @@ export const infoPublik = async (req: any, res: Response): Promise<void> => {
 
 export const generateRingkasanAI = async (req: any, res: Response): Promise<void> => {
   const k = await Kandidat.findByPk(req.params.id as string, {
-    include: [
-      { model: CatatanPewawancara, as: 'catatan_list' },
-      { model: HasilTesAkademik, as: 'hasil_tes' },
-    ],
+    include: [{ model: CatatanPewawancara, as: 'catatan_list' }, { model: HasilTesAkademik, as: 'hasil_tes' }],
   });
   if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
 
@@ -189,7 +168,6 @@ export const generateRingkasanAI = async (req: any, res: Response): Promise<void
 
   const catatan = (k as any).catatan_list || [];
   const hasil = (k as any).hasil_tes;
-
   const prompt = `Kamu adalah asisten penerimaan siswa baru di SMP Islam Al Fakhir. Buat ringkasan singkat (maksimal 200 kata) tentang kandidat berikut berdasarkan data wawancara. Ringkasan harus profesional dan membantu tim untuk mengambil keputusan.
 
 Nama: ${k.nama_diperbaiki || k.nama}
@@ -206,11 +184,7 @@ Tuliskan ringkasan dalam Bahasa Indonesia yang profesional.`;
 
   const geminiRes = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-    }
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) }
   );
   if (!geminiRes.ok) {
     const err = await geminiRes.text().catch(() => '');
@@ -218,8 +192,8 @@ Tuliskan ringkasan dalam Bahasa Indonesia yang profesional.`;
   }
   let ringkasanText = '';
   try {
-    const geminiData: any = await geminiRes.json();
-    ringkasanText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const data: any = await geminiRes.json();
+    ringkasanText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
   } catch {
     res.status(502).json({ success: false, message: 'Gemini response tidak valid' }); return;
   }
@@ -230,10 +204,9 @@ Tuliskan ringkasan dalam Bahasa Indonesia yang profesional.`;
 };
 
 export const monitorPewawancara = async (req: any, res: Response): Promise<void> => {
-  const { level, tahun_ajaran } = req.query;
   const where: any = {};
-  if (level) where.level = level;
-  if (tahun_ajaran) where.tahun_ajaran = tahun_ajaran;
+  if (req.query.level) where.level = req.query.level;
+  if (req.query.tahun_ajaran) where.tahun_ajaran = req.query.tahun_ajaran;
 
   const kandidat = await Kandidat.findAll({
     where,
@@ -248,13 +221,11 @@ export const monitorPewawancara = async (req: any, res: Response): Promise<void>
   for (const k of kandidat) {
     const kAny = k as any;
     const key = kAny.pewawancara_id || '__unassigned__';
-    if (!map[key]) {
-      map[key] = {
-        pewawancara_id: kAny.pewawancara_id,
-        pewawancara_nama: kAny.pewawancara_nama || kAny.pewawancara?.user?.nama || 'Belum ditugaskan',
-        total: 0, pending: 0, review: 0, diterima: 0, ditolak: 0, sudah_catatan: 0,
-      };
-    }
+    if (!map[key]) map[key] = {
+      pewawancara_id: kAny.pewawancara_id,
+      pewawancara_nama: kAny.pewawancara_nama || kAny.pewawancara?.user?.nama || 'Belum ditugaskan',
+      total: 0, pending: 0, review: 0, diterima: 0, ditolak: 0, sudah_catatan: 0,
+    };
     map[key].total++;
     map[key][k.status.toLowerCase()]++;
     if (kAny.catatan_list?.length > 0) map[key].sudah_catatan++;
@@ -262,20 +233,17 @@ export const monitorPewawancara = async (req: any, res: Response): Promise<void>
 
   const result = Object.values(map).map((r: any) => ({
     ...r,
-    status: (r.diterima + r.ditolak) === r.total && r.total > 0 ? 'complete'
-      : r.sudah_catatan > 0 ? 'in_progress'
-      : 'not_started',
+    status: (r.diterima + r.ditolak) === r.total && r.total > 0 ? 'complete' : r.sudah_catatan > 0 ? 'in_progress' : 'not_started',
   })).sort((a: any, b: any) => b.total - a.total);
+
   res.json({ success: true, data: result });
 };
 
 export const exportExcel = async (req: any, res: Response): Promise<void> => {
-  const XLSX = require('xlsx');
-  const { level, status, tahun_ajaran } = req.query;
   const where: any = {};
-  if (level) where.level = level;
-  if (status) where.status = status;
-  if (tahun_ajaran) where.tahun_ajaran = tahun_ajaran;
+  if (req.query.level) where.level = req.query.level;
+  if (req.query.status) where.status = req.query.status;
+  if (req.query.tahun_ajaran) where.tahun_ajaran = req.query.tahun_ajaran;
 
   const kandidat = await Kandidat.findAll({
     where,
@@ -311,46 +279,31 @@ export const exportExcel = async (req: any, res: Response): Promise<void> => {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Kandidat');
   const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', `attachment; filename="kandidat-${Date.now()}.xlsx"`);
   res.send(buf);
 };
 
 export const getQrCode = async (req: any, res: Response): Promise<void> => {
-  const QRCode = require('qrcode');
   const k = await Kandidat.findByPk(req.params.id as string, { attributes: ['id', 'nama', 'nama_diperbaiki'] });
   if (!k) { res.status(404).json({ success: false, message: 'Kandidat tidak ditemukan' }); return; }
   const url = `${process.env.NEXT_PUBLIC_APP_URL || 'https://admin.smpialfakhir.sch.id'}/tes/${k.id}`;
-  const png = await QRCode.toBuffer(url, { type: 'png', width: 300, margin: 2 });
+  const png = await (QRCode as any).toBuffer(url, { type: 'png', width: 300, margin: 2 });
   res.setHeader('Content-Type', 'image/png');
   res.setHeader('Content-Disposition', `inline; filename="qr-${k.id}.png"`);
   res.send(png);
 };
 
 export const daftarPublik = async (req: any, res: Response): Promise<void> => {
-  const { nama, level, nama_ortu, no_telp_ortu, email_ortu, asal_sekolah, jenis_kelamin, tanggal_lahir } = req.body;
-  if (!nama || !level) {
-    res.status(400).json({ success: false, message: 'nama dan level wajib diisi' });
-    return;
+  if (!req.body.nama || !req.body.level) {
+    res.status(400).json({ success: false, message: 'nama dan level wajib diisi' }); return;
   }
   const tahun_ajaran = getTahunAjaran();
-  const duplikat = await Kandidat.findOne({ where: { nama, level, tahun_ajaran } });
+  const duplikat = await Kandidat.findOne({ where: { nama: req.body.nama, level: req.body.level, tahun_ajaran } });
   if (duplikat) {
-    res.status(409).json({ success: false, message: 'Pendaftaran dengan nama dan jenjang yang sama sudah ada untuk tahun ajaran ini.' });
-    return;
+    res.status(409).json({ success: false, message: 'Pendaftaran dengan nama dan jenjang yang sama sudah ada untuk tahun ajaran ini.' }); return;
   }
-  const kandidat = await Kandidat.create({
-    nama, level,
-    nama_ortu: nama_ortu || null,
-    no_telp_ortu: no_telp_ortu || null,
-    email_ortu: email_ortu || null,
-    asal_sekolah: asal_sekolah || null,
-    jenis_kelamin: jenis_kelamin || null,
-    tanggal_lahir: tanggal_lahir || null,
-    tahun_ajaran,
-    status: 'PENDING',
-  });
+  const kandidat = await Kandidat.create(kandPayload(req.body, tahun_ajaran));
   res.status(201).json({ success: true, message: 'Pendaftaran berhasil! Tim kami akan menghubungi Anda.', id: kandidat.id });
 };
 
@@ -366,7 +319,6 @@ export const updateStatus = async (req: AuthRequest, res: Response): Promise<voi
 
   await k.update({ status });
 
-  // Kirim WA notif ke ortu
   if (k.no_telp_ortu && (status === 'DITERIMA' || status === 'DITOLAK')) {
     const nama = k.nama_diperbaiki || k.nama;
     const msg = status === 'DITERIMA'
