@@ -11,6 +11,12 @@ import logger from '../config/logger';
 const router = Router();
 router.use(authenticate);
 
+const sendWaOrtu = (phones: string[], msg: string, event: string): number => {
+  let sent = 0;
+  for (const p of phones) if (p) { sendWAMessage(p, msg).catch(e => logger.error({ event, error: e.message })); sent++; }
+  return sent;
+};
+
 // Haversine — jarak dua titik GPS dalam meter
 const haversineMeters = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
   const R = 6371000;
@@ -76,25 +82,13 @@ router.post('/masuk', authorize('admin'), async (req: AuthRequest, res: Response
     { replacements: { sid: siswa_id, skolahId: siswaRow.sekolah_id, today, now, uid: req.user!.id }, type: QueryTypes.INSERT }
   );
 
-  // Kirim notif WA ke semua orang tua
-  const phones: string[] = siswaRow.ortu_phones || [];
-  const message = buildMasukMessage(siswaRow.nama_siswa, siswaRow.nama_sekolah, now);
-
-  let notifSent = 0;
-  for (const phone of phones) {
-    if (phone) {
-      sendWAMessage(phone, message).catch((e) => logger.error({ event: 'wa_masuk_error', error: e.message }));
-      notifSent++;
-    }
-  }
+  const notifSent = sendWaOrtu(siswaRow.ortu_phones || [], buildMasukMessage(siswaRow.nama_siswa, siswaRow.nama_sekolah, now), 'wa_masuk_error');
 
   await sequelize.query(
-    `UPDATE absensi_gerbang SET notif_masuk_sent = TRUE
-     WHERE siswa_id = :sid AND tanggal = :today`,
+    `UPDATE absensi_gerbang SET notif_masuk_sent = TRUE WHERE siswa_id = :sid AND tanggal = :today`,
     { replacements: { sid: siswa_id, today }, type: QueryTypes.UPDATE }
   );
 
-  // Propagate hadir ke semua jadwal hari ini
   propagateGerbangToKelas(siswa_id, today, req.user!.id).catch(e =>
     logger.error({ event: 'propagate_gate_to_kelas_error', error: e.message })
   );
@@ -138,20 +132,10 @@ router.post('/pulang', authorize('admin'), async (req: AuthRequest, res: Respons
     { replacements: { sid: siswa_id, skolahId: siswaRow.sekolah_id, today, now, uid: req.user!.id }, type: QueryTypes.INSERT }
   );
 
-  const phones: string[] = siswaRow.ortu_phones || [];
-  const message = buildPulangMessage(siswaRow.nama_siswa, siswaRow.nama_sekolah, now);
-
-  let notifSent = 0;
-  for (const phone of phones) {
-    if (phone) {
-      sendWAMessage(phone, message).catch((e) => logger.error({ event: 'wa_pulang_error', error: e.message }));
-      notifSent++;
-    }
-  }
+  const notifSent = sendWaOrtu(siswaRow.ortu_phones || [], buildPulangMessage(siswaRow.nama_siswa, siswaRow.nama_sekolah, now), 'wa_pulang_error');
 
   await sequelize.query(
-    `UPDATE absensi_gerbang SET notif_pulang_sent = TRUE
-     WHERE siswa_id = :sid AND tanggal = :today`,
+    `UPDATE absensi_gerbang SET notif_pulang_sent = TRUE WHERE siswa_id = :sid AND tanggal = :today`,
     { replacements: { sid: siswa_id, today }, type: QueryTypes.UPDATE }
   );
 
@@ -406,17 +390,10 @@ router.post('/scan', authenticate, async (req: AuthRequest, res: Response): Prom
     { replacements: { sid: siswa_id, skolahId: siswaRow.sekolah_id, today, now, uid: req.user!.id, lat: lat ?? null, lng: lng ?? null, lok: lokasiValid, jarak: lokasiJarak }, type: QueryTypes.INSERT }
   );
 
-  // Kirim notif WA
-  const phones: string[] = siswaRow.ortu_phones || [];
-  const message = mode === 'masuk'
+  const waMsg = mode === 'masuk'
     ? buildMasukMessage(siswaRow.nama_siswa, siswaRow.nama_sekolah, now)
     : buildPulangMessage(siswaRow.nama_siswa, siswaRow.nama_sekolah, now);
-
-  for (const phone of phones) {
-    if (phone) {
-      sendWAMessage(phone, message).catch((e) => logger.error({ event: 'wa_gate_scan_error', error: e.message }));
-    }
-  }
+  sendWaOrtu(siswaRow.ortu_phones || [], waMsg, 'wa_gate_scan_error');
 
   // Propagate hadir ke semua jadwal hari ini (hanya untuk masuk)
   if (mode === 'masuk') {

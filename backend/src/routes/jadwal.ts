@@ -40,27 +40,18 @@ router.get('/', authorize('admin', 'guru', 'siswa', 'ortu'), async (req: AuthReq
 
 // Guru bisa buat jadwal sendiri, admin bisa buat untuk siapapun
 router.post('/', authorize('admin', 'guru'), async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    let body = { ...req.body };
-    // Guru: paksa guru_id ke diri sendiri
-    if (req.user!.role === 'guru') {
-      const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
-      if (!guru) { res.status(400).json({ success: false, message: 'Data guru tidak ditemukan' }); return; }
-      body.guru_id = (guru as any).id;
-    }
-    // Cegah duplikat: cek jadwal sama sudah ada
-    const existing = await JadwalPelajaran.findOne({
-      where: { guru_id: body.guru_id, kelas_id: body.kelas_id, hari: body.hari, jam_mulai: body.jam_mulai },
-    });
-    if (existing) {
-      res.status(409).json({ success: false, message: 'Jadwal dengan guru, kelas, hari, dan jam yang sama sudah ada' });
-      return;
-    }
-    const jadwal = await JadwalPelajaran.create(body);
-    res.status(201).json({ success: true, data: jadwal });
-  } catch (e: any) {
-    res.status(500).json({ success: false, message: e.message });
+  let body = { ...req.body };
+  if (req.user!.role === 'guru') {
+    const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
+    if (!guru) { res.status(400).json({ success: false, message: 'Data guru tidak ditemukan' }); return; }
+    body.guru_id = (guru as any).id;
   }
+  const existing = await JadwalPelajaran.findOne({
+    where: { guru_id: body.guru_id, kelas_id: body.kelas_id, hari: body.hari, jam_mulai: body.jam_mulai },
+  });
+  if (existing) { res.status(409).json({ success: false, message: 'Jadwal dengan guru, kelas, hari, dan jam yang sama sudah ada' }); return; }
+  const jadwal = await JadwalPelajaran.create(body);
+  res.status(201).json({ success: true, data: jadwal });
 });
 
 // Hanya admin atau guru pemilik yang bisa edit

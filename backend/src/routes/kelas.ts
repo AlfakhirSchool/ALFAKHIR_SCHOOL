@@ -10,7 +10,6 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', authorize('admin', 'guru', 'keuangan'), async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
   const { sekolah_id, tahun_ajaran, jenjang } = req.query;
   const where: Record<string, unknown> = {};
   const sekolahWhere: Record<string, unknown> = {};
@@ -49,7 +48,6 @@ router.get('/', authorize('admin', 'guru', 'keuangan'), async (req: AuthRequest,
   });
 
   res.json({ success: true, data: kelasList });
-  } catch (e: any) { res.status(500).json({ success: false, message: e.message || 'Gagal memuat kelas' }); }
 });
 
 router.post('/', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {

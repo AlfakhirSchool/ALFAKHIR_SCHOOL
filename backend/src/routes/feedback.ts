@@ -7,14 +7,10 @@ router.use(authenticate);
 
 // Kirim feedback (semua user)
 router.post('/', async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { kategori, judul, pesan, sumber } = req.body;
-    if (!judul || !pesan || !kategori) { res.status(400).json({ success: false, message: 'Kategori, judul, dan pesan wajib diisi' }); return; }
-    const fb = await Feedback.create({ user_id: req.user!.id, kategori, judul, pesan, sumber: sumber || 'web', status: 'baru' });
-    res.status(201).json({ success: true, message: 'Feedback berhasil dikirim ke Admin Master', data: fb });
-  } catch (e: any) {
-    res.status(500).json({ success: false, message: e.message });
-  }
+  const { kategori, judul, pesan, sumber } = req.body;
+  if (!judul || !pesan || !kategori) { res.status(400).json({ success: false, message: 'Kategori, judul, dan pesan wajib diisi' }); return; }
+  const fb = await Feedback.create({ user_id: req.user!.id, kategori, judul, pesan, sumber: sumber || 'web', status: 'baru' });
+  res.status(201).json({ success: true, message: 'Feedback berhasil dikirim ke Admin Master', data: fb });
 });
 
 // Lihat semua feedback (admin master only)

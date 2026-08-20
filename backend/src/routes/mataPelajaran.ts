@@ -9,15 +9,11 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { jenjang } = req.query;
-    const where: any = {};
-    if (jenjang && jenjang !== 'all') {
-      where[Op.or] = [{ jenjang: jenjang as string }, { jenjang: null }];
-    }
-    const list = await MataPelajaran.findAll({ where, order: [['nama', 'ASC']] });
-    res.json({ success: true, data: list });
-  } catch (e: any) { res.status(500).json({ success: false, message: e.message || 'Gagal memuat mata pelajaran' }); }
+  const { jenjang } = req.query;
+  const where: any = {};
+  if (jenjang && jenjang !== 'all') where[Op.or] = [{ jenjang: jenjang as string }, { jenjang: null }];
+  const list = await MataPelajaran.findAll({ where, order: [['nama', 'ASC']] });
+  res.json({ success: true, data: list });
 });
 
 router.post('/', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
