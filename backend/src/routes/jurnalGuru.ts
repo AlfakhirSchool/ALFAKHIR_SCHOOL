@@ -56,6 +56,5 @@ router.post('/:id/siswa/:siswa_id/foto', authorize('guru', 'admin'), uploadFoto.
 });
 router.post('/:id/submit', authorize('guru'), jurnalController.submit);
 router.post('/:id/review', authorize('admin', 'guru'), jurnalController.review);
-router.get('/:id/export/pdf', authorize('admin', 'guru'), jurnalController.exportPdf);
 
 export default router;

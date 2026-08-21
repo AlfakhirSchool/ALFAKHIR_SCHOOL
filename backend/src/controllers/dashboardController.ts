@@ -107,10 +107,8 @@ export const studentDashboard = async (req: AuthRequest, res: Response): Promise
 
   const today = new Date().toISOString().split('T')[0];
   const cacheKey = `dashboard:siswa:${siswa.id}:${today}`;
-  try {
-    const cached = await redis.get(cacheKey);
-    if (cached) { res.json({ success: true, data: JSON.parse(cached) }); return; }
-  } catch { /* Redis miss */ }
+  const cached = await redis.get(cacheKey).catch(() => null);
+  if (cached) { res.json({ success: true, data: JSON.parse(cached) }); return; }
 
   const tahunAjaran = `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
 

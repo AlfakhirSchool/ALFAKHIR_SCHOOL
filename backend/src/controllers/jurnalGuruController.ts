@@ -133,12 +133,6 @@ export const getLaporanKelas = async (req: AuthRequest, res: Response): Promise<
   res.json({ success: true, data: jurnalList, summary: { total: jurnalList.length, ...s } });
 };
 
-export const exportPdf = async (req: AuthRequest, res: Response): Promise<void> => {
-  const jurnal = await JurnalGuru.findByPk(req.params.id as string, { include: JURNAL_INCLUDE as any });
-  if (!jurnal) throw createError('Jurnal tidak ditemukan', 404);
-  res.json({ success: true, message: 'Export PDF jurnal - coming soon', data: jurnal });
-};
-
 export const downloadExcel = async (req: AuthRequest, res: Response): Promise<void> => {
   const { kelas_id, status, guru_id, start_date, end_date } = req.query;
   const levelWhere = await kelasIdFilter(req.user?.school_level);
