@@ -132,12 +132,13 @@ export default function CatatanSiswaAdminPage() {
           >
             <X size={24} />
           </button>
-          <AuthImage
-            src={lightbox}
-            alt="foto besar"
-            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          />
+          <div onClick={e => e.stopPropagation()}>
+            <AuthImage
+              src={lightbox}
+              alt="foto besar"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            />
+          </div>
         </div>
       )}
     </div>
