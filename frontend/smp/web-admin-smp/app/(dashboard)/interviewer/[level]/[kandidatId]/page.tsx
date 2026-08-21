@@ -85,7 +85,7 @@ export default function KandidatDetailPage({ params }: { params: Promise<{ level
 
   const emptyForm = {
     pewawancara_nama: user?.nama || '',
-    pewawancara_email: user?.email || '',
+    pewawancara_email: '',
     observasi: '', penilaian_akademik: '', dukungan_keluarga: '',
     catatan_karakter: '', catatan_lain: '', rekomendasi: '',
   };
@@ -95,7 +95,7 @@ export default function KandidatDetailPage({ params }: { params: Promise<{ level
   if (existingCatatan && !initialized) {
     setForm({
       pewawancara_nama: existingCatatan.pewawancara_nama || user?.nama || '',
-      pewawancara_email: existingCatatan.pewawancara_email || user?.email || '',
+      pewawancara_email: existingCatatan.pewawancara_email || '',
       observasi: existingCatatan.observasi || '',
       penilaian_akademik: existingCatatan.penilaian_akademik || '',
       dukungan_keluarga: existingCatatan.dukungan_keluarga || '',
