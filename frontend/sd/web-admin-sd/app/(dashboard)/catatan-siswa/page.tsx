@@ -3,7 +3,7 @@ import AuthImage from '@/components/AuthImage';
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, Image as ImageIcon } from 'lucide-react';
+import { FileText, Image as ImageIcon, X } from 'lucide-react';
 import Header from '@/components/layout/Header';
 import api from '@/lib/api';
 
@@ -12,6 +12,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 export default function CatatanSiswaAdminPage() {
   const [kelasId, setKelasId] = useState('');
   const [siswaId, setSiswaId] = useState('');
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-admin-cs'],
@@ -95,8 +96,10 @@ export default function CatatanSiswaAdminPage() {
           {catatan.map((c: any) => (
             <div key={c.id} className="bg-white rounded-xl shadow-sm p-5 flex gap-4">
               {c.foto_url && (
-                <AuthImage src={c.foto_url} alt="foto"
-                  className="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-gray-100" />
+                <button onClick={() => setLightbox(c.foto_url)} className="flex-shrink-0">
+                  <AuthImage src={c.foto_url} alt="foto"
+                    className="w-20 h-20 object-cover rounded-lg border border-gray-100 hover:opacity-80 transition-opacity cursor-zoom-in" />
+                </button>
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
@@ -117,6 +120,26 @@ export default function CatatanSiswaAdminPage() {
           ))}
         </div>
       </div>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-1 hover:bg-black/80"
+            onClick={() => setLightbox(null)}
+          >
+            <X size={24} />
+          </button>
+          <AuthImage
+            src={lightbox}
+            alt="foto besar"
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

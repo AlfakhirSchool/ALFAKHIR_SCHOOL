@@ -15,6 +15,7 @@ export default function CatatanSiswaPage() {
   const [view, setView] = useState<'list' | 'form'>('list');
   const [filterKelasId, setFilterKelasId] = useState('');
   const [filterSiswaId, setFilterSiswaId] = useState('');
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   // Form state
   const [formKelasId, setFormKelasId] = useState('');
@@ -178,10 +179,11 @@ export default function CatatanSiswaPage() {
             <div className="space-y-3">
               {filteredCatatan.map((c: any) => (
                 <div key={c.id} className="bg-white rounded-xl shadow-sm p-5 flex gap-4">
-                  {/* Foto thumbnail */}
                   {c.foto_url && (
-                    <AuthImage src={c.foto_url} alt="foto"
-                      className="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-gray-100" />
+                    <button onClick={() => setLightbox(c.foto_url)} className="flex-shrink-0">
+                      <AuthImage src={c.foto_url} alt="foto"
+                        className="w-20 h-20 object-cover rounded-lg border border-gray-100 hover:opacity-80 transition-opacity cursor-zoom-in" />
+                    </button>
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3">
@@ -329,6 +331,26 @@ export default function CatatanSiswaPage() {
           </div>
         )}
       </div>
+
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-1 hover:bg-black/80"
+            onClick={() => setLightbox(null)}
+          >
+            <X size={24} />
+          </button>
+          <AuthImage
+            src={lightbox}
+            alt="foto besar"
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
