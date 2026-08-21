@@ -2,23 +2,19 @@ import { Response } from 'express';
 import { SoalAkademik, JawabanAkademik, HasilTesAkademik, Kandidat } from '../models';
 import { AuthRequest } from '../middleware/auth';
 
-// Publik: soal per level untuk portal tes
+// publik=true strips jawaban_benar (portal tes kandidat)
+const PUBLIK_ATTRS = ['id', 'teks', 'mata_pelajaran', 'gambar_url', 'pilihan', 'urutan'];
+
 export const getAllPublik = async (req: any, res: Response): Promise<void> => {
-  const { level } = req.query;
   const where: any = {};
-  if (level) where.level = level;
-  const soal = await SoalAkademik.findAll({
-    where,
-    attributes: ['id', 'teks', 'mata_pelajaran', 'gambar_url', 'pilihan', 'urutan'],
-    order: [['urutan', 'ASC']],
-  });
+  if (req.query.level) where.level = req.query.level;
+  const soal = await SoalAkademik.findAll({ where, attributes: PUBLIK_ATTRS, order: [['urutan', 'ASC']] });
   res.json({ success: true, data: soal });
 };
 
 export const getAll = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { level } = req.query;
   const where: any = {};
-  if (level) where.level = level;
+  if (req.query.level) where.level = req.query.level;
   const soal = await SoalAkademik.findAll({ where, order: [['urutan', 'ASC']] });
   res.json({ success: true, data: soal });
 };

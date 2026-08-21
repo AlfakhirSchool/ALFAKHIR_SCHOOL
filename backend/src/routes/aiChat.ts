@@ -173,37 +173,37 @@ Aturan untuk bantuan pendidikan:
 - Tolak permintaan yang tidak ada hubungannya sama sekali dengan pendidikan atau operasional sekolah (contoh: resep masakan, berita politik, dll)
 - Gunakan format bullet/tabel jika data lebih dari 2 item`;
 
+  const client = new Groq({ apiKey });
+
+  const messages = [
+    { role: 'system' as const, content: systemPrompt },
+    ...(history as any[])
+      .filter((h: any) => h.role === 'user' || h.role === 'assistant')
+      .map((h: any) => ({
+        role: h.role as 'user' | 'assistant',
+        content: String(h.content),
+      })),
+    { role: 'user' as const, content: message },
+  ];
+
+  let response;
   try {
-    const client = new Groq({ apiKey });
-
-    const messages = [
-      { role: 'system' as const, content: systemPrompt },
-      ...(history as any[])
-        .filter((h: any) => h.role === 'user' || h.role === 'assistant')
-        .map((h: any) => ({
-          role: h.role as 'user' | 'assistant',
-          content: String(h.content),
-        })),
-      { role: 'user' as const, content: message },
-    ];
-
-    const response = await client.chat.completions.create({
+    response = await client.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       max_tokens: 1024,
       temperature: 0.1,
       messages,
     });
-
-    const text = response.choices[0]?.message?.content || '';
-    res.json({ success: true, data: { reply: text } });
   } catch (e: any) {
     logger.error({ event: 'groq_ai_error', error: e?.message });
     const status = e?.status === 429 ? 503 : 500;
-    const msg = status === 503
-      ? 'Kuota AI sedang penuh, coba beberapa menit lagi'
-      : 'AI gagal merespons, coba lagi';
+    const msg = status === 503 ? 'Kuota AI sedang penuh, coba beberapa menit lagi' : 'AI gagal merespons, coba lagi';
     res.status(status).json({ success: false, message: msg });
+    return;
   }
+
+  const text = response.choices[0]?.message?.content || '';
+  res.json({ success: true, data: { reply: text } });
 });
 
 export default router;

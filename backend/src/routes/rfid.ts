@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import crypto from 'crypto';
 import { QueryTypes } from 'sequelize';
 import sequelize from '../config/database';
 import redis from '../config/redis';
@@ -78,13 +79,12 @@ router.post('/scan', rateLimiter(60, 60 * 1000), async (req: Request, res: Respo
       res.status(401).json({ ok: false, msg: 'Request kedaluwarsa (replay protection)' });
       return;
     }
-    const expected = require('crypto')
-      .createHmac('sha256', hmacSecret)
+    const expected = crypto.createHmac('sha256', hmacSecret)
       .update(`${device_key}:${rfid_uid}:${mode}:${ts}`)
       .digest('hex');
     const sigBuf = Buffer.from(sig, 'hex');
     const expBuf = Buffer.from(expected, 'hex');
-    if (sigBuf.length !== expBuf.length || !require('crypto').timingSafeEqual(sigBuf, expBuf)) {
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
       res.status(401).json({ ok: false, msg: 'Signature tidak valid' });
       return;
     }

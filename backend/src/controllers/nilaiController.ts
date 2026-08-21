@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { Op } from 'sequelize';
-import { Nilai, Siswa, MataPelajaran, Guru, User, Kelas } from '../models';
+import { Nilai, Siswa, MataPelajaran, Guru, User, Kelas, JadwalPelajaran } from '../models';
 import { hitungNilaiAkhir, hitungGrade } from '../models/Nilai';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
@@ -133,7 +133,6 @@ export const getLaporan = async (req: AuthRequest, res: Response): Promise<void>
 
   // Guru: pastikan kelas yang diminta adalah kelas yang diampu
   if (req.user!.role === 'guru' && kelas_id) {
-    const { JadwalPelajaran } = await import('../models');
     const guru = await Guru.findOne({ where: { user_id: req.user!.id } });
     if (guru) {
       const jadwal = await JadwalPelajaran.findOne({ where: { guru_id: (guru as any).id, kelas_id: kelas_id as string } });
