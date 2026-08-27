@@ -19,8 +19,8 @@ export default function TugasGuruPage() {
   const [selectedTugas, setSelectedTugas] = useState<any>(null);
   const [kelasId, setKelasId] = useState('');
   const [form, setForm] = useState({
-    judul: '', deskripsi: '', kelas_id: '', mata_pelajaran_id: '',
-    deadline: '', max_nilai: '100',
+    judul: '', jenis: 'tugas', deskripsi: '', kelas_id: '', mata_pelajaran_id: '',
+    tgl_diberikan: new Date().toISOString().split('T')[0], deadline: '', max_nilai: '100',
   });
   const [file, setFile] = useState<File | null>(null);
   const [nilaiInput, setNilaiInput] = useState<Record<string, { nilai: string; catatan: string }>>({});
@@ -77,7 +77,7 @@ export default function TugasGuruPage() {
       qc.invalidateQueries({ queryKey: ['tugas', form.kelas_id] });
       setView('list');
       setKelasId(form.kelas_id);
-      setForm({ judul: '', deskripsi: '', kelas_id: '', mata_pelajaran_id: '', deadline: '', max_nilai: '100' });
+      setForm({ judul: '', jenis: 'tugas', deskripsi: '', kelas_id: '', mata_pelajaran_id: '', tgl_diberikan: new Date().toISOString().split('T')[0], deadline: '', max_nilai: '100' });
       setFile(null);
     },
   });
@@ -185,11 +185,22 @@ export default function TugasGuruPage() {
           </button>
 
           <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Judul Tugas *</label>
-              <input value={form.judul} onChange={e => setForm(p => ({ ...p, judul: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
-                placeholder="Contoh: Latihan Soal Bab 3" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Tugas/Proyek/Ulangan *</label>
+                <input value={form.judul} onChange={e => setForm(p => ({ ...p, judul: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  placeholder="Contoh: Latihan Soal Bab 3" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Jenis *</label>
+                <select value={form.jenis} onChange={e => setForm(p => ({ ...p, jenis: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500">
+                  <option value="tugas">Tugas</option>
+                  <option value="proyek">Proyek</option>
+                  <option value="ulangan_harian">Ulangan Harian</option>
+                </select>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -218,9 +229,14 @@ export default function TugasGuruPage() {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 resize-none" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Deadline *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tgl Diberikan *</label>
+                <input type="date" value={form.tgl_diberikan} onChange={e => setForm(p => ({ ...p, tgl_diberikan: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tgl Pengumpulan *</label>
                 <input type="datetime-local" value={form.deadline} onChange={e => setForm(p => ({ ...p, deadline: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500" />
               </div>

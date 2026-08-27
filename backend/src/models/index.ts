@@ -30,6 +30,9 @@ import Tugas from './Tugas';
 import PengumpulanTugas from './PengumpulanTugas';
 import TransaksiKeuangan from './TransaksiKeuangan';
 import Materi from './Materi';
+import Pelanggaran from './Pelanggaran';
+import SiswaBerhalangan from './SiswaBerhalangan';
+import AgendaPiket from './AgendaPiket';
 
 // User <-> Guru / Siswa / OrangTua
 User.hasOne(Guru, { foreignKey: 'user_id', as: 'guru_detail' });
@@ -178,7 +181,22 @@ export {
   Tugas, PengumpulanTugas,
   Materi,
   TransaksiKeuangan,
+  Pelanggaran, SiswaBerhalangan, AgendaPiket,
 };
+
+// Pelanggaran
+Siswa.hasMany(Pelanggaran, { foreignKey: 'siswa_id', as: 'pelanggaran_list' });
+Pelanggaran.belongsTo(Siswa, { foreignKey: 'siswa_id', as: 'siswa' });
+Guru.hasMany(Pelanggaran, { foreignKey: 'guru_id', as: 'pelanggaran_dicatat' });
+Pelanggaran.belongsTo(Guru, { foreignKey: 'guru_id', as: 'guru' });
+
+// SiswaBerhalangan
+Siswa.hasMany(SiswaBerhalangan, { foreignKey: 'siswa_id', as: 'berhalangan_list' });
+SiswaBerhalangan.belongsTo(Siswa, { foreignKey: 'siswa_id', as: 'siswa' });
+
+// AgendaPiket
+Guru.hasMany(AgendaPiket, { foreignKey: 'guru_id', as: 'agenda_piket_list' });
+AgendaPiket.belongsTo(Guru, { foreignKey: 'guru_id', as: 'guru' });
 
 // Materi associations
 Guru.hasMany(Materi, { foreignKey: 'guru_id', as: 'materi_list' });

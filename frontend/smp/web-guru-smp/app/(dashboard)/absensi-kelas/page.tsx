@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/layout/Header';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
@@ -16,10 +16,12 @@ const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
 export default function AbsensiKelasGuruPage() {
   const { user } = useAuthStore();
+  const qc = useQueryClient();
   const today = new Date().toISOString().split('T')[0];
   const [kelasId, setKelasId] = useState('');
   const [tanggal, setTanggal] = useState(today);
   const [statusMap, setStatusMap] = useState<Record<string, string>>({});
+  const [haidMap, setHaidMap] = useState<Record<string, number | false>>({}); // false = tidak haid, number = hari ke-
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -54,13 +56,51 @@ export default function AbsensiKelasGuruPage() {
     setStatusMap(init);
   }, [kelasId, (siswaList as any[]).length]);
 
+  // Query berhalangan hari ini di kelas ini
+  const { data: berhalanganData } = useQuery({
+    queryKey: ['berhalangan-kelas', kelasId, tanggal],
+    queryFn: () => api.get('/berhalangan', { params: { kelas_id: kelasId, bulan: parseInt(tanggal.split('-')[1]), tahun: parseInt(tanggal.split('-')[0]) } }).then(r => r.data.data || []),
+    enabled: !!kelasId,
+  });
+
+  useEffect(() => {
+    if (!berhalanganData) return;
+    const map: Record<string, number | false> = {};
+    (berhalanganData as any[]).filter((b: any) => b.tanggal?.startsWith(tanggal)).forEach((b: any) => {
+      map[b.siswa_id] = b.hari_ke ?? 1;
+    });
+    setHaidMap(map);
+  }, [berhalanganData, tanggal]);
+
+  const haidMut = useMutation({
+    mutationFn: ({ siswa_id, hari_ke }: { siswa_id: string; hari_ke: number | null }) =>
+      hari_ke ? api.post('/berhalangan', { siswa_id, tanggal, hari_ke }) : api.delete(`/berhalangan/${siswa_id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['berhalangan-kelas'] }),
+  });
+
+  const toggleHaid = (siswaId: string) => {
+    const current = haidMap[siswaId];
+    if (current !== false && current !== undefined) {
+      setHaidMap(m => ({ ...m, [siswaId]: false }));
+      haidMut.mutate({ siswa_id: siswaId, hari_ke: null });
+    } else {
+      setHaidMap(m => ({ ...m, [siswaId]: 1 }));
+      haidMut.mutate({ siswa_id: siswaId, hari_ke: 1 });
+    }
+  };
+
+  const setHariKe = (siswaId: string, hari: number) => {
+    setHaidMap(m => ({ ...m, [siswaId]: hari }));
+    haidMut.mutate({ siswa_id: siswaId, hari_ke: hari });
+  };
+
   const simpanMut = useMutation({
     mutationFn: () => api.post('/absensi/bulk-kelas', {
       kelas_id: kelasId,
       tanggal,
       absensi: (siswaList as any[]).map((s: any) => ({ siswa_id: s.id, status: statusMap[s.id] || 'hadir' })),
     }),
-    onSuccess: (res) => showToast(res.data.message || 'Absensi kelas berhasil disimpan'),
+    onSuccess: (res: any) => showToast(res.data.message || 'Absensi kelas berhasil disimpan'),
     onError: (e: any) => showToast(e.response?.data?.message || 'Gagal menyimpan', 'error'),
   });
 
@@ -134,15 +174,15 @@ export default function AbsensiKelasGuruPage() {
               </div>
               <div className="divide-y divide-gray-50">
                 {(siswaList as any[]).map((s: any, i: number) => (
-                  <div key={s.id} className="flex items-center justify-between px-6 py-3">
+                  <div key={s.id} className="flex items-center justify-between px-6 py-3 flex-wrap gap-2">
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-gray-400 w-6">{i + 1}</span>
                       <div>
                         <p className="font-medium text-[#1A2332] text-sm">{s.user?.nama || s.nama}</p>
-                        <p className="text-xs text-gray-400">{s.nis}</p>
+                        <p className="text-xs text-gray-400">{s.nis}{s.jenis_kelamin === 'P' ? ' · ♀' : ''}</p>
                       </div>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 items-center flex-wrap">
                       {(['hadir','sakit','izin','alfa'] as const).map(st => (
                         <button key={st} onClick={() => setStatusMap(prev => ({ ...prev, [s.id]: st }))}
                           className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
@@ -151,6 +191,24 @@ export default function AbsensiKelasGuruPage() {
                           {st[0].toUpperCase()}
                         </button>
                       ))}
+                      {/* Berhalangan/Haid — hanya tampil untuk siswi */}
+                      {(s.jenis_kelamin === 'P' || true) && (
+                        <div className="flex items-center gap-1 ml-1">
+                          <button onClick={() => toggleHaid(s.id)}
+                            className={`px-2 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
+                              haidMap[s.id] ? 'bg-pink-100 text-pink-700 border-pink-300' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-pink-50 hover:text-pink-500'
+                            }`}>
+                            🌸
+                          </button>
+                          {haidMap[s.id] && (
+                            <select value={haidMap[s.id] as number}
+                              onChange={e => setHariKe(s.id, parseInt(e.target.value))}
+                              className="text-xs border border-pink-200 rounded-lg px-1 py-1 bg-pink-50 text-pink-700 focus:outline-none">
+                              {[1,2,3,4,5,6,7].map(h => <option key={h} value={h}>Hari {h}</option>)}
+                            </select>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

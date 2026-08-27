@@ -10,6 +10,7 @@ import {
   DoorOpen, CreditCard, ClipboardCheck, FileText, Wallet, BookMarked,
   BarChart3, UserCog, Search, Settings, Bell, MessageSquare, QrCode, Printer,
   PanelLeftClose, PanelLeftOpen, ClipboardList, ChevronRight, NotebookPen,
+  AlertTriangle, ClipboardSignature,
 } from 'lucide-react';
 
 type MenuItem  = { href: string; icon: React.ReactNode; label: string };
@@ -121,6 +122,13 @@ const levelMenu = (level: string): SidebarEntry[] => [
       { href: '/jurnal-guru',   icon: <BookMarked size={15} />,  label: 'Jurnal Guru' },
       { href: '/catatan-siswa', icon: <NotebookPen size={15} />, label: 'Catatan Siswa' },
       { href: '/laporan',       icon: <BarChart3 size={15} />,  label: 'Laporan' },
+    ],
+  },
+  {
+    label: 'Kedisiplinan', icon: <AlertTriangle size={14} />, color: '#EF4444',
+    items: [
+      { href: '/pelanggaran',  icon: <AlertTriangle size={15} />,       label: 'Pelanggaran Siswa' },
+      { href: '/agenda-piket', icon: <ClipboardSignature size={15} />, label: 'Agenda Guru Piket' },
     ],
   },
   {

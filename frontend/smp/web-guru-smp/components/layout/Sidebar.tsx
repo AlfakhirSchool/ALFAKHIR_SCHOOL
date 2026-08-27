@@ -9,6 +9,7 @@ import {
   LayoutDashboard, ClipboardList, ClipboardCheck, BookOpen, FileText,
   BarChart3, BookMarked, Users, Calendar, MessageSquare, NotebookPen,
   PanelLeftClose, PanelLeftOpen, ChevronRight, ChevronDown, Settings,
+  AlertTriangle, ClipboardSignature,
 } from 'lucide-react';
 
 type MenuItem  = { href: string; icon: React.ReactNode; label: string };
@@ -34,11 +35,18 @@ const menuEntries: Entry[] = [
     items: [
       { href: '/nilai',  icon: <BookOpen size={15} />,   label: 'Input Nilai' },
       { href: '/rapor',  icon: <FileText size={15} />,   label: 'Rapor Kelas' },
-      { href: '/tugas',          icon: <FileText size={15} />,    label: 'Tugas' },
-      { href: '/jurnal',         icon: <BookMarked size={15} />,  label: 'Jurnal Guru' },
+      { href: '/tugas',          icon: <FileText size={15} />,    label: 'Tugas / Ulangan' },
+      { href: '/jurnal',         icon: <BookMarked size={15} />,  label: 'Jurnal Mengajar' },
       { href: '/catatan-siswa', icon: <NotebookPen size={15} />, label: 'Catatan Siswa' },
       { href: '/kelas',          icon: <Users size={15} />,       label: 'Kelas Saya' },
       { href: '/jadwal', icon: <Calendar size={15} />,   label: 'Jadwal' },
+    ],
+  },
+  {
+    label: 'Kedisiplinan', icon: <AlertTriangle size={14} />, color: '#EF4444',
+    items: [
+      { href: '/pelanggaran',  icon: <AlertTriangle size={15} />,       label: 'Pelanggaran' },
+      { href: '/agenda-piket', icon: <ClipboardSignature size={15} />, label: 'Agenda Piket' },
     ],
   },
   { href: '/feedback', icon: <MessageSquare size={16} />, label: 'Saran & Pertanyaan' },

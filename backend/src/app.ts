@@ -42,6 +42,9 @@ import logger from './config/logger';
 import { testEmailConnection } from './utils/emailService';
 import pengumumanRoutes from './routes/pengumuman';
 import transaksiKeuanganRoutes from './routes/transaksiKeuangan';
+import pelanggaranRoutes from './routes/pelanggaran';
+import berhalanganRoutes from './routes/berhalangan';
+import agendaPiketRoutes from './routes/agendaPiket';
 
 dotenv.config();
 
@@ -139,6 +142,9 @@ app.use(`${PREFIX}/tugas`, tugasRoutes);
 app.use(`${PREFIX}/materi`, materiRoutes);
 app.use(`${PREFIX}/pengumuman`, pengumumanRoutes);
 app.use(`${PREFIX}/keuangan/transaksi`, transaksiKeuanganRoutes);
+app.use(`${PREFIX}/pelanggaran`, pelanggaranRoutes);
+app.use(`${PREFIX}/berhalangan`, berhalanganRoutes);
+app.use(`${PREFIX}/agenda-piket`, agendaPiketRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
