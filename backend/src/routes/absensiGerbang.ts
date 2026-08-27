@@ -451,9 +451,8 @@ router.post('/rfid-listen', authorize('admin'), async (req: AuthRequest, res: Re
 });
 
 // Polling — cek apakah ada kartu yang terdeteksi
-router.get('/rfid-captured', authorize('admin'), async (_req: AuthRequest, res: Response): Promise<void> => {
-  const req2 = _req as AuthRequest;
-  const captureKey = `rfid_capture:${req2.user!.id}`;
+router.get('/rfid-captured', authorize('admin'), async (req: AuthRequest, res: Response): Promise<void> => {
+  const captureKey = `rfid_capture:${req.user!.id}`;
   const uid = await redis.get(captureKey).catch(() => null);
   if (uid) {
     await redis.del(captureKey).catch(() => {});

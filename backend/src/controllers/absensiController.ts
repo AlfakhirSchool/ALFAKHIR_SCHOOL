@@ -12,7 +12,7 @@ import { scanKeys } from '../utils/redisScan';
 import redis from '../config/redis';
 import { kelasIdFilter } from '../utils/levelFilter';
 import { sendWAMessage, buildMasukMessage, buildPulangMessage } from '../utils/waNotification';
-import { propagateKelasToGerbang, setIzin } from '../utils/absensiSync';
+import { propagateKelasToGerbang, propagateGerbangToKelas, setIzin } from '../utils/absensiSync';
 import logger from '../config/logger';
 
 const invalidateCache = (siswa_id: string) =>
@@ -138,7 +138,6 @@ export const scanQr = async (req: AuthRequest, res: Response): Promise<void> => 
       if (p) sendWAMessage(p, msg).catch(e => logger.error({ event: 'wa_gate_compat', error: e.message }));
     }
     if (gateMode === 'masuk') {
-      const { propagateGerbangToKelas } = await import('../utils/absensiSync');
       propagateGerbangToKelas(siswa_id, today, req.user!.id).catch(e =>
         logger.error({ event: 'propagate_gate_compat_error', error: e.message })
       );
