@@ -45,11 +45,17 @@ export default function TugasGuruPage() {
     },
   });
 
-  // List mata pelajaran
-  const { data: mapelList = [] } = useQuery({
-    queryKey: ['mapel'],
-    queryFn: () => api.get('/mata-pelajaran').then((r: any) => r.data.data ?? []),
+  // Mapel dari jadwal guru, difilter per kelas yang dipilih di form
+  const { data: jadwalAll = [] } = useQuery({
+    queryKey: ['jadwal-all-guru'],
+    queryFn: () => api.get('/jadwal-pelajaran').then((r: any) => r.data.data ?? []),
   });
+  const mapelList = form.kelas_id
+    ? (jadwalAll as any[])
+        .filter((j: any) => j.kelas_id === form.kelas_id && j.mataPelajaran)
+        .map((j: any) => j.mataPelajaran)
+        .filter((m: any, i: number, arr: any[]) => arr.findIndex((x: any) => x.id === m.id) === i)
+    : [];
 
   // List tugas per kelas
   const { data: tugasList = [], isLoading } = useQuery({
@@ -206,7 +212,7 @@ export default function TugasGuruPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Kelas *</label>
-                <select value={form.kelas_id} onChange={e => setForm(p => ({ ...p, kelas_id: e.target.value }))}
+                <select value={form.kelas_id} onChange={e => setForm(p => ({ ...p, kelas_id: e.target.value, mata_pelajaran_id: '' }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500">
                   <option value="">-- Pilih Kelas --</option>
                   {kelasList.map((k: any) => <option key={k.id} value={k.id}>{k.nama}</option>)}
@@ -215,8 +221,9 @@ export default function TugasGuruPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Mata Pelajaran</label>
                 <select value={form.mata_pelajaran_id} onChange={e => setForm(p => ({ ...p, mata_pelajaran_id: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500">
-                  <option value="">-- Pilih (opsional) --</option>
+                  disabled={!form.kelas_id}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:bg-gray-50 disabled:text-gray-400">
+                  <option value="">{form.kelas_id ? '-- Pilih (opsional) --' : '-- Pilih kelas dulu --'}</option>
                   {mapelList.map((m: any) => <option key={m.id} value={m.id}>{m.nama}</option>)}
                 </select>
               </div>
