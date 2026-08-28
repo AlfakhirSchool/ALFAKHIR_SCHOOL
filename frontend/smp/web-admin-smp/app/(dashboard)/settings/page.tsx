@@ -153,7 +153,7 @@ export default function SettingsPage() {
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
     queryKey: ['all-users-master', roleFilter],
-    queryFn: () => api.get(`/users?limit=200${roleFilter ? `&role=${roleFilter}` : ''}`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/users?limit=200${roleFilter ? `&role=${roleFilter}` : ''}`).then((r: any) => r.data.data || []),
     enabled: activeTab === 'accounts',
   });
 

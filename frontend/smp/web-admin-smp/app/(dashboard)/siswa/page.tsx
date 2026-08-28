@@ -35,12 +35,12 @@ export default function SiswaPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['siswa', search, page, activeJenjang],
-    queryFn: () => api.get('/siswa', { params: { search, page, limit: 20, jenjang: activeJenjang } }).then(r => r.data),
+    queryFn: () => api.get('/siswa', { params: { search, page, limit: 20, jenjang: activeJenjang } }).then((r: any) => r.data),
   });
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-all'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []),
   });
 
   const siswaList = data?.data || [];

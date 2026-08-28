@@ -34,23 +34,23 @@ export default function KelasPage() {
 
   const { data: kelasList, isLoading } = useQuery({
     queryKey: ['kelas-admin', activeJenjang],
-    queryFn: () => api.get('/kelas', { params: { jenjang: activeJenjang } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas', { params: { jenjang: activeJenjang } }).then((r: any) => r.data.data || []),
   });
 
   const { data: siswaData } = useQuery({
     queryKey: ['siswa-kelas-admin', selectedKelas?.id],
-    queryFn: () => api.get(`/kelas/${selectedKelas.id}/siswa`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/kelas/${selectedKelas.id}/siswa`).then((r: any) => r.data.data || []),
     enabled: !!selectedKelas,
   });
 
   const { data: sekolahList } = useQuery({
     queryKey: ['sekolah-list'],
-    queryFn: () => api.get('/siswa/sekolah-list').then(r => r.data.data || []),
+    queryFn: () => api.get('/siswa/sekolah-list').then((r: any) => r.data.data || []),
   });
 
   const { data: guruList } = useQuery({
     queryKey: ['guru-list', activeJenjang],
-    queryFn: () => api.get('/guru', { params: { jenjang: activeJenjang, limit: 100 } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/guru', { params: { jenjang: activeJenjang, limit: 100 } }).then((r: any) => r.data.data || []),
     enabled: showForm || !!editTarget,
   });
 
@@ -94,7 +94,7 @@ export default function KelasPage() {
       resource_name: `Kelas ${deleteTarget.nama}`,
       reason: deleteReason,
     }),
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       setDeleteMsg(res.data.message);
       setDeleteReason('');
     },

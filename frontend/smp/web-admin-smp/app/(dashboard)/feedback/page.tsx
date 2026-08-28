@@ -36,7 +36,7 @@ export default function FeedbackAdminPage() {
       const params: any = {};
       if (filterStatus) params.status = filterStatus;
       if (filterKat) params.kategori = filterKat;
-      return api.get('/feedback', { params }).then(r => r.data.data || []);
+      return api.get('/feedback', { params }).then((r: any) => r.data.data || []);
     },
     refetchInterval: 30000,
   });

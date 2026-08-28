@@ -59,7 +59,7 @@ export default function JurnalPage() {
 
   const { data: profileData } = useQuery({
     queryKey: ['guru-profile', user?.id],
-    queryFn: () => api.get('/auth/me').then(r => {
+    queryFn: () => api.get('/auth/me').then((r: any) => {
       const d = r.data.data;
       if (d?.guru && !((user as any)?.school_levels)?.length) {
         updateUser({ school_levels: d.guru.school_levels || [], spesialisasi: d.guru.spesialisasi || '' });
@@ -84,14 +84,14 @@ export default function JurnalPage() {
 
   const { data: jurnalList, isLoading } = useQuery({
     queryKey: ['jurnal-guru', user?.id],
-    queryFn: () => api.get('/jurnal-guru', { params: { limit: 200 } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/jurnal-guru', { params: { limit: 200 } }).then((r: any) => r.data.data || []),
     enabled: !!user?.id,
     staleTime: 0,
   });
 
   const { data: jadwalGuru = [] } = useQuery({
     queryKey: ['jadwal-guru', guruId],
-    queryFn: () => api.get('/jadwal-pelajaran', { params: { guru_id: guruId } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/jadwal-pelajaran', { params: { guru_id: guruId } }).then((r: any) => r.data.data || []),
     enabled: !!guruId,
   });
 
@@ -106,14 +106,14 @@ export default function JurnalPage() {
   // Siswa untuk jurnal yang aktif
   const { data: siswaKelas } = useQuery({
     queryKey: ['siswa-kelas', activeJurnal?.kelas_id],
-    queryFn: () => api.get(`/kelas/${activeJurnal.kelas_id}/siswa`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/kelas/${activeJurnal.kelas_id}/siswa`).then((r: any) => r.data.data || []),
     enabled: !!activeJurnal?.kelas_id && view === 'siswa',
   });
 
   // Detail siswa yang sudah diisi
   const { data: siswaDetail } = useQuery({
     queryKey: ['jurnal-siswa-detail', activeJurnal?.id],
-    queryFn: () => api.get(`/jurnal-guru/${activeJurnal.id}/siswa`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/jurnal-guru/${activeJurnal.id}/siswa`).then((r: any) => r.data.data || []),
     enabled: !!activeJurnal?.id && view === 'siswa',
     onSuccess: (data: any[]) => {
       const map: Record<string, { kehadiran: string; catatan: string; foto_url?: string }> = {};
@@ -168,7 +168,7 @@ export default function JurnalPage() {
   // State untuk view per-siswa
   const { data: allKelasList = [] } = useQuery({
     queryKey: ['kelas-all'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []),
     enabled: !!guruId,
   });
 
@@ -178,7 +178,7 @@ export default function JurnalPage() {
 
   const { data: psSiswaList = [] } = useQuery({
     queryKey: ['siswa-kelas-ps', psKelasId],
-    queryFn: () => api.get(`/kelas/${psKelasId}/siswa`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/kelas/${psKelasId}/siswa`).then((r: any) => r.data.data || []),
     enabled: !!psKelasId && view === 'per-siswa',
   });
 

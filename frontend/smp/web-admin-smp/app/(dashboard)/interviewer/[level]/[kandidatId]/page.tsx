@@ -76,7 +76,7 @@ export default function KandidatDetailPage({ params }: { params: Promise<{ level
 
   const { data, isLoading } = useQuery({
     queryKey: ['kandidat-detail', kandidatId],
-    queryFn: () => api.get(`/kandidat/${kandidatId}`).then(r => r.data.data),
+    queryFn: () => api.get(`/kandidat/${kandidatId}`).then((r: any) => r.data.data),
   });
 
   const k = data;

@@ -43,13 +43,13 @@ export default function JurnalGuruAdminPage() {
     finally { setDlLoading(false); }
   };
 
-  const { data: kelasList } = useQuery({ queryKey: ['kelas-all'], queryFn: () => api.get('/kelas').then(r => r.data.data || []) });
+  const { data: kelasList } = useQuery({ queryKey: ['kelas-all'], queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []) });
 
   const { data, isLoading } = useQuery({
     queryKey: ['jurnal-admin', filter, page],
     queryFn: () => api.get('/jurnal-guru', {
       params: { ...filter, page, limit: 20, kelas_id: filter.kelas_id || undefined, status: filter.status || undefined }
-    }).then(r => r.data),
+    }).then((r: any) => r.data),
   });
 
   const jurnalList = data?.data || [];

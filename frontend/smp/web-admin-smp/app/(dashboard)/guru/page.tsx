@@ -67,12 +67,12 @@ export default function GuruPage() {
     queryKey: ['guru', search, jenjangFilter, page],
     queryFn: () => api.get('/guru', {
       params: { search: search || undefined, jenjang: jenjangFilter || undefined, page, limit: 20 },
-    }).then(r => r.data),
+    }).then((r: any) => r.data),
   });
 
   const { data: mapelData } = useQuery({
     queryKey: ['mapel-all-for-guru'],
-    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []),
+    queryFn: () => api.get('/mata-pelajaran').then((r: any) => r.data.data || []),
   });
 
   const mapelByJenjang: Record<string, string[]> = {};
@@ -84,8 +84,8 @@ export default function GuruPage() {
 
 
   const createMut = useMutation({
-    mutationFn: (f: GuruForm) => api.post('/guru', { ...f, username: f.username }).then(r => r.data),
-    onSuccess: (d) => {
+    mutationFn: (f: GuruForm) => api.post('/guru', { ...f, username: f.username }).then((r: any) => r.data),
+    onSuccess: (d: any) => {
       showFeedback('success', d.message);
       setModal(null);
       setForm(emptyForm);
@@ -96,8 +96,8 @@ export default function GuruPage() {
 
   const updateMut = useMutation({
     mutationFn: ({ id, f }: { id: string; f: Partial<GuruForm> }) =>
-      api.put(`/guru/${id}`, { ...f, username: f.username || undefined }).then(r => r.data),
-    onSuccess: (d) => {
+      api.put(`/guru/${id}`, { ...f, username: f.username || undefined }).then((r: any) => r.data),
+    onSuccess: (d: any) => {
       showFeedback('success', d.message);
       setModal(null);
       setEditTarget(null);
@@ -107,8 +107,8 @@ export default function GuruPage() {
   });
 
   const deleteMut = useMutation({
-    mutationFn: (id: string) => api.delete(`/guru/${id}`).then(r => r.data),
-    onSuccess: (d) => {
+    mutationFn: (id: string) => api.delete(`/guru/${id}`).then((r: any) => r.data),
+    onSuccess: (d: any) => {
       showFeedback('success', d.message || 'Guru berhasil dihapus');
       setHapusId(null);
       qc.invalidateQueries({ queryKey: ['guru'] });

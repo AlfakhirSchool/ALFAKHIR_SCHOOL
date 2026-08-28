@@ -34,13 +34,13 @@ export default function AbsensiKelasPage() {
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-all'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []),
   });
 
   const { data: rekap, isLoading } = useQuery({
     queryKey: ['rekap-kelas', kelas_id, tanggal],
     queryFn: () => kelas_id
-      ? api.get('/absensi-gerbang/rekap-kelas', { params: { kelas_id, tanggal } }).then(r => r.data)
+      ? api.get('/absensi-gerbang/rekap-kelas', { params: { kelas_id, tanggal } }).then((r: any) => r.data)
       : null,
     enabled: !!kelas_id,
   });
@@ -63,7 +63,7 @@ export default function AbsensiKelasPage() {
   const bulkKelasMut = useMutation({
     mutationFn: (absensi: Array<{ siswa_id: string; status: string }>) =>
       api.post('/absensi/bulk-kelas', { kelas_id, tanggal, absensi }),
-    onSuccess: (res) => { showToast(res.data.message || 'Berhasil diterapkan ke semua mata pelajaran'); setStatusOverride({}); },
+    onSuccess: (res: any) => { showToast(res.data.message || 'Berhasil diterapkan ke semua mata pelajaran'); setStatusOverride({}); },
     onError: (e: any) => showToast(e.response?.data?.message || 'Gagal menerapkan', 'error'),
   });
 

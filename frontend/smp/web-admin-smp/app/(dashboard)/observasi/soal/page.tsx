@@ -55,7 +55,7 @@ export default function SoalAkademikPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['soal-admin', levelFilter],
-    queryFn: () => api.get('/soal-akademik', { params: { level: levelFilter } }).then(r => r.data.data as Soal[]),
+    queryFn: () => api.get('/soal-akademik', { params: { level: levelFilter } }).then((r: any) => r.data.data as Soal[]),
   });
 
   const soalList = (data || []).filter(s => !mapelFilter || s.mata_pelajaran === mapelFilter);

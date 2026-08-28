@@ -77,17 +77,17 @@ export default function PembayaranPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['pembayaran', filterStatus, page],
-    queryFn: () => api.get('/pembayaran', { params: { status: filterStatus || undefined, page, limit: 20 } }).then(r => r.data),
+    queryFn: () => api.get('/pembayaran', { params: { status: filterStatus || undefined, page, limit: 20 } }).then((r: any) => r.data),
   });
 
   const { data: laporan } = useQuery({
     queryKey: ['pembayaran-laporan'],
-    queryFn: () => api.get('/pembayaran/laporan').then(r => r.data),
+    queryFn: () => api.get('/pembayaran/laporan').then((r: any) => r.data),
   });
 
   const { data: siswaList = [] } = useQuery({
     queryKey: ['siswa-all'],
-    queryFn: () => api.get('/siswa', { params: { limit: 500 } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/siswa', { params: { limit: 500 } }).then((r: any) => r.data.data || []),
     enabled: showAdd,
   });
 

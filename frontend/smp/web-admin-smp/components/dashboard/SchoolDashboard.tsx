@@ -79,7 +79,7 @@ export default function SchoolDashboard({ level }: { level: Level }) {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-dashboard-v2'],
-    queryFn: () => api.get('/dashboard/admin').then(r => r.data.data),
+    queryFn: () => api.get('/dashboard/admin').then((r: any) => r.data.data),
     refetchInterval: 30000,
   });
 

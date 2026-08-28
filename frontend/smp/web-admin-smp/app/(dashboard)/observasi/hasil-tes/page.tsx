@@ -36,7 +36,7 @@ export default function HasilTesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['kandidat-hasil-tes'],
-    queryFn: () => api.get('/kandidat?limit=500').then(r => r.data.data?.kandidat || r.data.data || []),
+    queryFn: () => api.get('/kandidat?limit=500').then((r: any) => r.data.data?.kandidat || r.data.data || []),
   });
 
   const list: Kandidat[] = data || [];

@@ -35,27 +35,27 @@ export default function CatatanSiswaPage() {
   // Kelas list
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-catatan'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []),
   });
 
   // Siswa list berdasarkan kelas yang dipilih (list view filter)
   const { data: siswaNyaFilter = [] } = useQuery({
     queryKey: ['siswa-filter-catatan', filterKelasId],
-    queryFn: () => api.get(`/kelas/${filterKelasId}/siswa`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/kelas/${filterKelasId}/siswa`).then((r: any) => r.data.data || []),
     enabled: !!filterKelasId,
   });
 
   // Siswa list berdasarkan kelas yang dipilih (form)
   const { data: siswaForm = [] } = useQuery({
     queryKey: ['siswa-form-catatan', formKelasId],
-    queryFn: () => api.get(`/kelas/${formKelasId}/siswa`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/kelas/${formKelasId}/siswa`).then((r: any) => r.data.data || []),
     enabled: !!formKelasId,
   });
 
   // Catatan list
   const { data: catatanList = [], isLoading } = useQuery({
     queryKey: ['catatan-siswa-list', filterSiswaId],
-    queryFn: () => api.get('/catatan-siswa', { params: filterSiswaId ? { siswa_id: filterSiswaId } : {} }).then(r => r.data.data || []),
+    queryFn: () => api.get('/catatan-siswa', { params: filterSiswaId ? { siswa_id: filterSiswaId } : {} }).then((r: any) => r.data.data || []),
   });
 
   const simpan = useMutation({

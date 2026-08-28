@@ -24,13 +24,13 @@ export default function PendingChangesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['pending-changes', statusFilter],
-    queryFn: () => api.get('/pending-changes', { params: { status: statusFilter } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/pending-changes', { params: { status: statusFilter } }).then((r: any) => r.data.data || []),
   });
 
   const reviewMut = useMutation({
     mutationFn: ({ id, action }: { id: string; action: string }) =>
-      api.put(`/pending-changes/${id}/review`, { action, catatan }).then(r => r.data),
-    onSuccess: (d) => {
+      api.put(`/pending-changes/${id}/review`, { action, catatan }).then((r: any) => r.data),
+    onSuccess: (d: any) => {
       showFeedback('success', d.message);
       setReviewModal(null);
       setCatatan('');

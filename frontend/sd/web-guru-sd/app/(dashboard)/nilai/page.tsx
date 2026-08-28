@@ -30,12 +30,12 @@ export default function NilaiPage() {
 
   const { data: kelasList } = useQuery({
     queryKey: ['kelas-list'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []),
   });
 
   const { data: mapelList } = useQuery({
     queryKey: ['mapel-list'],
-    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []),
+    queryFn: () => api.get('/mata-pelajaran').then((r: any) => r.data.data || []),
   });
 
   const loadSiswa = async () => {

@@ -92,7 +92,7 @@ export default function Header({ title }: HeaderProps) {
   useEffect(() => {
     if (!userOpen || !isAdmin) return;
     api.get('/users', { params: { role: 'admin', limit: 20 } })
-      .then(r => {
+      .then((r: any) => {
         const all: any[] = r.data.data || [];
         const filtered = all.filter((a: any) => {
           if (a.id === user?.id) return false;

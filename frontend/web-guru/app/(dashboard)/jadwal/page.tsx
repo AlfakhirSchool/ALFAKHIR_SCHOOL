@@ -20,7 +20,7 @@ export default function JadwalPage() {
   // Pastikan school_levels ada di store (handle session lama)
   useQuery({
     queryKey: ['guru-profile-jadwal'],
-    queryFn: () => api.get('/auth/me').then(r => {
+    queryFn: () => api.get('/auth/me').then((r: any) => {
       const d = r.data.data;
       if (d?.guru && !((user as any)?.school_levels)?.length) {
         updateUser({ school_levels: d.guru.school_levels || [] });
@@ -40,13 +40,13 @@ export default function JadwalPage() {
 
   const { data: jadwalList = [], isLoading } = useQuery({
     queryKey: ['jadwal-guru-all'],
-    queryFn: () => api.get('/jadwal-pelajaran').then(r => r.data.data || []),
+    queryFn: () => api.get('/jadwal-pelajaran').then((r: any) => r.data.data || []),
   });
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-list', user?.school_levels],
     queryFn: async () => {
-      const all: any[] = await api.get('/kelas?all=1').then(r => r.data.data || []);
+      const all: any[] = await api.get('/kelas?all=1').then((r: any) => r.data.data || []);
       const levels = user?.school_levels || [];
       if (levels.length === 0) return all;
       return all.filter((k: any) => levels.includes(k.sekolah?.level));
@@ -55,7 +55,7 @@ export default function JadwalPage() {
 
   const { data: mapelList = [] } = useQuery({
     queryKey: ['mapel-guru'],
-    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []),
+    queryFn: () => api.get('/mata-pelajaran').then((r: any) => r.data.data || []),
   });
 
   // Derive jenjang tabs dari jadwal guru sendiri, fallback ke school_levels user

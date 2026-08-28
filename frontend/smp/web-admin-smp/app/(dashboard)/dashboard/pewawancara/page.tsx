@@ -32,12 +32,12 @@ export default function DashboardPewawancaraPage() {
 
   const { data: kandidatData, isLoading } = useQuery({
     queryKey: ['kandidat-pewawancara'],
-    queryFn: () => api.get('/kandidat', { params: { limit: 500 } }).then(r => r.data),
+    queryFn: () => api.get('/kandidat', { params: { limit: 500 } }).then((r: any) => r.data),
   });
 
   const { data: feedData } = useQuery({
     queryKey: ['activity-feed'],
-    queryFn: () => api.get('/jawaban-form/activity-feed').then(r => r.data.data || []),
+    queryFn: () => api.get('/jawaban-form/activity-feed').then((r: any) => r.data.data || []),
     refetchInterval: 30000,
   });
 

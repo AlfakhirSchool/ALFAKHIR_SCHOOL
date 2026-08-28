@@ -91,7 +91,7 @@ function KandidatRow({ k }: { k: Kandidat }) {
   const [open, setOpen] = useState(false);
   const { data: catatanList = [], isFetching } = useQuery<Catatan[]>({
     queryKey: ['catatan', k.id],
-    queryFn: () => api.get(`/catatan-pewawancara/kandidat/${k.id}`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/catatan-pewawancara/kandidat/${k.id}`).then((r: any) => r.data.data || []),
     enabled: open,
     staleTime: 30_000,
   });
@@ -155,7 +155,7 @@ export default function SemuaCatatanPage() {
 
   const { data = [], isLoading } = useQuery<Kandidat[]>({
     queryKey: ['kandidat-all-catatan'],
-    queryFn: () => api.get('/kandidat', { params: { limit: 500 } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/kandidat', { params: { limit: 500 } }).then((r: any) => r.data.data || []),
     staleTime: 60_000,
   });
 

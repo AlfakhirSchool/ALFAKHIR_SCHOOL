@@ -75,14 +75,14 @@ export default function ObservasiPage() {
   // ── Queries ──
   const { data, isLoading } = useQuery({
     queryKey: ['kandidat', filterStatus, filterLevel],
-    queryFn: () => api.get('/kandidat', { params: { status: filterStatus || undefined, level: filterLevel || undefined, limit: 500 } }).then(r => r.data),
+    queryFn: () => api.get('/kandidat', { params: { status: filterStatus || undefined, level: filterLevel || undefined, limit: 500 } }).then((r: any) => r.data),
   });
   const kandidatList: Kandidat[] = data?.data || [];
   const stats = data?.stats || { total: 0, pending: 0, review: 0, diterima: 0, ditolak: 0 };
 
   const { data: kelasList } = useQuery({
     queryKey: ['kelas-modal', daftarModal?.level],
-    queryFn: () => api.get('/kelas', { params: { jenjang: daftarModal?.level, limit: 100 } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas', { params: { jenjang: daftarModal?.level, limit: 100 } }).then((r: any) => r.data.data || []),
     enabled: !!daftarModal,
   });
 
@@ -93,7 +93,7 @@ export default function ObservasiPage() {
   });
   const updateMut = useMutation({
     mutationFn: ({ id, data }: any) => api.put(`/kandidat/${id}`, data),
-    onSuccess: (res) => { qc.invalidateQueries({ queryKey: ['kandidat'] }); setEditTarget(null); if (detail?.id === res.data.data?.id) setDetail(res.data.data); },
+    onSuccess: (res: any) => { qc.invalidateQueries({ queryKey: ['kandidat'] }); setEditTarget(null); if (detail?.id === res.data.data?.id) setDetail(res.data.data); },
   });
   const deleteMut = useMutation({
     mutationFn: (id: string) => api.delete(`/kandidat/${id}`),
@@ -101,7 +101,7 @@ export default function ObservasiPage() {
   });
   const daftarkanMut = useMutation({
     mutationFn: ({ id, kelas_id }: any) => api.post(`/kandidat/${id}/daftarkan`, { kelas_id }),
-    onSuccess: (res) => { setDaftarResult(res.data); qc.invalidateQueries({ queryKey: ['kandidat'] }); },
+    onSuccess: (res: any) => { setDaftarResult(res.data); qc.invalidateQueries({ queryKey: ['kandidat'] }); },
   });
 
   return (
@@ -488,15 +488,15 @@ function KandidatDetail({ kandidat, onClose, onDaftarkan, qc }: { kandidat: Kand
 
   const { data: catatanData, isLoading: loadCatatan } = useQuery({
     queryKey: ['catatan-pewawancara', kandidat.id],
-    queryFn: () => api.get(`/catatan-pewawancara/kandidat/${kandidat.id}`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/catatan-pewawancara/kandidat/${kandidat.id}`).then((r: any) => r.data.data || []),
   });
   const { data: hasilData } = useQuery({
     queryKey: ['hasil-tes', kandidat.id],
-    queryFn: () => api.get(`/soal-akademik/kandidat/${kandidat.id}/hasil`).then(r => r.data.data),
+    queryFn: () => api.get(`/soal-akademik/kandidat/${kandidat.id}/hasil`).then((r: any) => r.data.data),
   });
   const { data: ringkasanData } = useQuery({
     queryKey: ['ringkasan-ai', kandidat.id],
-    queryFn: () => api.get(`/kandidat/${kandidat.id}`).then(r => r.data.data?.ringkasan_ai || null),
+    queryFn: () => api.get(`/kandidat/${kandidat.id}`).then((r: any) => r.data.data?.ringkasan_ai || null),
   });
 
   const catatan: CatatanPewawancara[] = catatanData || [];
@@ -859,7 +859,7 @@ function MonitorPewawancaraTab({ levelFromUser }: { levelFromUser: string }) {
   const [filterLevel, setFilterLevel] = useState(levelFromUser);
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['monitor-pewawancara', filterLevel],
-    queryFn: () => api.get('/kandidat/monitor-pewawancara', { params: { level: filterLevel || undefined } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/kandidat/monitor-pewawancara', { params: { level: filterLevel || undefined } }).then((r: any) => r.data.data || []),
   });
   const rows: any[] = data || [];
 
@@ -986,7 +986,7 @@ function SoalTab({ levelFromUser }: { levelFromUser: string }) {
 
   const { data: soalData, isLoading } = useQuery({
     queryKey: ['soal-akademik', filterLevel],
-    queryFn: () => api.get('/soal-akademik', { params: { level: filterLevel || undefined } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/soal-akademik', { params: { level: filterLevel || undefined } }).then((r: any) => r.data.data || []),
   });
   const soalList: SoalAkademik[] = soalData || [];
 
@@ -1235,7 +1235,7 @@ function PertanyaanFormTab() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['pertanyaan-form', filterRole],
-    queryFn: () => api.get('/pertanyaan-form', { params: { role: filterRole } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/pertanyaan-form', { params: { role: filterRole } }).then((r: any) => r.data.data || []),
   });
   const list: any[] = data || [];
 

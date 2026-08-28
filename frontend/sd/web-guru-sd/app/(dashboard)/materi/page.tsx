@@ -16,13 +16,13 @@ export default function MateriGuruPage() {
 
   const { data: mapelList = [] } = useQuery({
     queryKey: ['mapel-guru'],
-    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data ?? []),
+    queryFn: () => api.get('/mata-pelajaran').then((r: any) => r.data.data ?? []),
   });
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-guru'],
     queryFn: async () => {
-      const jadwal = await api.get('/jadwal-pelajaran').then(r => r.data.data ?? []).catch(() => []);
+      const jadwal = await api.get('/jadwal-pelajaran').then((r: any) => r.data.data ?? []).catch(() => []);
       const map = new Map<string, any>();
       jadwal.forEach((j: any) => { if (j.kelas) map.set(j.kelas.id, j.kelas); });
       return Array.from(map.values());
@@ -31,7 +31,7 @@ export default function MateriGuruPage() {
 
   const { data: materiList = [], isLoading } = useQuery({
     queryKey: ['materi-guru', selectedMapel],
-    queryFn: () => api.get('/materi', { params: selectedMapel ? { mata_pelajaran_id: selectedMapel } : {} }).then(r => r.data.data ?? []),
+    queryFn: () => api.get('/materi', { params: selectedMapel ? { mata_pelajaran_id: selectedMapel } : {} }).then((r: any) => r.data.data ?? []),
   });
 
   const uploadMut = useMutation({

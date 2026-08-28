@@ -27,7 +27,7 @@ export default function MataPelajaranPage() {
 
   const { data: mapelList, isLoading } = useQuery({
     queryKey: ['mata-pelajaran', activeJenjang],
-    queryFn: () => api.get('/mata-pelajaran', { params: { jenjang: activeJenjang } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/mata-pelajaran', { params: { jenjang: activeJenjang } }).then((r: any) => r.data.data || []),
   });
 
   const [saveError, setSaveError] = useState<string>('');

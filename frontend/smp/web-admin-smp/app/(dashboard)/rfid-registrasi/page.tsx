@@ -31,12 +31,12 @@ export default function RfidRegistrasiPage() {
 
   const { data: sekolahList = [] } = useQuery({
     queryKey: ['sekolah-list'],
-    queryFn: () => api.get('/siswa/sekolah-list').then(r => r.data.data || []).catch(() => []),
+    queryFn: () => api.get('/siswa/sekolah-list').then((r: any) => r.data.data || []).catch(() => []),
   });
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-rfid', sekolahId],
-    queryFn: () => api.get('/kelas', { params: { sekolah_id: sekolahId } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas', { params: { sekolah_id: sekolahId } }).then((r: any) => r.data.data || []),
     enabled: !!sekolahId,
   });
 
@@ -44,7 +44,7 @@ export default function RfidRegistrasiPage() {
     queryKey: ['rfid-siswa', sekolahId, kelasId, search],
     queryFn: () => api.get('/absensi-gerbang/rfid-siswa', {
       params: { sekolah_id: sekolahId || undefined, kelas_id: kelasId || undefined, q: search || undefined }
-    }).then(r => r.data.data || []),
+    }).then((r: any) => r.data.data || []),
   });
 
   const filteredSiswa = siswaList.filter(s => {

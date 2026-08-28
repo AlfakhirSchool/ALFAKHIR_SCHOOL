@@ -38,13 +38,13 @@ export default function AuditLogPage() {
         start_date: filter.start_date || undefined,
         end_date: filter.end_date || undefined,
       },
-    }).then(r => r.data),
+    }).then((r: any) => r.data),
     refetchInterval: 15000,
   });
 
   const { data: stats } = useQuery({
     queryKey: ['audit-stats'],
-    queryFn: () => api.get('/audit-log/stats').then(r => r.data.data),
+    queryFn: () => api.get('/audit-log/stats').then((r: any) => r.data.data),
     refetchInterval: 30000,
   });
 

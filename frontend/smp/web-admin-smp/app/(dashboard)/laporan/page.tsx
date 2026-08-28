@@ -11,7 +11,7 @@ export default function LaporanPage() {
   const [generating, setGenerating] = useState(false);
   const [msg, setMsg] = useState('');
 
-  const { data: kelasList } = useQuery({ queryKey: ['kelas-all'], queryFn: () => api.get('/kelas').then(r => r.data.data || []) });
+  const { data: kelasList } = useQuery({ queryKey: ['kelas-all'], queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []) });
 
   const generateRapor = useMutation({
     mutationFn: () => api.post('/rapor/generate', raporFilter),

@@ -100,17 +100,17 @@ export default function UsersPage() {
     queryKey: ['users', search, roleFilter, jenjangFilter, page],
     queryFn: () => api.get('/users', {
       params: { search: search || undefined, role: roleFilter || undefined, jenjang: jenjangFilter || undefined, page, limit: 30 },
-    }).then(r => r.data),
+    }).then((r: any) => r.data),
   });
 
   const { data: statsData } = useQuery({
     queryKey: ['users-stats'],
     queryFn: async () => {
       const [a, g, s, o] = await Promise.all([
-        api.get('/users', { params: { role: 'admin', limit: 1 } }).then(r => r.data.pagination?.total || 0),
-        api.get('/users', { params: { role: 'guru', limit: 1 } }).then(r => r.data.pagination?.total || 0),
-        api.get('/users', { params: { role: 'siswa', limit: 1 } }).then(r => r.data.pagination?.total || 0),
-        api.get('/users', { params: { role: 'ortu', limit: 1 } }).then(r => r.data.pagination?.total || 0),
+        api.get('/users', { params: { role: 'admin', limit: 1 } }).then((r: any) => r.data.pagination?.total || 0),
+        api.get('/users', { params: { role: 'guru', limit: 1 } }).then((r: any) => r.data.pagination?.total || 0),
+        api.get('/users', { params: { role: 'siswa', limit: 1 } }).then((r: any) => r.data.pagination?.total || 0),
+        api.get('/users', { params: { role: 'ortu', limit: 1 } }).then((r: any) => r.data.pagination?.total || 0),
       ]);
       return { admin: a, guru: g, siswa: s, ortu: o };
     },
@@ -118,23 +118,23 @@ export default function UsersPage() {
 
   const resetMut = useMutation({
     mutationFn: ({ id, password }: { id: string; password: string }) =>
-      api.put(`/users/${id}/reset-password`, { password }).then(r => r.data),
-    onSuccess: (d) => { showFeedback('success', d.message); setResetModal(null); setNewPassword(''); },
+      api.put(`/users/${id}/reset-password`, { password }).then((r: any) => r.data),
+    onSuccess: (d: any) => { showFeedback('success', d.message); setResetModal(null); setNewPassword(''); },
     onError: (e: any) => showFeedback('error', e.response?.data?.message || 'Gagal reset password'),
   });
 
   const toggleMut = useMutation({
-    mutationFn: (id: string) => api.put(`/users/${id}/toggle-active`).then(r => r.data),
-    onSuccess: (d) => { showFeedback('success', d.message); qc.invalidateQueries({ queryKey: ['users'] }); },
+    mutationFn: (id: string) => api.put(`/users/${id}/toggle-active`).then((r: any) => r.data),
+    onSuccess: (d: any) => { showFeedback('success', d.message); qc.invalidateQueries({ queryKey: ['users'] }); },
     onError: (e: any) => showFeedback('error', e.response?.data?.message || 'Gagal mengubah status'),
   });
 
   const createMut = useMutation({
     mutationFn: (form: CreateForm) => {
       const username = form.username;
-      return api.post('/users', { ...form, username, school_level: form.school_level || null }).then(r => r.data);
+      return api.post('/users', { ...form, username, school_level: form.school_level || null }).then((r: any) => r.data);
     },
-    onSuccess: (d) => {
+    onSuccess: (d: any) => {
       showFeedback('success', d.message);
       setCreateModal(false);
       setCreateForm({ username: '', password: '', nama: '', role: 'admin', school_level: adminJenjang || '' });
@@ -145,21 +145,21 @@ export default function UsersPage() {
   });
 
   const deleteMut = useMutation({
-    mutationFn: (id: string) => api.delete(`/users/${id}`).then(r => r.data),
-    onSuccess: (d) => { showFeedback('success', d.message); qc.invalidateQueries({ queryKey: ['users'] }); qc.invalidateQueries({ queryKey: ['users-stats'] }); },
+    mutationFn: (id: string) => api.delete(`/users/${id}`).then((r: any) => r.data),
+    onSuccess: (d: any) => { showFeedback('success', d.message); qc.invalidateQueries({ queryKey: ['users'] }); qc.invalidateQueries({ queryKey: ['users-stats'] }); },
     onError: (e: any) => showFeedback('error', e.response?.data?.message || 'Gagal menghapus akun'),
   });
 
   const resetDeviceMut = useMutation({
-    mutationFn: (id: string) => api.post(`/auth/reset-device/${id}`).then(r => r.data),
-    onSuccess: (d) => showFeedback('success', d.message),
+    mutationFn: (id: string) => api.post(`/auth/reset-device/${id}`).then((r: any) => r.data),
+    onSuccess: (d: any) => showFeedback('success', d.message),
     onError: (e: any) => showFeedback('error', e.response?.data?.message || 'Gagal reset perangkat'),
   });
 
   const jenjangMut = useMutation({
     mutationFn: ({ id, school_levels }: { id: string; school_levels: string[] }) =>
-      api.put(`/users/${id}/set-jenjang`, { school_levels }).then(r => r.data),
-    onSuccess: (d) => {
+      api.put(`/users/${id}/set-jenjang`, { school_levels }).then((r: any) => r.data),
+    onSuccess: (d: any) => {
       showFeedback('success', d.message);
       setJenjangModal(null);
       qc.invalidateQueries({ queryKey: ['users'] });

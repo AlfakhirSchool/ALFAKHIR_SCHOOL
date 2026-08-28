@@ -33,7 +33,7 @@ export default function JadwalPage() {
 
   const { data: kelasList } = useQuery({
     queryKey: ['kelas-jadwal-admin', activeJenjang],
-    queryFn: () => api.get('/kelas', { params: { jenjang: activeJenjang } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas', { params: { jenjang: activeJenjang } }).then((r: any) => r.data.data || []),
   });
 
   const selectedKelasData = (kelasList || []).find((k: any) => k.id === form.kelas_id);
@@ -41,20 +41,20 @@ export default function JadwalPage() {
 
   const { data: guruList } = useQuery({
     queryKey: ['guru-jadwal-admin', kelasJenjang],
-    queryFn: () => api.get('/guru', { params: { jenjang: kelasJenjang, limit: 100 } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/guru', { params: { jenjang: kelasJenjang, limit: 100 } }).then((r: any) => r.data.data || []),
     enabled: showForm,
   });
 
   const { data: mapelList } = useQuery({
     queryKey: ['mapel-all'],
-    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []),
+    queryFn: () => api.get('/mata-pelajaran').then((r: any) => r.data.data || []),
   });
 
   const { data: jadwalList, isLoading } = useQuery({
     queryKey: ['jadwal-admin', activeJenjang, filterKelas],
     queryFn: () => api.get('/jadwal-pelajaran', {
       params: filterKelas ? { kelas_id: filterKelas } : { jenjang: activeJenjang },
-    }).then(r => r.data.data || []),
+    }).then((r: any) => r.data.data || []),
   });
 
   const addJadwal = useMutation({

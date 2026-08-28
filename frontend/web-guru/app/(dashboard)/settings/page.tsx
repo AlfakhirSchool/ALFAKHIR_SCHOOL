@@ -17,7 +17,7 @@ export default function SettingsPage() {
 
   const { data: pendingData, refetch: refetchPending } = useQuery({
     queryKey: ['my-pending'],
-    queryFn: () => api.get('/pending-changes/mine').then(r => r.data.data || []),
+    queryFn: () => api.get('/pending-changes/mine').then((r: any) => r.data.data || []),
   });
   const pending: any[] = pendingData || [];
 

@@ -52,7 +52,7 @@ export default function DashboardGuruPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['guru-dashboard'],
-    queryFn: () => api.get('/dashboard/guru').then(r => r.data.data),
+    queryFn: () => api.get('/dashboard/guru').then((r: any) => r.data.data),
   });
 
   const kpi = data?.kpi || {};
@@ -65,7 +65,7 @@ export default function DashboardGuruPage() {
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-guru'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []),
   });
 
   const downloadRekap = async () => {

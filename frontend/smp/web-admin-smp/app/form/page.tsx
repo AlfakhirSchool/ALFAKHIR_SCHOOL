@@ -32,7 +32,7 @@ export default function FormPortalPage() {
 
   useEffect(() => {
     if (!selected) return;
-    fetch(`${API}/jawaban-form/kandidat/${selected.id}`).then(r => r.json()).then(d => {
+    fetch(`${API}/jawaban-form/kandidat/${selected.id}`).then((r: any) => r.json()).then((d: any) => {
       setJawabanStatus((d.data || []).map((j: any) => j.role));
     }).catch(() => setJawabanStatus([]));
   }, [selected]);

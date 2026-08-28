@@ -16,18 +16,18 @@ export default function CatatanSiswaAdminPage() {
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-admin-cs'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []),
   });
 
   const { data: siswaList = [] } = useQuery({
     queryKey: ['siswa-admin-cs', kelasId],
-    queryFn: () => api.get(`/kelas/${kelasId}/siswa`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/kelas/${kelasId}/siswa`).then((r: any) => r.data.data || []),
     enabled: !!kelasId,
   });
 
   const { data: catatanData, isLoading } = useQuery({
     queryKey: ['catatan-admin', siswaId],
-    queryFn: () => api.get('/catatan-siswa', { params: { siswa_id: siswaId, limit: 100 } }).then(r => r.data),
+    queryFn: () => api.get('/catatan-siswa', { params: { siswa_id: siswaId, limit: 100 } }).then((r: any) => r.data),
     enabled: !!siswaId,
   });
 

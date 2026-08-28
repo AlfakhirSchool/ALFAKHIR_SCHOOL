@@ -25,7 +25,7 @@ export default function AgendaPiketPage() {
 
   const { data: agendaData, isLoading } = useQuery({
     queryKey: ['agenda-piket'],
-    queryFn: () => api.get('/agenda-piket').then(r => r.data),
+    queryFn: () => api.get('/agenda-piket').then((r: any) => r.data),
   });
 
   const createMut = useMutation({

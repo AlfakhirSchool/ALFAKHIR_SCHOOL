@@ -25,7 +25,7 @@ export default function FeedbackPage() {
 
   const { data: myFeedback = [] } = useQuery({
     queryKey: ['my-feedback'],
-    queryFn: () => api.get('/feedback/mine').then(r => r.data.data || []),
+    queryFn: () => api.get('/feedback/mine').then((r: any) => r.data.data || []),
   });
 
   const send = useMutation({

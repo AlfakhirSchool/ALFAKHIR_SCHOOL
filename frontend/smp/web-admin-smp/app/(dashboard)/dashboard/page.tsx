@@ -61,7 +61,7 @@ export default function DashboardSelectPage() {
 
   const { data } = useQuery({
     queryKey: ['admin-dashboard-v2'],
-    queryFn: () => api.get('/dashboard/admin').then(r => r.data.data),
+    queryFn: () => api.get('/dashboard/admin').then((r: any) => r.data.data),
     enabled: user?.role !== 'guru' && user?.role !== 'pewawancara' && user?.role !== 'keuangan',
   });
 

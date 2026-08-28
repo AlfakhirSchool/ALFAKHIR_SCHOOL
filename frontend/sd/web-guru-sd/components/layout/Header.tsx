@@ -28,13 +28,13 @@ export default function Header({ title }: HeaderProps) {
 
   const { data: pending = [] } = useQuery({
     queryKey: ['my-pending'],
-    queryFn: () => api.get('/pending-changes/mine').then(r => r.data.data || []),
+    queryFn: () => api.get('/pending-changes/mine').then((r: any) => r.data.data || []),
     refetchInterval: 30000,
   });
 
   const { data: dashData } = useQuery({
     queryKey: ['guru-dashboard'],
-    queryFn: () => api.get('/dashboard/guru').then(r => r.data.data),
+    queryFn: () => api.get('/dashboard/guru').then((r: any) => r.data.data),
     refetchInterval: 60000,
   });
 

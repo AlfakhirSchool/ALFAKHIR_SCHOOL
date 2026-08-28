@@ -21,13 +21,13 @@ export default function AbsensiGerbangPage() {
 
   const { data: hariIni = [], refetch } = useQuery({
     queryKey: ['absensi-gerbang-hari-ini'],
-    queryFn: () => api.get('/absensi-gerbang/hari-ini').then(r => r.data.data || []),
+    queryFn: () => api.get('/absensi-gerbang/hari-ini').then((r: any) => r.data.data || []),
     refetchInterval: 30000,
   });
 
   const { data: dailyToken, refetch: refetchToken } = useQuery({
     queryKey: ['absensi-gerbang-daily-token'],
-    queryFn: () => api.get('/absensi-gerbang/daily-token').then(r => r.data.data),
+    queryFn: () => api.get('/absensi-gerbang/daily-token').then((r: any) => r.data.data),
     refetchInterval: 60000,
   });
 
@@ -49,13 +49,13 @@ export default function AbsensiGerbangPage() {
 
   const masukMut = useMutation({
     mutationFn: (siswa_id: string) => api.post('/absensi-gerbang/masuk', { siswa_id }),
-    onSuccess: (res) => { showToast(res.data.message); setSearch(''); setDropdown([]); refetch(); },
+    onSuccess: (res: any) => { showToast(res.data.message); setSearch(''); setDropdown([]); refetch(); },
     onError: (e: any) => showToast(e.response?.data?.message || 'Gagal mencatat masuk', 'error'),
   });
 
   const pulangMut = useMutation({
     mutationFn: (siswa_id: string) => api.post('/absensi-gerbang/pulang', { siswa_id }),
-    onSuccess: (res) => { showToast(res.data.message); setSearch(''); setDropdown([]); refetch(); },
+    onSuccess: (res: any) => { showToast(res.data.message); setSearch(''); setDropdown([]); refetch(); },
     onError: (e: any) => showToast(e.response?.data?.message || 'Gagal mencatat pulang', 'error'),
   });
 

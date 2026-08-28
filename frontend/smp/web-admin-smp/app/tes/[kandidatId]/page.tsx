@@ -28,7 +28,7 @@ export default function TesKandidatPage({ params }: { params: Promise<{ kandidat
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API}/kandidat/publik/${kandidatId}`).then(r => r.json()),
+      fetch(`${API}/kandidat/publik/${kandidatId}`).then((r: any) => r.json()),
     ]).then(async ([kData]) => {
       if (!kData.success) { setError('Kandidat tidak ditemukan.'); setLoading(false); return; }
       const k = kData.data;

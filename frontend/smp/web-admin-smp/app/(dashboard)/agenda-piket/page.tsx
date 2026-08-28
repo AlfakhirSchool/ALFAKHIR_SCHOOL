@@ -11,7 +11,7 @@ export default function AgendaPiketAdminPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['agenda-piket-admin'],
-    queryFn: () => api.get('/agenda-piket', { params: { limit: 100 } }).then(r => r.data),
+    queryFn: () => api.get('/agenda-piket', { params: { limit: 100 } }).then((r: any) => r.data),
   });
 
   const deleteMut = useMutation({

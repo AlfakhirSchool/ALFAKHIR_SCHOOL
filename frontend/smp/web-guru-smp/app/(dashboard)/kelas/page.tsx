@@ -10,12 +10,12 @@ export default function KelasSayaPage() {
 
   const { data: kelasList, isLoading } = useQuery({
     queryKey: ['kelas-guru'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []),
   });
 
   const { data: siswaData } = useQuery({
     queryKey: ['siswa-kelas', selectedKelas?.id],
-    queryFn: () => api.get(`/kelas/${selectedKelas.id}/siswa`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/kelas/${selectedKelas.id}/siswa`).then((r: any) => r.data.data || []),
     enabled: !!selectedKelas,
   });
 

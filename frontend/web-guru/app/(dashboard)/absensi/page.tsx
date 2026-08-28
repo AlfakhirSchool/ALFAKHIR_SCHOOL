@@ -42,7 +42,7 @@ export default function AbsensiGuruPage() {
 
   const { data: myJadwal = [] } = useQuery({
     queryKey: ['my-jadwal-all', user?.id],
-    queryFn: () => api.get('/jadwal-pelajaran').then(r => r.data.data || []),
+    queryFn: () => api.get('/jadwal-pelajaran').then((r: any) => r.data.data || []),
     enabled: !!user,
     staleTime: 0,
   });
@@ -54,7 +54,7 @@ export default function AbsensiGuruPage() {
 
   const { data: jadwalList = [] } = useQuery({
     queryKey: ['jadwal-kelas', kelasId],
-    queryFn: () => api.get('/jadwal-pelajaran', { params: { kelas_id: kelasId } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/jadwal-pelajaran', { params: { kelas_id: kelasId } }).then((r: any) => r.data.data || []),
     enabled: !!kelasId,
   });
 
@@ -69,7 +69,7 @@ export default function AbsensiGuruPage() {
 
   const loadPersiapan = useMutation({
     mutationFn: () => api.get('/absensi/persiapan-guru', { params: { jadwal_pelajaran_id: jadwalId, tanggal } }),
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       const d = res.data;
       setJadwalInfo(d.jadwal);
       // Inisialisasi: pakai status_guru jika sudah direkam, else pakai status_gate
@@ -84,7 +84,7 @@ export default function AbsensiGuruPage() {
 
   const qrMut = useMutation({
     mutationFn: () => api.post('/absensi/qr-session/create', { jadwal_pelajaran_id: jadwalId, tanggal }),
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       const d = res.data.data;
       setQrModal({ image: d.qr_image, sessionId: d.id, code: d.unique_code });
     },

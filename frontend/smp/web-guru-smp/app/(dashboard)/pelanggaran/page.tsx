@@ -23,14 +23,14 @@ export default function PelanggaranGuruPage() {
 
   const { data: profile } = useQuery({
     queryKey: ['guru-profile'], staleTime: 5 * 60 * 1000,
-    queryFn: () => api.get('/auth/me').then(r => r.data.data),
+    queryFn: () => api.get('/auth/me').then((r: any) => r.data.data),
   });
   const guruKelas: any[] = profile?.guru?.kelas_list || [];
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-guru-piket'],
     queryFn: async () => {
-      const jadwal = await api.get('/jadwal-pelajaran').then(r => r.data.data ?? []).catch(() => []);
+      const jadwal = await api.get('/jadwal-pelajaran').then((r: any) => r.data.data ?? []).catch(() => []);
       const seen = new Set<string>();
       return jadwal.map((j: any) => j.kelas).filter((k: any) => k && !seen.has(k.id) && seen.add(k.id));
     },
@@ -38,13 +38,13 @@ export default function PelanggaranGuruPage() {
 
   const { data: siswaList = [] } = useQuery({
     queryKey: ['siswa-kelas', kelasId],
-    queryFn: () => api.get(`/kelas/${kelasId}/siswa`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/kelas/${kelasId}/siswa`).then((r: any) => r.data.data || []),
     enabled: !!kelasId,
   });
 
   const { data: pelanggaranData, isLoading } = useQuery({
     queryKey: ['pelanggaran-guru', kelasId],
-    queryFn: () => api.get('/pelanggaran', { params: kelasId ? { kelas_id: kelasId } : {} }).then(r => r.data),
+    queryFn: () => api.get('/pelanggaran', { params: kelasId ? { kelas_id: kelasId } : {} }).then((r: any) => r.data),
   });
 
   const createMut = useMutation({

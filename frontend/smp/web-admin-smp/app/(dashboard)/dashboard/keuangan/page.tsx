@@ -22,15 +22,15 @@ const StatusBadge = ({ status }: { status: string }) => {
 export default function DashboardKeuanganPage() {
   const { data: laporan } = useQuery({
     queryKey: ['keuangan-laporan'],
-    queryFn: () => api.get('/pembayaran/laporan').then(r => r.data),
+    queryFn: () => api.get('/pembayaran/laporan').then((r: any) => r.data),
   });
   const { data: belumBayar } = useQuery({
     queryKey: ['keuangan-belum'],
-    queryFn: () => api.get('/pembayaran', { params: { status: 'belum_bayar', limit: 10 } }).then(r => r.data),
+    queryFn: () => api.get('/pembayaran', { params: { status: 'belum_bayar', limit: 10 } }).then((r: any) => r.data),
   });
   const { data: baru } = useQuery({
     queryKey: ['keuangan-lunas'],
-    queryFn: () => api.get('/pembayaran', { params: { status: 'lunas', limit: 10 } }).then(r => r.data),
+    queryFn: () => api.get('/pembayaran', { params: { status: 'lunas', limit: 10 } }).then((r: any) => r.data),
   });
 
   const summary = laporan?.summary || { total_tagihan: 0, total_terbayar: 0, total_tunggakan: 0 };

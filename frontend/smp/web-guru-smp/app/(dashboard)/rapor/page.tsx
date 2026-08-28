@@ -35,7 +35,7 @@ export default function RaporPage() {
 
   const { data: kelasList } = useQuery({
     queryKey: ['my-kelas'],
-    queryFn: () => api.get('/kelas').then((r) => r.data.data || []),
+    queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []),
   });
 
   const {

@@ -110,13 +110,13 @@ export default function MasterDashboard() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-dashboard-v2'],
-    queryFn: () => api.get('/dashboard/admin').then(r => r.data.data),
+    queryFn: () => api.get('/dashboard/admin').then((r: any) => r.data.data),
     refetchInterval: 15000,
   });
 
   const { data: deleteReqs, refetch: refetchDR } = useQuery({
     queryKey: ['delete-requests-pending'],
-    queryFn: () => api.get('/delete-requests?status=pending').then(r => r.data.data || []),
+    queryFn: () => api.get('/delete-requests?status=pending').then((r: any) => r.data.data || []),
     refetchInterval: 30000,
   });
 

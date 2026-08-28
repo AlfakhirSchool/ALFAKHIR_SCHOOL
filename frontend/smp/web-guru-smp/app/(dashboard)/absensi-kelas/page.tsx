@@ -31,7 +31,7 @@ export default function AbsensiKelasGuruPage() {
 
   const { data: myJadwal = [] } = useQuery({
     queryKey: ['my-jadwal-kelas', user?.id],
-    queryFn: () => api.get('/jadwal-pelajaran').then(r => r.data.data || []),
+    queryFn: () => api.get('/jadwal-pelajaran').then((r: any) => r.data.data || []),
     enabled: !!user,
   });
 
@@ -45,7 +45,7 @@ export default function AbsensiKelasGuruPage() {
 
   const { data: siswaList = [], isLoading } = useQuery({
     queryKey: ['siswa-kelas', kelasId],
-    queryFn: () => api.get('/kelas/' + kelasId + '/siswa').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas/' + kelasId + '/siswa').then((r: any) => (r.data.data || []).sort((a: any, b: any) => (a.user?.nama || a.nama || '').localeCompare(b.user?.nama || b.nama || '', 'id'))),
     enabled: !!kelasId,
   });
 
@@ -59,7 +59,7 @@ export default function AbsensiKelasGuruPage() {
   // Query berhalangan hari ini di kelas ini
   const { data: berhalanganData } = useQuery({
     queryKey: ['berhalangan-kelas', kelasId, tanggal],
-    queryFn: () => api.get('/berhalangan', { params: { kelas_id: kelasId, bulan: parseInt(tanggal.split('-')[1]), tahun: parseInt(tanggal.split('-')[0]) } }).then(r => r.data.data || []),
+    queryFn: () => api.get('/berhalangan', { params: { kelas_id: kelasId, bulan: parseInt(tanggal.split('-')[1]), tahun: parseInt(tanggal.split('-')[0]) } }).then((r: any) => r.data.data || []),
     enabled: !!kelasId,
   });
 

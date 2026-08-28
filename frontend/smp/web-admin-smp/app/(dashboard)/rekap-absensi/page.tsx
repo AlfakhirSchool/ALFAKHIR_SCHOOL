@@ -37,7 +37,7 @@ export default function RekapAbsensiAdminPage() {
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-list'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []),
   });
 
   const kelasByJenjang = (kelasList as any[]).filter(
@@ -46,7 +46,7 @@ export default function RekapAbsensiAdminPage() {
 
   const { data: rekap, isLoading } = useQuery({
     queryKey: ['rekap-data', kelasId, bulan, tahun],
-    queryFn: () => api.get(`/absensi/rekap-data?kelas_id=${kelasId}&bulan=${bulan}&tahun=${tahun}`).then(r => r.data.data),
+    queryFn: () => api.get(`/absensi/rekap-data?kelas_id=${kelasId}&bulan=${bulan}&tahun=${tahun}`).then((r: any) => r.data.data),
     enabled: !!kelasId,
   });
 

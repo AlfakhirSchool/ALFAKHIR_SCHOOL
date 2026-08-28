@@ -42,8 +42,8 @@ export default function FormKandidatPage({ params, searchParams }: { params: Pro
   useEffect(() => {
     const roleParam = role || 'siswa';
     Promise.all([
-      fetch(`${API}/kandidat/publik/${kandidatId}`).then(r => r.json()),
-      fetch(`${API}/jawaban-form/kandidat/${kandidatId}`).then(r => r.json()),
+      fetch(`${API}/kandidat/publik/${kandidatId}`).then((r: any) => r.json()),
+      fetch(`${API}/jawaban-form/kandidat/${kandidatId}`).then((r: any) => r.json()),
     ]).then(async ([kData, jData]) => {
       if (kData.success) {
         setKandidat(kData.data);

@@ -23,18 +23,18 @@ export default function PelanggaranAdminPage() {
 
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-admin'],
-    queryFn: () => api.get('/kelas').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []),
   });
 
   const { data: siswaList = [] } = useQuery({
     queryKey: ['siswa-kelas-form', formKelasId],
-    queryFn: () => api.get(`/kelas/${formKelasId}/siswa`).then(r => r.data.data || []),
+    queryFn: () => api.get(`/kelas/${formKelasId}/siswa`).then((r: any) => r.data.data || []),
     enabled: !!formKelasId,
   });
 
   const { data, isLoading } = useQuery({
     queryKey: ['pelanggaran-admin', kelasId],
-    queryFn: () => api.get('/pelanggaran', { params: kelasId ? { kelas_id: kelasId } : {} }).then(r => r.data),
+    queryFn: () => api.get('/pelanggaran', { params: kelasId ? { kelas_id: kelasId } : {} }).then((r: any) => r.data),
   });
 
   const createMut = useMutation({

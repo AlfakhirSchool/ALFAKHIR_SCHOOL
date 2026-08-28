@@ -29,7 +29,7 @@ export default function TugasGuruPage() {
   // Data profil guru
   const { data: profile } = useQuery({
     queryKey: ['guru-profile'],
-    queryFn: () => api.get('/auth/me').then(r => r.data.data),
+    queryFn: () => api.get('/auth/me').then((r: any) => r.data.data),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -37,7 +37,7 @@ export default function TugasGuruPage() {
   const { data: kelasList = [] } = useQuery({
     queryKey: ['kelas-guru'],
     queryFn: async () => {
-      const jadwal = await api.get('/jadwal-pelajaran').then(r => r.data.data ?? []).catch(() => []);
+      const jadwal = await api.get('/jadwal-pelajaran').then((r: any) => r.data.data ?? []).catch(() => []);
       const seen = new Set<string>();
       return jadwal
         .map((j: any) => j.kelas)
@@ -48,20 +48,20 @@ export default function TugasGuruPage() {
   // List mata pelajaran
   const { data: mapelList = [] } = useQuery({
     queryKey: ['mapel'],
-    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data ?? []),
+    queryFn: () => api.get('/mata-pelajaran').then((r: any) => r.data.data ?? []),
   });
 
   // List tugas per kelas
   const { data: tugasList = [], isLoading } = useQuery({
     queryKey: ['tugas', kelasId],
-    queryFn: () => api.get('/tugas', { params: { kelas_id: kelasId } }).then(r => r.data.data ?? []),
+    queryFn: () => api.get('/tugas', { params: { kelas_id: kelasId } }).then((r: any) => r.data.data ?? []),
     enabled: !!kelasId,
   });
 
   // Submissions
   const { data: submissions = [], isLoading: loadingSub } = useQuery({
     queryKey: ['submissions', selectedTugas?.id],
-    queryFn: () => api.get(`/tugas/${selectedTugas.id}/submissions`).then(r => r.data.data ?? []),
+    queryFn: () => api.get(`/tugas/${selectedTugas.id}/submissions`).then((r: any) => r.data.data ?? []),
     enabled: !!selectedTugas,
   });
 

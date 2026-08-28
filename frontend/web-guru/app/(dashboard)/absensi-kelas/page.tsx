@@ -29,7 +29,7 @@ export default function AbsensiKelasGuruPage() {
 
   const { data: myJadwal = [] } = useQuery({
     queryKey: ['my-jadwal-kelas', user?.id],
-    queryFn: () => api.get('/jadwal-pelajaran').then(r => r.data.data || []),
+    queryFn: () => api.get('/jadwal-pelajaran').then((r: any) => r.data.data || []),
     enabled: !!user,
   });
 
@@ -43,7 +43,7 @@ export default function AbsensiKelasGuruPage() {
 
   const { data: siswaList = [], isLoading } = useQuery({
     queryKey: ['siswa-kelas', kelasId],
-    queryFn: () => api.get('/kelas/' + kelasId + '/siswa').then(r => (r.data.data || []).sort((a: any, b: any) => (a.user?.nama || a.nama || '').localeCompare(b.user?.nama || b.nama || '', 'id'))),
+    queryFn: () => api.get('/kelas/' + kelasId + '/siswa').then((r: any) => (r.data.data || []).sort((a: any, b: any) => (a.user?.nama || a.nama || '').localeCompare(b.user?.nama || b.nama || '', 'id'))),
     enabled: !!kelasId,
   });
 
@@ -60,7 +60,7 @@ export default function AbsensiKelasGuruPage() {
       tanggal,
       absensi: (siswaList as any[]).map((s: any) => ({ siswa_id: s.id, status: statusMap[s.id] || 'hadir' })),
     }),
-    onSuccess: (res) => showToast(res.data.message || 'Absensi kelas berhasil disimpan'),
+    onSuccess: (res: any) => showToast(res.data.message || 'Absensi kelas berhasil disimpan'),
     onError: (e: any) => showToast(e.response?.data?.message || 'Gagal menyimpan', 'error'),
   });
 

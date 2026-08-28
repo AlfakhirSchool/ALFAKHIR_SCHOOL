@@ -29,7 +29,7 @@ export default function InterviewerLevelPage({ params }: { params: Promise<{ lev
 
   const { data, isLoading } = useQuery({
     queryKey: ['kandidat-level', apiLevel],
-    queryFn: () => api.get('/kandidat', { params: { level: apiLevel, limit: 500 } }).then(r => r.data),
+    queryFn: () => api.get('/kandidat', { params: { level: apiLevel, limit: 500 } }).then((r: any) => r.data),
   });
 
   const allKandidat: any[] = data?.data || [];

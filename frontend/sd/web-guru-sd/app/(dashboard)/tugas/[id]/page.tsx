@@ -20,13 +20,13 @@ export default function TugasDetailPage() {
 
   const { data: tugas } = useQuery({
     queryKey: ['tugas-detail', id],
-    queryFn: () => api.get(`/tugas/${id}`).then(r => r.data.data),
+    queryFn: () => api.get(`/tugas/${id}`).then((r: any) => r.data.data),
     enabled: !!id,
   });
 
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ['submissions', id],
-    queryFn: () => api.get(`/tugas/${id}/submissions`).then(r => r.data.data),
+    queryFn: () => api.get(`/tugas/${id}/submissions`).then((r: any) => r.data.data),
     enabled: !!id,
   });
 

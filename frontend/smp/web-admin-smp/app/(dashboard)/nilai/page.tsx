@@ -12,8 +12,8 @@ export default function NilaiAdminPage() {
   const [hapusId, setHapusId] = useState<string | null>(null);
   const [hapusInfo, setHapusInfo] = useState<string>('');
 
-  const { data: kelasList } = useQuery({ queryKey: ['kelas-all'], queryFn: () => api.get('/kelas').then(r => r.data.data || []) });
-  const { data: mapelList } = useQuery({ queryKey: ['mapel-all'], queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data || []) });
+  const { data: kelasList } = useQuery({ queryKey: ['kelas-all'], queryFn: () => api.get('/kelas').then((r: any) => r.data.data || []) });
+  const { data: mapelList } = useQuery({ queryKey: ['mapel-all'], queryFn: () => api.get('/mata-pelajaran').then((r: any) => r.data.data || []) });
 
   const { data, isLoading } = useQuery({
     queryKey: ['nilai-laporan', filter],
@@ -24,7 +24,7 @@ export default function NilaiAdminPage() {
         semester: filter.semester || undefined,
         tahun_ajaran: filter.tahun_ajaran || undefined,
       }
-    }).then(r => r.data),
+    }).then((r: any) => r.data),
   });
 
   const deleteMut = useMutation({
