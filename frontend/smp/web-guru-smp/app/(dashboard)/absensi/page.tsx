@@ -76,7 +76,7 @@ export default function AbsensiGuruPage() {
       setRows(d.data.map((r: AbsensiRow) => ({
         ...r,
         status_guru: r.status_guru || r.status_gate,
-      })));
+      })).sort((a: AbsensiRow, b: AbsensiRow) => a.nama_siswa.localeCompare(b.nama_siswa, 'id')));
       setStep('input');
     },
     onError: (e: any) => showToast(e.response?.data?.message || 'Gagal memuat data', 'error'),

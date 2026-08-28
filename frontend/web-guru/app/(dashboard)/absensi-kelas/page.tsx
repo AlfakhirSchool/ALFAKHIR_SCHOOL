@@ -43,7 +43,7 @@ export default function AbsensiKelasGuruPage() {
 
   const { data: siswaList = [], isLoading } = useQuery({
     queryKey: ['siswa-kelas', kelasId],
-    queryFn: () => api.get('/kelas/' + kelasId + '/siswa').then(r => r.data.data || []),
+    queryFn: () => api.get('/kelas/' + kelasId + '/siswa').then(r => (r.data.data || []).sort((a: any, b: any) => (a.user?.nama || a.nama || '').localeCompare(b.user?.nama || b.nama || '', 'id'))),
     enabled: !!kelasId,
   });
 
