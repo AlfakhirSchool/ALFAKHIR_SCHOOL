@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
+import path from 'path';
+import fs from 'fs';
 import { User, Siswa, Kelas, Sekolah } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
@@ -204,4 +206,22 @@ export const remove = async (req: AuthRequest, res: Response): Promise<void> => 
   if (!siswa) throw createError('Siswa tidak ditemukan', 404);
   await (siswa as any).user.update({ is_active: false });
   res.json({ success: true, message: 'Siswa berhasil dinonaktifkan' });
+};
+
+export const uploadPhoto = async (req: AuthRequest, res: Response): Promise<void> => {
+  const file = (req as any).file;
+  if (!file) { res.status(400).json({ success: false, message: 'File tidak ditemukan' }); return; }
+
+  const siswa = await Siswa.findByPk(String(req.params.id), { include: [{ model: User, as: 'user' }] });
+  if (!siswa) throw createError('Siswa tidak ditemukan', 404);
+
+  const user = (siswa as any).user as User;
+  if (user.profile_pic) {
+    const oldPath = path.join(__dirname, '..', '..', user.profile_pic.replace(/^\//, ''));
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+  }
+
+  const profilePicUrl = `/uploads/profiles/${file.filename}`;
+  await user.update({ profile_pic: profilePicUrl });
+  res.json({ success: true, data: { profile_pic: profilePicUrl } });
 };

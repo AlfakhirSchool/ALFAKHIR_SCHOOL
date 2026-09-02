@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as siswaController from '../controllers/siswaController';
 import { authenticate, authorize } from '../middleware/auth';
+import * as authController from '../controllers/authController';
 
 const router = Router();
 
@@ -12,6 +13,7 @@ router.get('/sekolah-list', authorize('admin', 'guru'), siswaController.getSekol
 router.post('/', authorize('admin'), siswaController.create);
 router.post('/import-csv', authorize('admin'), siswaController.importCsv);
 router.post('/sync-sheets', authorize('admin'), siswaController.syncFromSheets);
+router.post('/:id/upload-photo', authorize('admin', 'guru'), authController.upload.single('photo'), siswaController.uploadPhoto);
 router.get('/:id', authorize('admin', 'guru', 'siswa', 'ortu'), siswaController.getById);
 router.put('/:id', authorize('admin'), siswaController.update);
 router.delete('/:id', authorize('admin'), siswaController.remove);
