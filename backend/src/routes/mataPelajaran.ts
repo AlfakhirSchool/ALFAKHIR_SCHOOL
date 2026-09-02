@@ -3,12 +3,13 @@ import { Op } from 'sequelize';
 import { MataPelajaran } from '../models';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
 import { createError } from '../middleware/errorHandler';
+import { cache } from '../middleware/cacheMiddleware';
 
 const router = Router();
 
 router.use(authenticate);
 
-router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get('/', cache(300), async (req: AuthRequest, res: Response): Promise<void> => {
   const { jenjang } = req.query;
   const where: any = {};
   if (jenjang && jenjang !== 'all') where[Op.or] = [{ jenjang: jenjang as string }, { jenjang: null }];
