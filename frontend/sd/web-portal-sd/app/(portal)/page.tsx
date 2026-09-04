@@ -38,34 +38,18 @@ export default function BerandaPage() {
   const { user } = useAuthStore();
   const isOrtu = user?.role === 'ortu';
 
-  const { data: siswaData } = useQuery({
-    queryKey: ['portal-siswa-me'],
-    queryFn: () => api.get('/siswa/me').then(r => r.data.data),
+  const { data: dashboardData } = useQuery({
+    queryKey: ['portal-dashboard'],
+    queryFn: () => api.get('/portal/dashboard').then(r => r.data.data),
     enabled: !isOrtu,
+    staleTime: 60_000,
   });
 
-  const { data: tagihanData } = useQuery({
-    queryKey: ['portal-tagihan-summary', siswaData?.id],
-    queryFn: () => api.get('/pembayaran', { params: { siswa_id: siswaData?.id } }).then(r => r.data),
-    enabled: !isOrtu && !!siswaData?.id,
-  });
-
-  const { data: tugasData } = useQuery({
-    queryKey: ['portal-tugas-summary', siswaData?.kelas_id],
-    queryFn: () => api.get('/tugas', { params: { kelas_id: siswaData?.kelas_id } }).then(r => r.data),
-    enabled: !isOrtu && !!siswaData?.kelas_id,
-  });
-
-  const { data: mapelData } = useQuery({
-    queryKey: ['portal-mapel'],
-    queryFn: () => api.get('/mata-pelajaran').then(r => r.data.data),
-    enabled: !isOrtu,
-  });
-
-  const { data: pengumumanData } = useQuery({
-    queryKey: ['portal-pengumuman'],
-    queryFn: () => api.get('/pengumuman', { params: { limit: 5 } }).then(r => r.data.data as any[]),
-  });
+  const siswaData = dashboardData?.siswa;
+  const mapelData = dashboardData?.mapel;
+  const pengumumanData: any[] = dashboardData?.pengumuman ?? [];
+  const tagihanData = { data: dashboardData?.tagihan ?? [] };
+  const tugasData = { data: dashboardData?.tugas ?? [] };
 
 
   const tagihan = tagihanData?.data || [];

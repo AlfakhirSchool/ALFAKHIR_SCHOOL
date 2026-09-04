@@ -13,10 +13,14 @@ export default function BerandaPage() {
   const { user } = useAuthStore();
   const isOrtu = user?.role === 'ortu';
 
-  const { data: tagihanData } = useQuery({
-    queryKey: ['portal-tagihan-summary'],
-    queryFn: () => api.get('/pembayaran').then(r => r.data),
+  const { data: dashboardData } = useQuery({
+    queryKey: ['portal-dashboard'],
+    queryFn: () => api.get('/portal/dashboard').then(r => r.data.data),
+    enabled: !isOrtu,
+    staleTime: 60_000,
   });
+
+  const tagihanData = { data: dashboardData?.tagihan ?? [] };
 
   const tagihan = tagihanData?.data || [];
   const belumBayar = tagihan.filter((t: any) => t.status !== 'lunas');

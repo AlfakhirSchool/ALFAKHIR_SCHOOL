@@ -45,6 +45,7 @@ import transaksiKeuanganRoutes from './routes/transaksiKeuangan';
 import pelanggaranRoutes from './routes/pelanggaran';
 import berhalanganRoutes from './routes/berhalangan';
 import agendaPiketRoutes from './routes/agendaPiket';
+import portalRoutes from './routes/portal';
 
 dotenv.config();
 
@@ -145,6 +146,7 @@ app.use(`${PREFIX}/keuangan/transaksi`, transaksiKeuanganRoutes);
 app.use(`${PREFIX}/pelanggaran`, pelanggaranRoutes);
 app.use(`${PREFIX}/berhalangan`, berhalanganRoutes);
 app.use(`${PREFIX}/agenda-piket`, agendaPiketRoutes);
+app.use(`${PREFIX}/portal`, portalRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
