@@ -34,8 +34,7 @@ const menuEntries: Entry[] = [
     items: [
       { href: '/nilai',  icon: <BookOpen size={15} />,   label: 'Input Nilai' },
       { href: '/rapor',  icon: <FileText size={15} />,   label: 'Rapor Kelas' },
-      { href: '/tugas',          icon: <FileText size={15} />,    label: 'Tugas' },
-      { href: '/materi',         icon: <BookOpen size={15} />,   label: 'Materi' },
+      { href: '/ruang-kelas',    icon: <BookOpen size={15} />,   label: 'Ruang Kelas' },
       { href: '/jurnal',         icon: <BookMarked size={15} />,  label: 'Jurnal Guru' },
       { href: '/catatan-siswa', icon: <NotebookPen size={15} />, label: 'Catatan Siswa' },
       { href: '/kelas',          icon: <Users size={15} />,       label: 'Kelas Saya' },

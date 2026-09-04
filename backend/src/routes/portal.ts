@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
-import { Siswa, Kelas, MataPelajaran, Pembayaran, Tugas } from '../models';
+import { Siswa, Kelas, MataPelajaran, Pembayaran, Tugas, Materi } from '../models';
 import Pengumuman from '../models/Pengumuman';
 import redis from '../config/redis';
 
@@ -36,8 +36,8 @@ router.get('/dashboard', authorize('siswa'), async (req: AuthRequest, res: Respo
   const siswaId = siswa.id;
   const kelasId = siswa.kelas_id;
 
-  // 2. Parallel: tagihan, tugas, mapel, pengumuman
-  const [tagihan, tugas, mapel, pengumuman] = await Promise.all([
+  // 2. Parallel: tagihan, tugas, materi, mapel, pengumuman
+  const [tagihan, tugas, materi, mapel, pengumuman] = await Promise.all([
     Pembayaran.findAll({
       where: { siswa_id: siswaId },
       order: [['tanggal_jatuh_tempo', 'ASC']],
@@ -45,7 +45,13 @@ router.get('/dashboard', authorize('siswa'), async (req: AuthRequest, res: Respo
     kelasId
       ? Tugas.findAll({
           where: { kelas_id: kelasId },
-          order: [['deadline', 'ASC']],
+          order: [['created_at', 'DESC']],
+        })
+      : Promise.resolve([]),
+    kelasId
+      ? Materi.findAll({
+          where: { kelas_id: kelasId, is_active: true },
+          order: [['created_at', 'DESC']],
         })
       : Promise.resolve([]),
     MataPelajaran.findAll({ order: [['nama', 'ASC']] }),
@@ -61,6 +67,7 @@ router.get('/dashboard', authorize('siswa'), async (req: AuthRequest, res: Respo
       siswa,
       tagihan,
       tugas,
+      materi,
       mapel,
       pengumuman,
     },

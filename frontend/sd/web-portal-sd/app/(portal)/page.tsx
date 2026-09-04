@@ -28,8 +28,8 @@ const MAPEL_COLORS: Record<string, { bg: string; color: string }> = {
 
 const MENU = [
   { href: '/tagihan',    icon: CreditCard,    label: 'Tagihan',       color: '#F97316', bg: '#fff7ed' },
-  { href: '/tugas',      icon: FileText,      label: 'Tugas',         color: '#3B82F6', bg: '#eff6ff' },
-  { href: '/materi',     icon: BookOpen,      label: 'Mata\nPelajaran', color: '#F59E0B', bg: '#fffbeb' },
+  { href: '/ruang-kelas', icon: FileText,     label: 'Tugas',          color: '#3B82F6', bg: '#eff6ff' },
+  { href: '/ruang-kelas', icon: BookOpen,     label: 'Kelas',           color: '#F59E0B', bg: '#fffbeb' },
   { href: '/jadwal',     icon: Clock,         label: 'Jadwal',        color: '#06B6D4', bg: '#ecfeff' },
   { href: '/pengumuman', icon: Bell,          label: 'Pengumuman',    color: '#EF4444', bg: '#fef2f2' },
 ];
