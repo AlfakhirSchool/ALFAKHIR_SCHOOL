@@ -3,6 +3,8 @@ import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
 
 const BCRYPT_ROUNDS = 8; // rounds=10 → ~100ms, rounds=8 → ~25ms per login
+// pre-computed saat startup — cegah timing attack (user tidak ada vs salah password)
+const DUMMY_HASH = bcrypt.hashSync('_dummy_placeholder_', BCRYPT_ROUNDS);
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -79,17 +81,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (!user) user = await User.unscoped().findOne({ where: { email: loginIdentifier, is_active: true } });
   }
 
-  if (!user) { res.status(401).json({ success: false, message: 'Username/NIS atau password salah' }); return; }
-
-  const validPassword = await bcrypt.compare(password, (user as any).password_hash);
-  if (!validPassword) { res.status(401).json({ success: false, message: 'NIS atau password salah' }); return; }
+  // selalu jalankan bcrypt.compare — cegah timing attack (bedain NIS terdaftar/tidak)
+  const hashToCompare = user ? (user as any).password_hash : DUMMY_HASH;
+  const validPassword = await bcrypt.compare(password, hashToCompare);
+  if (!user || !validPassword) { res.status(401).json({ success: false, message: 'NIS atau password salah' }); return; }
 
   // Re-hash ke rounds lebih rendah di background — tidak block response
   const currentRounds = bcrypt.getRounds((user as any).password_hash);
   if (currentRounds > BCRYPT_ROUNDS) {
     bcrypt.hash(password, BCRYPT_ROUNDS)
       .then(newHash => user!.update({ password_hash: newHash } as any))
-      .catch(() => {});
+      .catch((e: unknown) => console.error('rehash error:', e));
   }
 
   if (device_id && (user.role === 'siswa' || user.role === 'ortu')) {
