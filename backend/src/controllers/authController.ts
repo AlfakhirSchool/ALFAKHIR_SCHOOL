@@ -60,13 +60,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   let user: InstanceType<typeof User> | null = null;
 
   if (nis) {
-    const siswa = await Siswa.findOne({ where: { nis } });
+    // 1 query: siswa + user sekaligus via include
+    const siswa = await Siswa.findOne({
+      where: { nis },
+      include: [{ model: User, as: 'user', where: { is_active: true }, required: true }],
+    }) as any;
     if (!siswa) { res.status(401).json({ success: false, message: 'NIS atau password salah' }); return; }
     if (loginRole === 'ortu') {
       const ortu = await OrangTua.findOne({ where: { siswa_id: siswa.id } });
       user = ortu ? await User.unscoped().findOne({ where: { id: (ortu as any).user_id, is_active: true } }) : null;
     } else {
-      user = await User.unscoped().findOne({ where: { id: siswa.user_id, is_active: true } });
+      user = siswa.user as InstanceType<typeof User>;
     }
   } else {
     user = await User.unscoped().findOne({ where: { username: loginIdentifier, is_active: true } });
@@ -87,8 +91,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (!user.device_id) await user.update({ device_id });
   }
 
-  const { accessToken, refreshToken } = generateTokens(user);
-  const profile_detail = await fetchProfileDetail(user);
+  // generateTokens & fetchProfileDetail parallel — tidak saling bergantung
+  const [{ accessToken, refreshToken }, profile_detail] = await Promise.all([
+    Promise.resolve(generateTokens(user)),
+    fetchProfileDetail(user),
+  ]);
 
   logAction({
     user_id: user.id, nama: user.nama, role: user.role, school_level: user.school_level,
