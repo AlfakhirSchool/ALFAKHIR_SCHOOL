@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
+
+const BCRYPT_ROUNDS = 8; // rounds=10 → ~100ms, rounds=8 → ~25ms per login
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -81,6 +83,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
   const validPassword = await bcrypt.compare(password, (user as any).password_hash);
   if (!validPassword) { res.status(401).json({ success: false, message: 'NIS atau password salah' }); return; }
+
+  // Re-hash ke rounds lebih rendah di background — tidak block response
+  const currentRounds = bcrypt.getRounds((user as any).password_hash);
+  if (currentRounds > BCRYPT_ROUNDS) {
+    bcrypt.hash(password, BCRYPT_ROUNDS)
+      .then(newHash => user!.update({ password_hash: newHash } as any))
+      .catch(() => {});
+  }
 
   if (device_id && (user.role === 'siswa' || user.role === 'ortu')) {
     const deviceOwner = await User.findOne({ where: { device_id } });
@@ -216,7 +226,7 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
   const valid = await bcrypt.compare(old_password, user.password_hash);
   if (!valid) { res.status(400).json({ success: false, message: 'Password lama tidak benar' }); return; }
 
-  await user.update({ password_hash: await bcrypt.hash(new_password, 10) });
+  await user.update({ password_hash: await bcrypt.hash(new_password, BCRYPT_ROUNDS) });
   redis.del(`profile:${req.user!.id}`).catch(() => {});
   res.json({ success: true, message: 'Password berhasil diubah' });
 };
