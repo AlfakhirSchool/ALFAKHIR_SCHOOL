@@ -18,13 +18,13 @@ import logger from '../config/logger';
 const invalidateCache = (siswa_id: string) =>
   scanKeys(`absensi:detail:${siswa_id}:*`).then(keys => { if (keys.length) redis.del(...keys); }).catch(() => {});
 
-const upsertAbsensi = (siswa_id: string, jid: string, tgl: string, status: string, catatan: string | null, uid: string) =>
+const upsertAbsensi = (siswa_id: string, jid: string, tgl: string, status: string, catatan: string | null, uid: string, t?: any) =>
   sequelize.query(
     `INSERT INTO absensi (id, siswa_id, jadwal_pelajaran_id, tanggal, status, catatan, waktu_hadir, qr_code_scanned, created_by, created_at)
      VALUES (gen_random_uuid(), :siswa_id, :jid, :tgl, :status, :catatan, :waktu, false, :uid, NOW())
      ON CONFLICT (siswa_id, jadwal_pelajaran_id, tanggal) DO UPDATE SET
        status = EXCLUDED.status, catatan = EXCLUDED.catatan, waktu_hadir = EXCLUDED.waktu_hadir`,
-    { replacements: { siswa_id, jid, tgl, status, catatan, waktu: status === 'hadir' ? new Date() : null, uid }, type: QueryTypes.INSERT }
+    { replacements: { siswa_id, jid, tgl, status, catatan, waktu: status === 'hadir' ? new Date() : null, uid }, type: QueryTypes.INSERT, ...(t ? { transaction: t } : {}) }
   );
 
 const fetchRekapBase = async (kelas_id: string, b: number, y: number) => {
@@ -287,7 +287,9 @@ export const bulkGuru = async (req: AuthRequest, res: Response): Promise<void> =
   };
   if (!jadwal_pelajaran_id || !tanggal || !list?.length) throw createError('Data tidak lengkap', 400);
 
-  await Promise.all(list.map(item => upsertAbsensi(item.siswa_id, jadwal_pelajaran_id, tanggal, item.status, item.catatan || null, req.user!.id)));
+  await sequelize.transaction(async (t) => {
+    await Promise.all(list.map(item => upsertAbsensi(item.siswa_id, jadwal_pelajaran_id, tanggal, item.status, item.catatan || null, req.user!.id, t)));
+  });
 
   const hadirIds = list.filter(i => i.status === 'hadir').map(i => i.siswa_id);
   if (hadirIds.length) propagateKelasToGerbang(hadirIds, tanggal, req.user!.id).catch(e => logger.error({ event: 'propagate_kelas_to_gerbang_error', error: e.message }));
@@ -323,9 +325,11 @@ export const bulkKelas = async (req: AuthRequest, res: Response): Promise<void> 
   const jadwalList = await JadwalPelajaran.findAll({ where: { kelas_id, hari: hariIni } });
   if (!jadwalList.length) throw createError(`Tidak ada jadwal untuk hari ${hariIni}`, 400);
 
-  await Promise.all(jadwalList.flatMap(jadwal =>
-    list.map(item => upsertAbsensi(item.siswa_id, (jadwal as any).id, tanggal, item.status, item.catatan || null, req.user!.id))
-  ));
+  await sequelize.transaction(async (t) => {
+    await Promise.all(jadwalList.flatMap(jadwal =>
+      list.map(item => upsertAbsensi(item.siswa_id, (jadwal as any).id, tanggal, item.status, item.catatan || null, req.user!.id, t))
+    ));
+  });
 
   res.json({ success: true, message: `${list.length} siswa × ${jadwalList.length} jadwal = ${list.length * jadwalList.length} absensi disimpan` });
 };
